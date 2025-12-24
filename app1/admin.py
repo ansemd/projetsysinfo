@@ -1,12 +1,6 @@
 from django.contrib import admin
 from .models import Client, Chauffeur, Vehicule, Destination, TypeService, Tarification, Expedition, Tournee, TrackingExpedition
 
-class DestinationAdmin(admin.ModelAdmin):
-    readonly_fields = ['tarif_base', 'delai_livraison_estime']
-
-class TypeServiceAdmin(admin.ModelAdmin):
-    readonly_fields = ['multiplicateur_prix', 'multiplicateur_delai']
-
 class TrackingInline(admin.TabularInline):
     model = TrackingExpedition
     extra = 0
@@ -39,12 +33,17 @@ class TourneeAdmin(admin.ModelAdmin):
 admin.site.register(Client)
 admin.site.register(Chauffeur)
 admin.site.register(Vehicule)
-admin.site.register(Destination, DestinationAdmin)
-admin.site.register(TypeService, TypeServiceAdmin)
+admin.site.register(TypeService)
 admin.site.register(Tarification)
 admin.site.register(Expedition, ExpeditionAdmin)
 admin.site.register(TrackingExpedition)
 
+class DestinationAdmin(admin.ModelAdmin):
+    list_display = ['ville', 'wilaya', 'pays', 'zone_geographique', 'tarif_base']
+    list_filter = ['zone_geographique', 'zone_logistique']
+    search_fields = ['ville', 'wilaya']
+
+admin.site.register(Destination, DestinationAdmin)
 
 
 
