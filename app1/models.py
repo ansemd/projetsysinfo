@@ -215,7 +215,7 @@ class Tarification(models.Model):
         unique_together = ['destination', 'type_service']
 
     def __str__(self):
-        return f"{self.destination.ville} - {self.type_service}"
+        return f"{self.destination.ville} - {self.destination.wilaya} - {self.type_service}"
 
     def calculer_prix(self, poids, volume):
 
