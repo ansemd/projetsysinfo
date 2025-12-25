@@ -7,38 +7,23 @@ from django.utils import timezone
 from django.db.models import Sum
 
 # SECTION 1 : TABLES DE BASE
-
-
 class Client(models.Model):
-    
 
     nom = models.CharField(max_length=20)
     prenom = models.CharField(max_length=20)
     date_naissance = models.DateField(default='2000-01-01')
     telephone = PhoneNumberField(region='DZ', unique=True)
     email = models.EmailField(blank=True, null=True)
-
-
     adresse = models.TextField(blank=True, null=True)
     ville = models.CharField(max_length=100, blank=True, null=True)
     wilaya = models.CharField(max_length=100, blank=True, null=True)
-
-
     solde = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    
-
     date_inscription = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
-    
-
     remarques = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.prenom} {self.nom}"
-
-    def get_id_client(self):
-        return f"CL-{self.id:03d}"
-
+        return f"CL-{self.id:03d} {self.prenom} {self.nom}"
 
 class Chauffeur(models.Model):
 
@@ -47,36 +32,17 @@ class Chauffeur(models.Model):
     date_naissance = models.DateField(default='2000-01-01')
     telephone = PhoneNumberField(region='DZ')
     email = models.EmailField(blank=True, null=True)
-
-
     adresse = models.TextField(blank=True, null=True)
     ville = models.CharField(max_length=100, blank=True, null=True)
     wilaya = models.CharField(max_length=100, blank=True, null=True)
-
-
     numero_permis = models.CharField(max_length=50, unique=True)
     date_obtention_permis = models.DateField()
     date_expiration_permis = models.DateField()
-
-
     date_embauche = models.DateField()
     salaire = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
-
-    STATUT_CHOICES = [
-        ('DISPONIBLE', 'Disponible'),
-        ('EN_TOURNEE', 'En tournée'),
-        ('CONGE', 'En congé'),
-        ('MALADIE', 'Maladie'),
-        ('AUTRE', 'Autre raison'),
-    ]
-    statut_disponibilite = models.CharField(max_length=20, choices=STATUT_CHOICES, default='DISPONIBLE')
-
-
+    statut_disponibilite = models.CharField(max_length=20, choices=[('DISPONIBLE', 'Disponible'),('EN_TOURNEE', 'En tournée'),('CONGE', 'En congé'),('MALADIE', 'Maladie'),('AUTRE', 'Autre raison'),], default='DISPONIBLE')
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
-    
-
     remarques = models.TextField(blank=True, null=True)
 
     def __str__(self):
@@ -85,94 +51,39 @@ class Chauffeur(models.Model):
     def get_id_chauffeur(self):
         return f"CH-{self.id:03d}"
 
-
 class Vehicule(models.Model):
 
     numero_immatriculation = models.CharField(max_length=50, unique=True)
     marque = models.CharField(max_length=100)
     modele = models.CharField(max_length=100)
     annee = models.IntegerField()
-
-
-    TYPE_CHOICES = [
-        ('CAMIONNETTE', 'Camionnette'),
-        ('CAMION', 'Camion'),
-        ('FOURGON', 'Fourgon'),
-        ('MOTO', 'Moto'),
-    ]
-    type_vehicule = models.CharField(max_length=20, choices=TYPE_CHOICES)
-
-
+    type_vehicule = models.CharField(max_length=20, choices=[('CAMIONNETTE', 'Camionnette'),('CAMION', 'Camion'),('FOURGON', 'Fourgon'),('MOTO', 'Moto'),])
     capacite_poids = models.DecimalField(max_digits=8, decimal_places=2, help_text="Capacité en kg")
     capacite_volume = models.DecimalField(max_digits=8, decimal_places=2, help_text="Volume en m³")
     consommation_moyenne = models.DecimalField(max_digits=5, decimal_places=2, help_text="Consommation en L/100km")
-
-
-    ETAT_CHOICES = [
-        ('EXCELLENT', 'Excellent'),
-        ('BON', 'Bon'),
-        ('MOYEN', 'Moyen'),
-        ('MAUVAIS', 'Mauvais'),
-    ]
-    etat = models.CharField(max_length=20, choices=ETAT_CHOICES, default='BON')
-
-
-    STATUT_CHOICES = [
-        ('DISPONIBLE', 'Disponible'),
-        ('EN_TOURNEE', 'En tournée'),
-        ('EN_MAINTENANCE', 'En maintenance'),
-        ('HORS_SERVICE', 'Hors service'),
-    ]
-    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='DISPONIBLE')
-
-
+    etat = models.CharField(max_length=20, choices=[('EXCELLENT', 'Excellent'),('BON', 'Bon'),('MOYEN', 'Moyen'),('MAUVAIS', 'Mauvais'),], default='BON')
+    statut = models.CharField(max_length=20, choices=[('DISPONIBLE', 'Disponible'),('EN_TOURNEE', 'En tournée'),('EN_MAINTENANCE', 'En maintenance'),('HORS_SERVICE', 'Hors service'),], default='DISPONIBLE')
     date_derniere_revision = models.DateField(blank=True, null=True)
     date_prochaine_revision = models.DateField(blank=True, null=True)
     kilometrage = models.PositiveIntegerField(default=0, help_text="Compteur kilométrique total")
-
-
     date_acquisition = models.DateField()
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
-    
-
     remarques = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.marque} {self.modele} - {self.numero_immatriculation}"
-
 
 class Destination(models.Model):
 
     ville = models.CharField(max_length=100)
     wilaya = models.CharField(max_length=100, blank=True, null=True)
     pays = models.CharField(max_length=100, default='Algérie')
-
-
-    ZONE_CHOICES = [
-        ('LOCALE', 'Locale (même wilaya)'),
-        ('NATIONALE', 'Nationale'),
-        ('INTERNATIONALE', 'Internationale'),
-    ]
-    zone_geographique = models.CharField(max_length=20, choices=ZONE_CHOICES)
-
-
-    ZONE_LOGISTIQUE_CHOICES = [
-        ('CENTRE', 'Centre (Alger, Blida...)'),
-        ('EST', 'Est (Constantine, Annaba, Sétif...)'),
-        ('OUEST', 'Ouest (Oran, Tlemcen, Sidi Bel Abbès...)'),
-        ('SUD', 'Sud (Tamanrasset, Adrar, Bechar...)'),
-    ]
-    zone_logistique = models.CharField(max_length=10, choices=ZONE_LOGISTIQUE_CHOICES, default='CENTRE')
-
-
+    zone_geographique = models.CharField(max_length=20, choices=[('LOCALE', 'Locale (même wilaya)'),('NATIONALE', 'Nationale'),('INTERNATIONALE', 'Internationale'),])
+    zone_logistique = models.CharField(max_length=10, choices=[('CENTRE', 'Centre (Alger, Blida...)'),('EST', 'Est (Constantine, Annaba, Sétif...)'),('OUEST', 'Ouest (Oran, Tlemcen, Sidi Bel Abbès...)'),('SUD', 'Sud (Tamanrasset, Adrar, Bechar...)'),], default='CENTRE')
     distance_estimee = models.IntegerField(help_text="Distance en km depuis le dépôt principal")
     tarif_base = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Tarif de base en DA")
-    
-
     delai_livraison_estime = models.IntegerField(default=1, help_text="Délai estimé en jours")
-
-
     code_postal = models.CharField(max_length=10, blank=True, null=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
@@ -181,36 +92,21 @@ class Destination(models.Model):
     def __str__(self):
         return f"{self.ville} - {self.wilaya} - {self.pays}"
 
-
 class TypeService(models.Model):
 
-    
-    TYPE_CHOICES = [
-        ('STANDARD', 'Standard'),
-        ('EXPRESS', 'Express'),
-        ('INTERNATIONAL', 'International'),
-    ]
-    type_service = models.CharField(max_length=20, choices=TYPE_CHOICES, unique=True)
+    type_service = models.CharField(max_length=20, choices=[('STANDARD', 'Standard'),('EXPRESS', 'Express'),('INTERNATIONAL', 'International'), ], unique=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.type_service
 
-
 class Tarification(models.Model):
 
-    
     destination = models.ForeignKey(Destination, on_delete=models.CASCADE)
     type_service = models.ForeignKey(TypeService, on_delete=models.CASCADE)
-
-
     tarif_poids = models.DecimalField(max_digits=10, decimal_places=2, default=10.00, help_text="Tarif par kg en DA")
     tarif_volume = models.DecimalField(max_digits=10, decimal_places=2, default=20.00, help_text="Tarif par m³ en DA")
-
-
-    date_creation = models.DateTimeField(auto_now_add=True)
-    date_modification = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
         unique_together = ['destination', 'type_service']
 
@@ -218,153 +114,54 @@ class Tarification(models.Model):
         return f"{self.destination.ville} - {self.destination.wilaya} - {self.type_service}"
 
     def calculer_prix(self, poids, volume):
-
         poids = Decimal(str(poids))
         volume = Decimal(str(volume))
         
-
-        prix = self.destination.tarif_base + (poids * self.tarif_poids) + (volume * self.tarif_volume)
-        
-
         if self.type_service.type_service == 'EXPRESS':
-            prix = prix * 2
+            # EXPRESS : tarif de base calculé selon distance
+            tarif_base_express = Decimal(str(self.destination.distance_estimee)) * Decimal('25.00')
+            prix = tarif_base_express + (poids * self.tarif_poids) + (volume * self.tarif_volume)
+        else:
+            # STANDARD et INTERNATIONAL : tarif_base normal
+            prix = self.destination.tarif_base + (poids * self.tarif_poids) + (volume * self.tarif_volume)
         
         return prix
+    
+    def calculer_delai(self):
+
+        if self.type_service.type_service == 'EXPRESS':
+            # EXPRESS : délai selon distance
+            if self.destination.distance_estimee < 500:
+                return 1  # 1 jour
+            else:
+                return 2  # 2 jours
+        else:
+            # STANDARD et INTERNATIONAL : délai de la destination
+            return self.destination.delai_livraison_estime
 
 class Tournee(models.Model):
-    # --- RELATIONS ---
-    chauffeur = models.ForeignKey(Chauffeur, on_delete=models.PROTECT)
-    vehicule = models.ForeignKey(Vehicule, on_delete=models.PROTECT)
-    
-    # --- PLANIFICATION ---
+    chauffeur = models.ForeignKey('Chauffeur', on_delete=models.PROTECT)
+    vehicule = models.ForeignKey('Vehicule', on_delete=models.PROTECT)
     date_depart = models.DateTimeField()
     date_retour_prevue = models.DateTimeField(blank=True, null=True)
-    zone_cible = models.CharField(
-        max_length=10, 
-        choices=Destination.ZONE_LOGISTIQUE_CHOICES
-    )
+    date_retour_reelle = models.DateTimeField(blank=True, null=True)
+    zone_cible = models.CharField(max_length=10, choices=[('CENTRE', 'Centre'), ('EST', 'Est'), ('OUEST', 'Ouest'), ('SUD', 'Sud')])
+    kilometrage_depart = models.PositiveIntegerField(blank=True, null=True, editable=False)
+    kilometrage_arrivee = models.PositiveIntegerField(blank=True, null=True)
+    kilometrage_parcouru = models.PositiveIntegerField(blank=True, null=True, editable=False)
+    consommation_carburant = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True, editable=False)
+    statut = models.CharField(max_length=20, choices=[('PREVUE', 'Prévue'), ('EN_COURS', 'En cours'), ('TERMINEE', 'Terminée')], default='PREVUE')
+    remarques = models.TextField(blank=True, null=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
     
-    # --- SUIVI OPÉRATIONNEL (Cahier des charges) ---
-    kilometrage_depart = models.PositiveIntegerField(blank=True,null=True,help_text="Auto-rempli depuis le véhicule au départ")
-    kilometrage_arrivee = models.PositiveIntegerField(blank=True, null=True, help_text="À saisir au retour")
-    consommation_carburant = models.DecimalField(
-        max_digits=6, decimal_places=2, blank=True, null=True, help_text="En litres"
-    )
-    
-    statut = models.CharField(
-        max_length=20, 
-        choices=[('PREVUE', 'Prévue'), ('EN_COURS', 'En cours'), ('TERMINEE', 'Terminée')],
-        default='PREVUE'
-    )
-
     def __str__(self):
-        date_f = self.date_depart.strftime('%d/%m/%Y %H:%M')
-        return f"Tournée {self.id} | {date_f} | {self.zone_cible} - {self.statut}"
-
+        return f"Tournée #{self.id} - {self.chauffeur} - {self.statut}"
+    
     def save(self, *args, **kwargs):
-        from decimal import Decimal
-        from django.utils import timezone
-        from .models import TrackingExpedition
-
-        # 0. Détecter le changement de statut pour le tracking
-        old_status = None
-        if self.pk:
-            old_status = Tournee.objects.get(pk=self.pk).statut
-
-        # 1. AUTOMATISATION : Kilométrage et Consommation
-        if not self.pk and not self.kilometrage_depart:
-            self.kilometrage_depart = self.vehicule.kilometrage
-
-        if self.kilometrage_arrivee and self.kilometrage_depart:
-            distance = self.kilometrage_arrivee - self.kilometrage_depart
-            # Calcul Decimal pour éviter les erreurs de type avec float
-            self.consommation_carburant = (Decimal(distance) / Decimal('100')) * self.vehicule.consommation_moyenne
-
-        # 2. LOGIQUE DE FLUX (Statuts Véhicule et Chauffeur)
-        if self.statut in ['PREVUE', 'EN_COURS']:
-            self.vehicule.statut = 'EN_TOURNEE'
-            self.chauffeur.statut_disponibilite = 'EN_TOURNEE'
-        elif self.statut == 'TERMINEE':
-            self.vehicule.statut = 'DISPONIBLE'
-            self.chauffeur.statut_disponibilite = 'DISPONIBLE'
-            if self.kilometrage_arrivee:
-                self.vehicule.kilometrage = self.kilometrage_arrivee
-
-        # 3. SAUVEGARDE DES OBJETS LIÉS ET DE LA TOURNÉE
-        self.vehicule.save()
-        self.chauffeur.save()
+        from .utils import TourneeService
+        TourneeService.traiter_tournee(self)
         super().save(*args, **kwargs)
-
-        # 4. LOGIQUE AUTOMATIQUE DE TRACKING (BACKEND)
-        
-        # A. Passage en TRANSIT (Quand la tournée démarre)
-        if old_status == 'PREVUE' and self.statut == 'EN_COURS':
-            for exp in self.expeditions.all():
-                exp.statut = 'EN_TRANSIT'
-                exp.save() # Met à jour le statut du colis
-                TrackingExpedition.objects.create(
-                    expedition=exp, 
-                    statut_etape='EN_TRANSIT',
-                    commentaire=f"Camion {self.vehicule.numero_immatriculation} en route."
-                )
-
-        # B. Clôture de mission (LIVRAISON ou ECHEC/RETOUR)
-        elif old_status == 'EN_COURS' and self.statut == 'TERMINEE':
-            for exp in self.expeditions.all():
-                if exp.statut == 'ECHEC':
-                    # On crée l'étape d'échec puis celle du retour physique au dépôt
-                    TrackingExpedition.objects.create(
-                        expedition=exp, 
-                        statut_etape='ECHEC_LIVRAISON', 
-                        commentaire="Incident lors de la livraison."
-                    )
-                    TrackingExpedition.objects.create(
-                        expedition=exp, 
-                        statut_etape='RETOUR_DEPOT', 
-                        commentaire="Colis retourné au dépôt par le chauffeur."
-                    )
-                else:
-                    # Livraison réussie par défaut si pas d'échec marqué
-                    exp.statut = 'LIVRE'
-                    exp.date_livraison_reelle = timezone.now().date()
-                    exp.save()
-                    TrackingExpedition.objects.create(
-                        expedition=exp, 
-                        statut_etape='LIVRE',
-                        commentaire="Livraison confirmée à la fermeture de la tournée."
-                    )
-
-    def verifier_chargement(self):
-        """Déclenche l'étape EN_CHARGEMENT 2h avant le départ"""
-        from datetime import timedelta
-        from django.utils import timezone
-        
-        temps_restant = self.date_depart - timezone.now()
-        if self.statut == 'PREVUE' and timedelta(hours=0) < temps_restant <= timedelta(hours=2):
-            for exp in self.expeditions.all():
-                if not exp.historique_tracking.filter(statut_etape='EN_CHARGEMENT').exists():
-                    TrackingExpedition.objects.create(
-                        expedition=exp, 
-                        statut_etape='EN_CHARGEMENT',
-                        commentaire="Colis chargé dans le véhicule."
-                    )
-
-    def verifier_et_demarrer(self):
-        """Vérifie les ressources et démarre la tournée"""
-        from django.utils import timezone
-        
-        est_heure_depart = timezone.now() >= self.date_depart
-        chauffeur_pret = self.chauffeur.statut_disponibilite in ['DISPONIBLE', 'EN_TOURNEE']
-        vehicule_pret = self.vehicule.statut in ['DISPONIBLE', 'EN_TOURNEE']
-
-        if self.statut == 'PREVUE' and est_heure_depart:
-            if chauffeur_pret and vehicule_pret:
-                self.statut = 'EN_COURS'
-                self.save() # Le save() ci-dessus déclenchera le tracking EN_TRANSIT
-                return True, "Tournée démarrée."
-            else:
-                return False, "Ressources indisponibles (Chauffeur/Véhicule)."
-        return False, "Conditions de départ non remplies."
 
 class Expedition(models.Model):
     # --- RELATIONS ---
