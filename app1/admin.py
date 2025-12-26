@@ -1,43 +1,14 @@
 from django.contrib import admin
-from .models import Client, Chauffeur, Vehicule, Destination, TypeService, Tarification, Expedition, Tournee, TrackingExpedition
+from .models import Client, Chauffeur, Vehicule, Destination, TypeService, Tarification, Tournee, Expedition, TrackingExpedition
 
-class TrackingInline(admin.TabularInline):
-    model = TrackingExpedition
-    extra = 0
-    readonly_fields = ['date_evenement', 'statut_etape', 'commentaire']
-
-class ExpeditionAdmin(admin.ModelAdmin):
-    readonly_fields = ['montant_total', 'date_livraison_prevue']
-    inlines = [TrackingInline]
-
-
-@admin.register(Tournee)
-class TourneeAdmin(admin.ModelAdmin):
-    def render_change_form(self, request, context, *args, **kwargs):
-        obj = kwargs.get('obj')
-        
-        # On garde les disponibles OU ceux déjà affectés à cette tournée précise
-        vehicules_libres = Vehicule.objects.filter(statut='DISPONIBLE')
-        chauffeurs_libres = Chauffeur.objects.filter(statut_disponibilite='DISPONIBLE')
-
-        if obj: # Si on est en train de modifier une tournée existante
-            vehicules_libres |= Vehicule.objects.filter(id=obj.vehicule.id)
-            chauffeurs_libres |= Chauffeur.objects.filter(id=obj.chauffeur.id)
-
-        context['adminform'].form.fields['vehicule'].queryset = vehicules_libres
-        context['adminform'].form.fields['chauffeur'].queryset = chauffeurs_libres
-        
-        return super().render_change_form(request, context, *args, **kwargs)
-
-
+# ========== SIMPLE ==========
 admin.site.register(Client)
 admin.site.register(Chauffeur)
 admin.site.register(Vehicule)
 admin.site.register(TypeService)
 admin.site.register(Tarification)
-admin.site.register(Expedition, ExpeditionAdmin)
-admin.site.register(TrackingExpedition)
 
+# ========== DESTINATION ==========
 class DestinationAdmin(admin.ModelAdmin):
     list_display = ['ville', 'wilaya', 'pays', 'zone_geographique', 'tarif_base']
     list_filter = ['zone_geographique', 'zone_logistique']
@@ -45,5 +16,58 @@ class DestinationAdmin(admin.ModelAdmin):
 
 admin.site.register(Destination, DestinationAdmin)
 
+# ========== TOURNEE ==========
+class ExpeditionInline(admin.TabularInline):
+    model = Expedition
+    extra = 0
+    can_delete = False
+    fields = ['client', 'destination', 'poids', 'montant_total', 'statut']
+    readonly_fields = ['client', 'destination', 'poids', 'montant_total', 'statut']
 
+class TourneeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'chauffeur', 'vehicule', 'zone_cible', 'date_depart', 'statut', 'est_privee']
+    list_filter = ['statut', 'zone_cible', 'est_privee']
+    inlines = [ExpeditionInline]
 
+admin.site.register(Tournee, TourneeAdmin)
+
+# ========== EXPEDITION ==========
+class TrackingInline(admin.TabularInline):
+    model = TrackingExpedition
+    extra = 0
+    can_delete = False
+    fields = ['statut_etape', 'date_heure', 'commentaire']
+    readonly_fields = ['statut_etape', 'date_heure', 'commentaire']
+
+class ExpeditionAdmin(admin.ModelAdmin):
+    list_display = ['id', 'client', 'destination', 'tournee', 'poids', 'montant_total', 'statut']
+    list_filter = ['statut', 'type_service']
+    readonly_fields = ['montant_total', 'date_livraison_prevue']
+    inlines = [TrackingInline]
+
+admin.site.register(Expedition, ExpeditionAdmin)
+
+# ========== TRACKING ==========
+class TrackingExpeditionAdmin(admin.ModelAdmin):
+    list_display = ['get_tournee', 'get_expedition', 'get_statut', 'date_heure']
+    list_filter = ['expedition__tournee', 'expedition__statut']
+    
+    def get_tournee(self, obj):
+        return f"Tournée #{obj.expedition.tournee.id}" if obj.expedition.tournee else "Sans tournée"
+    get_tournee.short_description = "Tournée"
+    
+    def get_expedition(self, obj):
+        return f"EXP-{obj.expedition.id:06d}"
+    get_expedition.short_description = "Expédition"
+    
+    def get_statut(self, obj):
+        return obj.expedition.get_statut_display()
+    get_statut.short_description = "Statut"
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+admin.site.register(TrackingExpedition, TrackingExpeditionAdmin)
