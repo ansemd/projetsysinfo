@@ -196,15 +196,32 @@ class Expedition(models.Model):
         return f"EXP-{self.id:06d}"
     
     def save(self, *args, **kwargs):
-        from .utils import ExpeditionService, TrackingService
+        from .utils import ExpeditionService, TrackingService, FacturationService
         
         is_new = self.pk is None
         
-        ExpeditionService.avant_sauvegarde(self)
+        # Calcul automatique du montant si non fourni
+        if not self.montant_total:
+            ExpeditionService.calculer_montant(self)
+        
+        # Sauvegarder d'abord pour avoir un ID
         super().save(*args, **kwargs)
         
-        # Trackings automatiques APRÈS save (pour avoir expedition.id)
+        # Actions APRÈS save (quand on a un ID)
         if is_new:
+            # 1. Affectation tournée
+            if self.type_service.type_service == 'EXPRESS':
+                ExpeditionService.creer_tournee_express(self)
+            else:
+                ExpeditionService.affecter_tournee_intelligente(self)
+            
+            # 2. Calculer date livraison si tournée assignée
+            if self.tournee:
+                ExpeditionService.calculer_date_livraison(self)
+                # Sauvegarder à nouveau pour enregistrer la date
+                super().save(update_fields=['date_livraison_prevue', 'tournee'])
+            
+            # 3. Trackings
             TrackingService.creer_suivi(self, 'COLIS_CREE', "Colis enregistré dans le système")
             
             if self.tournee:
@@ -213,12 +230,10 @@ class Expedition(models.Model):
                     'EN_ATTENTE',
                     f"Affecté à la tournée #{self.tournee.id}. Départ prévu: {self.tournee.date_depart.strftime('%d/%m/%Y')}"
                 )
+            
+            # 4. Créer ou ajouter à une facture
+            FacturationService.gerer_facture_expedition(self)
 
-    def delete(self, *args, **kwargs):
-        from .utils import ExpeditionService
-        ExpeditionService.avant_suppression(self)
-        super().delete(*args, **kwargs)
-        
 class TrackingExpedition(models.Model):
     expedition = models.ForeignKey('Expedition', on_delete=models.CASCADE, related_name='suivis')
     statut_etape = models.CharField(max_length=20, choices=[('COLIS_CREE', 'Colis créé'),('EN_ATTENTE', 'En attente'),('EN_TRANSIT', 'En transit'),('LIVRE', 'Livré'),('ECHEC', 'Échec'),])
@@ -230,3 +245,88 @@ class TrackingExpedition(models.Model):
     
     def __str__(self):
         return f"{self.expedition} - {self.get_statut_etape_display()}"
+    
+# ========== SECTION 3 : FACTURATION ET PAIEMENTS ==========
+
+class Facture(models.Model):
+    
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='factures')
+    expeditions = models.ManyToManyField('Expedition', related_name='factures')
+    numero_facture = models.CharField(max_length=50, unique=True, blank=True)
+    montant_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    montant_tva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    montant_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    taux_tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.00)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_echeance = models.DateField()
+    statut = models.CharField(max_length=20, choices=[('IMPAYEE', 'Impayée'),('PARTIELLEMENT_PAYEE', 'Partiellement payée'),('PAYEE', 'Payée'),('EN_RETARD', 'En retard'),('ANNULEE', 'Annulée'),], default='IMPAYEE')
+    remarques = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_creation']
+    
+    def __str__(self):
+        return f"{self.numero_facture} - {self.client}"
+    
+    def save(self, *args, **kwargs):
+        # Générer automatiquement le numéro de facture au format FACT-YYYYMMDD-XXXXX
+        if not self.numero_facture:
+            super().save(*args, **kwargs)
+            self.numero_facture = f"FACT-{self.date_creation.strftime('%Y%m%d')}-{self.id:05d}"
+            kwargs['force_insert'] = False
+        super().save(*args, **kwargs)
+
+class Paiement(models.Model):
+    
+    facture = models.ForeignKey('Facture', on_delete=models.CASCADE, related_name='paiements')
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='paiements')
+    montant_paye = models.DecimalField(max_digits=10, decimal_places=2)
+    date_paiement = models.DateTimeField(auto_now_add=True)
+    mode_paiement = models.CharField(max_length=20, choices=[('ESPECES', 'Espèces'),('CARTE', 'Carte bancaire'),('VIREMENT', 'Virement'),('CHEQUE', 'Chèque'),])
+    reference_transaction = models.CharField(max_length=100, blank=True, null=True)
+    remarques = models.TextField(blank=True, null=True)
+    statut = models.CharField(max_length=20, default='VALIDE')  # VALIDE ou ANNULE
+    
+    class Meta:
+        ordering = ['-date_paiement']
+    
+    def __str__(self):
+        return f"Paiement {self.montant_paye} DA - {self.facture.numero_facture}"
+    
+    def save(self, *args, **kwargs):
+        """Validation et mise à jour automatique"""
+        from .utils import FacturationService
+        from django.core.exceptions import ValidationError
+        
+        is_new = self.pk is None
+        
+        # Validations pour nouveaux paiements uniquement
+        if is_new:
+            if self.facture.statut == 'ANNULEE':
+                raise ValidationError("Impossible de payer une facture annulée")
+            
+            if self.facture.statut == 'PAYEE':
+                raise ValidationError("Cette facture est déjà entièrement payée")
+            
+            montant_restant = FacturationService.calculer_montant_restant(self.facture)
+            
+            if montant_restant <= 0:
+                raise ValidationError("Cette facture est déjà entièrement payée")
+            
+            if self.montant_paye > montant_restant:
+                raise ValidationError(
+                    f"Le montant ({self.montant_paye} DA) dépasse le montant restant ({montant_restant} DA)"
+                )
+            
+            if self.montant_paye <= 0:
+                raise ValidationError("Le montant doit être supérieur à 0")
+        
+        super().save(*args, **kwargs)
+        
+        # Mise à jour solde client et statut facture (nouveaux paiements uniquement)
+        if is_new and self.statut == 'VALIDE':
+            self.client.solde -= self.montant_paye
+            self.client.save()
+            
+            FacturationService.mettre_a_jour_statut_facture(self.facture)
+

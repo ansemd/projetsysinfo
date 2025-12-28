@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails - {{ client.nom }} {{ client.prenom }}</title>
+</head>
+<body>
+    <h1>Détails du client CL-{{ client.id|stringformat:"03d" }}</h1>
+    
+    <a href="{% url 'liste_clients' %}">← Retour à la liste</a>
+    
+    <br><br>
+    
+    <!-- Informations personnelles -->
+    <h2>Informations personnelles</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Nom</th>
+            <td>{{ client.nom }}</td>
+        </tr>
+        <tr>
+            <th>Prénom</th>
+            <td>{{ client.prenom }}</td>
+        </tr>
+        <tr>
+            <th>Date de naissance</th>
+            <td>{{ client.date_naissance|date:"d/m/Y"|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Téléphone</th>
+            <td>{{ client.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ client.email|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Adresse</th>
+            <td>{{ client.adresse|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Ville</th>
+            <td>{{ client.ville|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Code postal</th>
+            <td>{{ client.code_postal|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Solde</th>
+            <td><strong>{{ client.solde }} DA</strong></td>
+        </tr>
+    </table>
+    
+    <br>
+    
+    <!-- Liste des expéditions -->
+    <h2>Expéditions ({{ expeditions|length }})</h2>
+    
+    {% if expeditions %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Destination</th>
+                <th>Poids</th>
+                <th>Volume</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date création</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in expeditions %}
+            <tr>
+                <td>{{ exp.get_numero_expedition }}</td>
+                <td>{{ exp.destination.ville }} - {{ exp.destination.wilaya }}</td>
+                <td>{{ exp.poids }} kg</td>
+                <td>{{ exp.volume }} m³</td>
+                <td>{{ exp.montant_total }} DA</td>
+                <td>{{ exp.get_statut_display }}</td>
+                <td>{{ exp.date_creation|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Ce client n'a encore effectué aucune expédition.</p>
+    {% endif %}
+</body>
+</html>

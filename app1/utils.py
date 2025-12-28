@@ -99,41 +99,13 @@ class TourneeService:
         tournee.vehicule.save()
 
 class ExpeditionService:
-    
-    @staticmethod
-    def avant_sauvegarde(expedition):
-        """Appelé avant save() - Toute la logique de validation et calculs"""
-        
-        # 1. Validations
-        ExpeditionService.valider_expedition(expedition)
-        
-        # 2. Calculer montant (toujours, même en modification)
-        ExpeditionService.calculer_montant(expedition)
-        
-        # 3. Affectation tournée (nouvelle expédition uniquement)
-        if expedition.pk is None:
-            if expedition.type_service.type_service == 'EXPRESS':
-                ExpeditionService.creer_tournee_express(expedition)
-            else:
-                ExpeditionService.affecter_tournee_intelligente(expedition)
-        
-        # 4. Calculer date livraison (toujours si tournée existe)
-        if expedition.tournee:
-            ExpeditionService.calculer_date_livraison(expedition)
-            
-            # Mettre à jour statut selon tournée
-            if expedition.tournee.statut == 'EN_COURS':
-                expedition.statut = 'EN_TRANSIT'
-            elif expedition.tournee.statut == 'PREVUE':
-                expedition.statut = 'EN_ATTENTE'
-    
-    @staticmethod
-    def avant_suppression(expedition):
-        """Appelé avant delete() - Vérifier qu'on peut supprimer"""
-        if expedition.tournee and expedition.tournee.statut != 'PREVUE':
-            raise ValidationError(
-                "Impossible de supprimer : la tournée est déjà en cours ou terminée"
-            )
+    """
+    Service gérant les opérations sur les expéditions :
+    - Validation et calculs
+    - Affectation intelligente de tournées
+    - Annulation d'expédition avec remboursement proportionnel
+    - Notifications
+    """
     
     @staticmethod
     def valider_expedition(expedition):
@@ -144,7 +116,7 @@ class ExpeditionService:
             raise ValidationError({'poids': "Le poids doit être supérieur à 0"})
         
         # Vérifier modification si tournée en cours/terminée
-        if expedition.pk:  # Modification d'une expédition existante
+        if expedition.pk:
             from .models import Expedition
             ancienne = Expedition.objects.get(pk=expedition.pk)
             if ancienne.tournee and ancienne.tournee.statut != 'PREVUE':
@@ -163,7 +135,7 @@ class ExpeditionService:
         ).first()
         
         if tarif:
-            volume = expedition.volume or 0  # Si volume null, utiliser 0
+            volume = expedition.volume or 0
             expedition.montant_total = tarif.calculer_prix(
                 expedition.poids,
                 volume
@@ -176,14 +148,12 @@ class ExpeditionService:
         """Cherche et affecte automatiquement la meilleure tournée"""
         from .models import Tournee
         
-        # Chercher tournées compatibles (futures uniquement)
         tournees_compatibles = Tournee.objects.filter(
             zone_cible=expedition.destination.zone_logistique,
             statut='PREVUE',
-            date_depart__gte=timezone.now()  # Futures uniquement
+            date_depart__gte=timezone.now()
         ).order_by('date_depart')
         
-        # Tester chaque tournée
         for tournee in tournees_compatibles:
             totaux = tournee.expeditions.aggregate(poids_total=Sum('poids'))
             poids_actuel = totaux['poids_total'] or 0
@@ -192,7 +162,6 @@ class ExpeditionService:
                 expedition.tournee = tournee
                 return
         
-        # Aucune tournée compatible → créer nouvelle
         ExpeditionService.creer_nouvelle_tournee(expedition)
     
     @staticmethod
@@ -200,7 +169,6 @@ class ExpeditionService:
         """Crée une nouvelle tournée pour l'expédition STANDARD"""
         from .models import Tournee, Chauffeur, Vehicule
         
-        # Trouver chauffeur et véhicule disponibles
         chauffeur = Chauffeur.objects.filter(statut_disponibilite='DISPONIBLE').first()
         vehicule = Vehicule.objects.filter(statut='DISPONIBLE').first()
         
@@ -210,18 +178,16 @@ class ExpeditionService:
                 "L'expédition sera créée sans tournée. Veuillez l'affecter manuellement plus tard."
             )
         
-        # Déterminer le délai selon la zone
         zone = expedition.destination.zone_logistique
         if zone == 'CENTRE':
-            jours_delai = 1  # Lendemain
+            jours_delai = 1
         elif zone in ['EST', 'OUEST']:
-            jours_delai = 2  # Après 2 jours
+            jours_delai = 2
         elif zone == 'SUD':
-            jours_delai = 3  # Après 3 jours
+            jours_delai = 3
         else:
-            jours_delai = 1  # Par défaut
+            jours_delai = 1
         
-        # Calculer date de départ
         date_depart = timezone.now() + timedelta(days=jours_delai)
         date_depart = date_depart.replace(hour=9, minute=0, second=0)
         
@@ -240,7 +206,6 @@ class ExpeditionService:
         """Crée une tournée privée pour une expédition EXPRESS"""
         from .models import Tournee, Chauffeur, Vehicule
         
-        # Trouver chauffeur et véhicule disponibles
         chauffeur = Chauffeur.objects.filter(statut_disponibilite='DISPONIBLE').first()
         vehicule = Vehicule.objects.filter(statut='DISPONIBLE').first()
         
@@ -250,7 +215,6 @@ class ExpeditionService:
                 "Veuillez attendre ou passer en STANDARD."
             )
         
-        # Déterminer date de départ
         maintenant = timezone.now()
         if maintenant.hour < 14:
             date_depart = maintenant
@@ -258,7 +222,6 @@ class ExpeditionService:
             date_depart = maintenant + timedelta(days=1)
             date_depart = date_depart.replace(hour=8, minute=0, second=0)
         
-        # Créer la tournée privée EXPRESS
         tournee = Tournee.objects.create(
             chauffeur=chauffeur,
             vehicule=vehicule,
@@ -276,7 +239,6 @@ class ExpeditionService:
         """Calcule la date de livraison prévue"""
         from .models import Tarification
         
-        # Récupérer le délai depuis Tarification
         tarif = Tarification.objects.filter(
             destination=expedition.destination,
             type_service=expedition.type_service
@@ -289,44 +251,87 @@ class ExpeditionService:
             )
     
     @staticmethod
-    def envoyer_notification_destinataire(expedition):
-        """Envoie un email au destinataire 1 jour avant le départ de la tournée"""
-        from django.core.mail import send_mail
-        from django.conf import settings
+    def annuler_expedition(expedition):
+        """Annuler une expédition avec logique de remboursement proportionnel"""
+        from .models import Facture, Paiement
+        from datetime import date
+        from django.db.models import Sum
         
-        if not expedition.tournee or not expedition.date_livraison_prevue:
+        if expedition.statut == 'ANNULEE':
+            raise ValidationError("Cette expédition est déjà annulée")
+        
+        if expedition.statut not in ['EN_ATTENTE', 'COLIS_CREE']:
+            raise ValidationError(
+                "Impossible d'annuler : l'expédition est déjà en transit, livrée ou en échec"
+            )
+        
+        if expedition.tournee and expedition.tournee.statut != 'PREVUE':
+            raise ValidationError(
+                "Impossible d'annuler : la tournée est déjà en cours ou terminée"
+            )
+        
+        if expedition.tournee and date.today() >= expedition.tournee.date_depart.date():
+            raise ValidationError(
+                "Impossible d'annuler : la date de départ de la tournée est dépassée"
+            )
+        
+        facture = expedition.factures.filter(
+            statut__in=['IMPAYEE', 'PARTIELLEMENT_PAYEE', 'PAYEE', 'EN_RETARD']
+        ).first()
+        
+        if not facture:
+            # Pas de facture → suppression simple
+            expedition.suivis.all().delete()
+            super(type(expedition), expedition).delete()
             return
         
-        jours_restants = (expedition.date_livraison_prevue - timezone.now().date()).days
+        montant_exp_ht = expedition.montant_total
+        montant_exp_tva = montant_exp_ht * (facture.taux_tva / 100)
+        montant_exp_ttc = montant_exp_ht + montant_exp_tva
         
-        sujet = f"Votre colis arrive bientôt - Expédition #{expedition.id}"
-        message = f"""
-Bonjour {expedition.nom_destinataire},
-
-Votre colis est en route !
-
-📦 Numéro d'expédition : #{expedition.id}
-📍 Destination : {expedition.destination.ville}
-📅 Date de livraison prévue : {expedition.date_livraison_prevue.strftime('%d/%m/%Y')}
-⏰ Arrivée estimée dans : {jours_restants} jour(s)
-
-Description : {expedition.description or 'Non spécifiée'}
-
-Merci de votre confiance !
-
-L'équipe Transport Express
-        """
+        total_paye_facture = facture.paiements.filter(statut='VALIDE').aggregate(
+            total=Sum('montant_paye')
+        )['total'] or Decimal('0.00')
         
-        try:
-            send_mail(
-                sujet,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [expedition.email_destinataire],
-                fail_silently=False,
-            )
-        except Exception as e:
-            print(f"Erreur envoi email : {e}")
+        if facture.montant_ttc > 0:
+            proportion_payee = total_paye_facture / facture.montant_ttc
+        else:
+            proportion_payee = Decimal('0.00')
+        
+        montant_paye_pour_exp = montant_exp_ttc * proportion_payee
+        montant_non_paye_pour_exp = montant_exp_ttc - montant_paye_pour_exp
+        
+        expedition.client.solde -= montant_paye_pour_exp
+        expedition.client.solde -= montant_non_paye_pour_exp
+        expedition.client.save()
+        
+        facture.expeditions.remove(expedition)
+        
+        if facture.expeditions.count() == 0:
+            for paiement in facture.paiements.filter(statut='VALIDE'):
+                paiement.statut = 'ANNULE'
+                paiement.save()
+            
+            facture.statut = 'ANNULEE'
+            facture.montant_ht = Decimal('0.00')
+            facture.montant_tva = Decimal('0.00')
+            facture.montant_ttc = Decimal('0.00')
+            facture.save()
+        else:
+            FacturationService.calculer_montants_facture(facture)
+            FacturationService.mettre_a_jour_statut_facture(facture)
+        
+        # Supprimer les trackings
+        expedition.suivis.all().delete()
+        
+        # Supprimer l'expédition (appel direct pour éviter boucle)
+        super(type(expedition), expedition).delete()
+    
+    
+    @staticmethod
+    def envoyer_notification_destinataire(expedition):
+        """Placeholder pour notifications"""
+        pass
 
 class VehiculeService:
     
@@ -388,3 +393,299 @@ class TrackingService:
             statut_etape=statut_etape,
             commentaire=commentaire
         )
+
+# ========== SECTION 3 : SERVICES FACTURATION ==========
+
+class FacturationService:
+    """
+    Service gérant toutes les opérations liées à la facturation :
+    - Calcul des montants (HT, TVA, TTC)
+    - Création et mise à jour des factures
+    - Gestion des paiements
+    - Annulation de factures
+    """
+    
+    @staticmethod
+    def calculer_montants_facture(facture):
+        """
+        Calculer les montants HT, TVA et TTC d'une facture
+        en fonction des expéditions qu'elle contient
+        """
+        from django.db.models import Sum
+        
+        # Montant HT = somme des montants de toutes les expéditions
+        montant_ht = facture.expeditions.aggregate(
+            total=Sum('montant_total')
+        )['total'] or Decimal('0.00')
+        
+        # TVA = Montant HT × taux de TVA
+        montant_tva = montant_ht * (facture.taux_tva / 100)
+        
+        # TTC = HT + TVA
+        montant_ttc = montant_ht + montant_tva
+        
+        # Mettre à jour la facture
+        facture.montant_ht = montant_ht
+        facture.montant_tva = montant_tva
+        facture.montant_ttc = montant_ttc
+        facture.save()
+        
+        return facture
+    
+    
+    @staticmethod
+    def calculer_montant_restant(facture):
+        """
+        Calculer le montant restant à payer pour une facture
+        = Montant TTC - Somme des paiements valides
+        """
+        from django.db.models import Sum
+        
+        total_paye = facture.paiements.filter(statut='VALIDE').aggregate(
+            total=Sum('montant_paye')
+        )['total'] or Decimal('0.00')
+        
+        return facture.montant_ttc - total_paye
+    
+    
+    @staticmethod
+    def mettre_a_jour_statut_facture(facture):
+        """
+        Mettre à jour automatiquement le statut de la facture selon :
+        - Le montant payé
+        - La date d'échéance
+        
+        Statuts possibles :
+        - IMPAYEE : Aucun paiement, dans les délais
+        - PARTIELLEMENT_PAYEE : Paiement partiel, dans les délais
+        - PAYEE : Paiement complet
+        - EN_RETARD : Impayée ou partielle, échéance dépassée
+        - ANNULEE : Facture annulée
+        """
+        from datetime import date
+        
+        # Ne pas modifier une facture annulée
+        if facture.statut == 'ANNULEE':
+            return
+        
+        montant_restant = FacturationService.calculer_montant_restant(facture)
+        
+        # Vérifier si payée complètement
+        if montant_restant <= 0:
+            facture.statut = 'PAYEE'
+        
+        # Vérifier si partiellement payée
+        elif montant_restant < facture.montant_ttc:
+            # Vérifier si en retard
+            if date.today() > facture.date_echeance:
+                facture.statut = 'EN_RETARD'
+            else:
+                facture.statut = 'PARTIELLEMENT_PAYEE'
+        
+        # Sinon impayée
+        else:
+            # Vérifier si en retard
+            if date.today() > facture.date_echeance:
+                facture.statut = 'EN_RETARD'
+            else:
+                facture.statut = 'IMPAYEE'
+        
+        facture.save()
+    
+    
+    @staticmethod
+    def gerer_facture_expedition(expedition):
+        """
+        Créer une nouvelle facture OU ajouter l'expédition à une facture existante.
+        
+        Logique de regroupement :
+        - Si une facture IMPAYEE ou PARTIELLEMENT_PAYEE existe AUJOURD'HUI pour ce client
+          → Ajouter l'expédition à cette facture
+        - Sinon → Créer une nouvelle facture
+        
+        Cette logique permet de regrouper toutes les expéditions d'un client
+        créées le même jour dans une seule facture.
+        """
+        from datetime import date, timedelta
+        from .models import Facture
+        
+        client = expedition.client
+        aujourd_hui = date.today()
+        
+        # Chercher une facture existante pour ce client, créée aujourd'hui, non payée
+        facture_du_jour = Facture.objects.filter(
+            client=client,
+            date_creation__date=aujourd_hui,
+            statut__in=['IMPAYEE', 'PARTIELLEMENT_PAYEE']
+        ).first()
+        
+        if facture_du_jour:
+            # AJOUTER à la facture existante
+            facture_du_jour.expeditions.add(expedition)
+            
+            # Recalculer les montants
+            FacturationService.calculer_montants_facture(facture_du_jour)
+            
+            # Calculer le montant TTC de cette expédition
+            montant_exp_tva = expedition.montant_total * (facture_du_jour.taux_tva / 100)
+            montant_exp_ttc = expedition.montant_total + montant_exp_tva
+            
+            # Mettre à jour le solde du client (augmenter la dette)
+            client.solde += montant_exp_ttc
+            client.save()
+            
+            # Mettre à jour le statut de la facture
+            FacturationService.mettre_a_jour_statut_facture(facture_du_jour)
+            
+            return facture_du_jour
+        
+        else:
+            # CRÉER une NOUVELLE facture
+            facture = Facture.objects.create(
+                client=client,
+                date_echeance=aujourd_hui + timedelta(days=30),  # Échéance dans 30 jours
+                statut='IMPAYEE',
+                taux_tva=Decimal('19.00')
+            )
+            
+            # Ajouter l'expédition
+            facture.expeditions.add(expedition)
+            
+            # Calculer les montants
+            FacturationService.calculer_montants_facture(facture)
+            
+            # Mettre à jour le solde du client (augmenter la dette)
+            client.solde += facture.montant_ttc
+            client.save()
+            
+            return facture
+    
+    
+    @staticmethod
+    def enregistrer_paiement(facture, montant, mode_paiement, reference=None, remarques=None):
+        """
+        Enregistrer un paiement pour une facture.
+        
+        Validations :
+        - La facture ne doit pas être annulée
+        - La facture ne doit pas être déjà payée
+        - Le montant doit être > 0
+        - Le montant ne doit pas dépasser le montant restant
+        
+        Actions :
+        - Créer l'objet Paiement
+        - Diminuer le solde du client
+        - Mettre à jour le statut de la facture
+        """
+        from .models import Paiement
+        # Vérifier que la facture n'est pas annulée
+        if facture.statut == 'ANNULEE':
+            raise ValidationError("Impossible de payer une facture annulée")
+        
+        # Vérifier que la facture n'est pas déjà payée
+        if facture.statut == 'PAYEE':
+            raise ValidationError("Cette facture est déjà entièrement payée")
+        
+        montant_restant = FacturationService.calculer_montant_restant(facture)
+        
+        # Vérifier que le montant restant est > 0 (sécurité supplémentaire)
+        if montant_restant <= 0:
+            raise ValidationError("Cette facture est déjà entièrement payée")
+        
+        # Vérifier que le montant ne dépasse pas le restant
+        if montant > montant_restant:
+            raise ValidationError(
+                f"Le montant ({montant} DA) dépasse le montant restant ({montant_restant} DA)"
+            )
+        
+        # Vérifier que le montant est positif
+        if montant <= 0:
+            raise ValidationError("Le montant doit être supérieur à 0")
+        
+        # Créer le paiement
+        paiement = Paiement.objects.create(
+            facture=facture,
+            client=facture.client,
+            montant_paye=montant,
+            mode_paiement=mode_paiement,
+            reference_transaction=reference,
+            remarques=remarques,
+            statut='VALIDE'
+        )
+        
+        # Mettre à jour le solde du client (diminuer la dette)
+        facture.client.solde -= montant
+        facture.client.save()
+        
+        # Mettre à jour le statut de la facture
+        FacturationService.mettre_a_jour_statut_facture(facture)
+        
+        return paiement
+    
+    
+    @staticmethod
+    def annuler_facture_simple(facture):
+        """
+        Annuler une facture contenant UNE SEULE expédition.
+        
+        Pour les factures contenant plusieurs expéditions,
+        il faut annuler les expéditions une par une (voir ExpeditionService.annuler_expedition)
+        
+        Actions :
+        - Annuler tous les paiements
+        - Rembourser le client (crédit)
+        - Marquer l'expédition comme annulée
+        - Marquer la facture comme annulée
+        """
+        from django.db.models import Sum
+        
+        if facture.statut == 'ANNULEE':
+            raise ValidationError("Cette facture est déjà annulée")
+        
+        # Vérifier qu'il n'y a qu'une seule expédition
+        nb_expeditions = facture.expeditions.count()
+        if nb_expeditions > 1:
+            raise ValidationError(
+                f"Cette facture contient {nb_expeditions} expéditions. "
+                "Veuillez annuler les expéditions individuellement."
+            )
+        
+        if nb_expeditions == 0:
+            raise ValidationError("Cette facture ne contient aucune expédition")
+        
+        # Récupérer l'expédition
+        expedition = facture.expeditions.first()
+        
+        # Calculer le total payé
+        total_paye = facture.paiements.filter(statut='VALIDE').aggregate(
+            total=Sum('montant_paye')
+        )['total'] or Decimal('0.00')
+        
+        # Annuler tous les paiements
+        for paiement in facture.paiements.filter(statut='VALIDE'):
+            paiement.statut = 'ANNULE'
+            paiement.save()
+        
+        # Rembourser au client le total payé (crédit)
+        facture.client.solde -= total_paye
+        
+        # Enlever le montant non payé du solde
+        montant_impaye = facture.montant_ttc - total_paye
+        facture.client.solde -= montant_impaye
+        
+        facture.client.save()
+        
+        # Marquer l'expédition comme annulée
+        expedition.statut = 'ANNULEE'
+        expedition.save()
+        
+        # Supprimer les trackings de l'expédition
+        expedition.suivis.all().delete()
+        
+        # Marquer la facture comme annulée
+        facture.statut = 'ANNULEE'
+        facture.save()
+
+
+
+    
