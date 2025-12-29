@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un Chauffeur</title>
+</head>
+<body>
+    <h1>Créer un Nouveau Chauffeur</h1>
+    
+    <a href="{% url 'liste_chauffeurs' %}"><button>← Retour</button></a>
+    
+    <hr>
+    
+    <!-- Messages d'erreur -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h3>Informations Personnelles</h3>
+        <table>
+            <tr>
+                <td><label>Nom *</label></td>
+                <td><input type="text" name="nom" required maxlength="50"></td>
+            </tr>
+            <tr>
+                <td><label>Prénom *</label></td>
+                <td><input type="text" name="prenom" required maxlength="50"></td>
+            </tr>
+            <tr>
+                <td><label>Date de Naissance *</label></td>
+                <td><input type="date" name="date_naissance" value="2000-01-01" required></td>
+            </tr>
+        </table>
+        
+        <h3>Coordonnées</h3>
+        <table>
+            <tr>
+                <td><label>Téléphone *</label></td>
+                <td><input type="tel" name="telephone" placeholder="+213555123456" required></td>
+            </tr>
+            <tr>
+                <td><label>Email</label></td>
+                <td><input type="email" name="email"></td>
+            </tr>
+            <tr>
+                <td><label>Adresse</label></td>
+                <td><input type="text" name="adresse"></td>
+            </tr>
+            <tr>
+                <td><label>Ville</label></td>
+                <td><input type="text" name="ville"></td>
+            </tr>
+            <tr>
+                <td><label>Wilaya</label></td>
+                <td><input type="text" name="wilaya"></td>
+            </tr>
+        </table>
+        
+        <h3>Informations Professionnelles</h3>
+        <table>
+            <tr>
+                <td><label>Numéro de Permis *</label></td>
+                <td><input type="text" name="numero_permis" required maxlength="50"></td>
+            </tr>
+            <tr>
+                <td><label>Date Obtention Permis *</label></td>
+                <td><input type="date" name="date_obtention_permis" required></td>
+            </tr>
+            <tr>
+                <td><label>Date Expiration Permis *</label></td>
+                <td><input type="date" name="date_expiration_permis" required></td>
+            </tr>
+            <tr>
+                <td><label>Date d'Embauche *</label></td>
+                <td><input type="date" name="date_embauche" required></td>
+            </tr>
+            <tr>
+                <td><label>Salaire (DA)</label></td>
+                <td><input type="number" name="salaire" step="0.01" min="0"></td>
+            </tr>
+            <tr>
+                <td><label>Statut Disponibilité *</label></td>
+                <td>
+                    <select name="statut_disponibilite" required>
+                        <option value="DISPONIBLE">Disponible</option>
+                        <option value="EN_TOURNEE">En tournée</option>
+                        <option value="CONGE">En congé</option>
+                        <option value="MALADIE">Maladie</option>
+                        <option value="AUTRE">Autre raison</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        
+        <h3>Remarques</h3>
+        <textarea name="remarques" rows="5" cols="50"></textarea>
+        
+        <br><br>
+        <button type="submit">Créer le Chauffeur</button>
+        <a href="{% url 'liste_chauffeurs' %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>

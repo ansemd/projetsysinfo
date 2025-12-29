@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Chauffeur - {{ chauffeur.prenom }} {{ chauffeur.nom }}</title>
+</head>
+<body>
+    <h1 style="color: red;">⚠️ ATTENTION - Suppression de Chauffeur</h1>
+    
+    <a href="{% url 'detail_chauffeur' chauffeur.id %}"><button>← Annuler et Revenir</button></a>
+    
+    <hr>
+    
+    <!-- Messages d'erreur -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>Vous êtes sur le point de supprimer:</h2>
+    
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID Chauffeur</th>
+            <td>CH-{{ chauffeur.id|stringformat:"03d" }}</td>
+        </tr>
+        <tr>
+            <th>Nom Complet</th>
+            <td><strong>{{ chauffeur.prenom }} {{ chauffeur.nom }}</strong></td>
+        </tr>
+        <tr>
+            <th>Numéro de Permis</th>
+            <td>{{ chauffeur.numero_permis }}</td>
+        </tr>
+        <tr>
+            <th>Téléphone</th>
+            <td>{{ chauffeur.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Date d'Embauche</th>
+            <td>{{ chauffeur.date_embauche|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>{{ chauffeur.get_statut_disponibilite_display }}</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <h3 style="color: red;">⚠️ Conséquences de la suppression:</h3>
+    <ul>
+        <li>Le chauffeur sera définitivement supprimé</li>
+        <li>Ses tournées seront impactées</li>
+        <li>Cette action est IRRÉVERSIBLE</li>
+    </ul>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" style="background-color: red; color: white; padding: 10px 20px;">
+            Oui, Supprimer Définitivement
+        </button>
+        <a href="{% url 'detail_chauffeur' chauffeur.id %}"><button type="button">Non, Annuler</button></a>
+    </form>
+</body>
+</html>

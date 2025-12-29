@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Chauffeur - {{ chauffeur.prenom }} {{ chauffeur.nom }}</title>
+</head>
+<body>
+    <h1>Détails du Chauffeur</h1>
+    
+    <a href="{% url 'liste_chauffeurs' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_chauffeur' chauffeur.id %}"><button>Modifier</button></a>
+    <a href="{% url 'supprimer_chauffeur' chauffeur.id %}"><button>Supprimer</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations du chauffeur -->
+    <h2>Informations Personnelles</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID Chauffeur</th>
+            <td>CH-{{ chauffeur.id|stringformat:"03d" }}</td>
+        </tr>
+        <tr>
+            <th>Nom</th>
+            <td>{{ chauffeur.nom }}</td>
+        </tr>
+        <tr>
+            <th>Prénom</th>
+            <td>{{ chauffeur.prenom }}</td>
+        </tr>
+        <tr>
+            <th>Date de Naissance</th>
+            <td>{{ chauffeur.date_naissance|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <th>Téléphone</th>
+            <td>{{ chauffeur.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ chauffeur.email|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Adresse</th>
+            <td>{{ chauffeur.adresse|default:"Non renseignée" }}</td>
+        </tr>
+        <tr>
+            <th>Ville</th>
+            <td>{{ chauffeur.ville|default:"Non renseignée" }}</td>
+        </tr>
+        <tr>
+            <th>Wilaya</th>
+            <td>{{ chauffeur.wilaya|default:"Non renseignée" }}</td>
+        </tr>
+        <tr>
+            <th>Numéro de Permis</th>
+            <td>{{ chauffeur.numero_permis }}</td>
+        </tr>
+        <tr>
+            <th>Date Obtention Permis</th>
+            <td>{{ chauffeur.date_obtention_permis|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <th>Date Expiration Permis</th>
+            <td>{{ chauffeur.date_expiration_permis|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <th>Date d'Embauche</th>
+            <td>{{ chauffeur.date_embauche|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <th>Salaire</th>
+            <td>{% if chauffeur.salaire %}{{ chauffeur.salaire|floatformat:2 }} DA{% else %}Non renseigné{% endif %}</td>
+        </tr>
+        <tr>
+            <th>Statut Disponibilité</th>
+            <td><strong>{{ chauffeur.get_statut_disponibilite_display }}</strong></td>
+        </tr>
+        <tr>
+            <th>Date de Création</th>
+            <td>{{ chauffeur.date_creation|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Dernière Modification</th>
+            <td>{{ chauffeur.date_modification|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Remarques</th>
+            <td>{{ chauffeur.remarques|default:"Aucune remarque" }}</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total Tournées:</strong> {{ stats_chauffeur.total_tournees }}</p>
+    <p><strong>Prévues:</strong> {{ stats_chauffeur.tournees_prevues }} | 
+       <strong>En cours:</strong> {{ stats_chauffeur.tournees_en_cours }} | 
+       <strong>Terminées:</strong> {{ stats_chauffeur.tournees_terminees }}</p>
+    
+    <hr>
+    
+    <!-- Tournée actuelle du chauffeur -->
+    <h2>Tournée Actuelle</h2>
+    
+    {% if tournee_actuelle %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Tournée</th>
+                <th>Chauffeur</th>
+                <th>Véhicule</th>
+                <th>Zone Cible</th>
+                <th>Date Départ</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Tournée #{{ tournee_actuelle.id }}</td>
+                <td>{{ tournee_actuelle.chauffeur.prenom }} {{ tournee_actuelle.chauffeur.nom }}</td>
+                <td>{{ tournee_actuelle.vehicule.numero_immatriculation }}</td>
+                <td>{{ tournee_actuelle.get_zone_cible_display }}</td>
+                <td>{{ tournee_actuelle.date_depart|date:"d/m/Y H:i" }}</td>
+                <td><strong>{{ tournee_actuelle.get_statut_display }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune tournée en cours ou prévue pour ce chauffeur.</p>
+    {% endif %}
+    
+</body>
+</html>

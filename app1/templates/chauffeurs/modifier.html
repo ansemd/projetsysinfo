@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Chauffeur - {{ chauffeur.prenom }} {{ chauffeur.nom }}</title>
+</head>
+<body>
+    <h1>Modifier Chauffeur: CH-{{ chauffeur.id|stringformat:"03d" }}</h1>
+    
+    <a href="{% url 'detail_chauffeur' chauffeur.id %}"><button>← Retour</button></a>
+    
+    <hr>
+    
+    <p><strong>Date de création:</strong> {{ chauffeur.date_creation|date:"d/m/Y H:i" }}</p>
+    <p><strong>Dernière modification:</strong> {{ chauffeur.date_modification|date:"d/m/Y H:i" }}</p>
+    <p style="color: orange;">⚠️ La date de modification sera mise à jour automatiquement</p>
+    
+    <hr>
+    
+    <!-- Messages d'erreur -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h3>Informations Personnelles</h3>
+        <table>
+            <tr>
+                <td><label>Nom *</label></td>
+                <td><input type="text" name="nom" value="{{ chauffeur.nom }}" required maxlength="50"></td>
+            </tr>
+            <tr>
+                <td><label>Prénom *</label></td>
+                <td><input type="text" name="prenom" value="{{ chauffeur.prenom }}" required maxlength="50"></td>
+            </tr>
+            <tr>
+                <td><label>Date de Naissance *</label></td>
+                <td><input type="date" name="date_naissance" value="{{ chauffeur.date_naissance|date:'Y-m-d' }}" required></td>
+            </tr>
+        </table>
+        
+        <h3>Coordonnées</h3>
+        <table>
+            <tr>
+                <td><label>Téléphone *</label></td>
+                <td><input type="tel" name="telephone" value="{{ chauffeur.telephone }}" required></td>
+            </tr>
+            <tr>
+                <td><label>Email</label></td>
+                <td><input type="email" name="email" value="{{ chauffeur.email|default:'' }}"></td>
+            </tr>
+            <tr>
+                <td><label>Adresse</label></td>
+                <td><input type="text" name="adresse" value="{{ chauffeur.adresse|default:'' }}"></td>
+            </tr>
+            <tr>
+                <td><label>Ville</label></td>
+                <td><input type="text" name="ville" value="{{ chauffeur.ville|default:'' }}"></td>
+            </tr>
+            <tr>
+                <td><label>Wilaya</label></td>
+                <td><input type="text" name="wilaya" value="{{ chauffeur.wilaya|default:'' }}"></td>
+            </tr>
+        </table>
+        
+        <h3>Informations Professionnelles</h3>
+        <table>
+            <tr>
+                <td><label>Numéro de Permis *</label></td>
+                <td><input type="text" name="numero_permis" value="{{ chauffeur.numero_permis }}" required maxlength="50"></td>
+            </tr>
+            <tr>
+                <td><label>Date Obtention Permis *</label></td>
+                <td><input type="date" name="date_obtention_permis" value="{{ chauffeur.date_obtention_permis|date:'Y-m-d' }}" required></td>
+            </tr>
+            <tr>
+                <td><label>Date Expiration Permis *</label></td>
+                <td><input type="date" name="date_expiration_permis" value="{{ chauffeur.date_expiration_permis|date:'Y-m-d' }}" required></td>
+            </tr>
+            <tr>
+                <td><label>Date d'Embauche *</label></td>
+                <td><input type="date" name="date_embauche" value="{{ chauffeur.date_embauche|date:'Y-m-d' }}" required></td>
+            </tr>
+            <tr>
+                <td><label>Salaire (DA)</label></td>
+                <td><input type="number" name="salaire" value="{{ chauffeur.salaire|default:'' }}" step="0.01" min="0"></td>
+            </tr>
+            <tr>
+                <td><label>Statut Disponibilité *</label></td>
+                <td>
+                    <select name="statut_disponibilite" required>
+                        <option value="DISPONIBLE" {% if chauffeur.statut_disponibilite == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
+                        <option value="EN_TOURNEE" {% if chauffeur.statut_disponibilite == 'EN_TOURNEE' %}selected{% endif %}>En tournée</option>
+                        <option value="CONGE" {% if chauffeur.statut_disponibilite == 'CONGE' %}selected{% endif %}>En congé</option>
+                        <option value="MALADIE" {% if chauffeur.statut_disponibilite == 'MALADIE' %}selected{% endif %}>Maladie</option>
+                        <option value="AUTRE" {% if chauffeur.statut_disponibilite == 'AUTRE' %}selected{% endif %}>Autre raison</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        
+        <h3>Remarques</h3>
+        <textarea name="remarques" rows="5" cols="50">{{ chauffeur.remarques|default:'' }}</textarea>
+        
+        <br><br>
+        <button type="submit">Enregistrer les Modifications</button>
+        <a href="{% url 'detail_chauffeur' chauffeur.id %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>
