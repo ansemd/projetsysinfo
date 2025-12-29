@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Client - {{ client.prenom }} {{ client.nom }}</title>
+</head>
+<body>
+    <h1 style="color: red;">⚠️ ATTENTION - Suppression de Client</h1>
+    
+    <a href="{% url 'detail_client' client.id %}"><button>← Annuler et Revenir</button></a>
+    
+    <hr>
+    
+    <!-- Messages d'erreur -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>Vous êtes sur le point de supprimer:</h2>
+    
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID Client</th>
+            <td>CL-{{ client.id|stringformat:"03d" }}</td>
+        </tr>
+        <tr>
+            <th>Nom Complet</th>
+            <td><strong>{{ client.prenom }} {{ client.nom }}</strong></td>
+        </tr>
+        <tr>
+            <th>Téléphone</th>
+            <td>{{ client.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ client.email|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Solde</th>
+            <td>{{ client.solde|floatformat:2 }} DA</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <h3 style="color: red;">⚠️ Conséquences de la suppression:</h3>
+    <ul>
+        <li>Le client sera définitivement supprimé</li>
+        <li>Toutes ses expéditions seront supprimées</li>
+        <li>Ses factures et paiements seront perdus</li>
+        <li>Cette action est IRRÉVERSIBLE</li>
+    </ul>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" style="background-color: red; color: white; padding: 10px 20px;">
+            Oui, Supprimer Définitivement
+        </button>
+        <a href="{% url 'detail_client' client.id %}"><button type="button">Non, Annuler</button></a>
+    </form>
+</body>
+</html>

@@ -2,102 +2,39 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Liste des clients</title>
+    <title>Liste des Clients</title>
 </head>
 <body>
-    <h1>Liste des clients</h1>
+    <h1>Liste des Clients</h1>
     
-    <!-- Formulaire de recherche -->
-    <form method="GET" action="">
-        <label for="search">Rechercher un client :</label>
-        <input type="text" name="search" id="search" value="{{ search }}" placeholder="Nom ou prénom...">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Recherche -->
+    <form method="get">
+        <input type="text" name="search" placeholder="Rechercher..." value="{{ search }}">
         <button type="submit">Rechercher</button>
-        {% if search %}
-            <a href="{% url 'liste_clients' %}">Réinitialiser</a>
-        {% endif %}
     </form>
     
     <br>
+    <a href="{% url 'creer_client' %}"><button>+ Nouveau Client</button></a>
     
-    <!-- Si un client est trouvé par la recherche, afficher ses détails -->
-    {% if client_trouve %}
+    <hr>
     
-    <h2>Résultat de la recherche : {{ client_trouve.nom }} {{ client_trouve.prenom }}</h2>
-    
-    <!-- Informations du client -->
-    <h3>Informations personnelles</h3>
-    <table border="1" cellpadding="10">
-        <tr>
-            <th>ID</th>
-            <td>CL-{{ client_trouve.id|stringformat:"03d" }}</td>
-        </tr>
-        <tr>
-            <th>Nom</th>
-            <td>{{ client_trouve.nom }}</td>
-        </tr>
-        <tr>
-            <th>Prénom</th>
-            <td>{{ client_trouve.prenom }}</td>
-        </tr>
-        <tr>
-            <th>Téléphone</th>
-            <td>{{ client_trouve.telephone }}</td>
-        </tr>
-        <tr>
-            <th>Email</th>
-            <td>{{ client_trouve.email|default:"Non renseigné" }}</td>
-        </tr>
-        <tr>
-            <th>Solde</th>
-            <td><strong>{{ client_trouve.solde }} DA</strong></td>
-        </tr>
-    </table>
-    
-    <br>
-    
-    <!-- Expéditions du client -->
-    <h3>Expéditions ({{ expeditions|length }})</h3>
-    
-    {% if expeditions %}
-    <table border="1" cellpadding="10">
-        <thead>
-            <tr>
-                <th>Numéro</th>
-                <th>Destination</th>
-                <th>Poids</th>
-                <th>Volume</th>
-                <th>Montant</th>
-                <th>Statut</th>
-                <th>Date création</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for exp in expeditions %}
-            <tr>
-                <td>{{ exp.get_numero_expedition }}</td>
-                <td>{{ exp.destination.ville }} - {{ exp.destination.wilaya }}</td>
-                <td>{{ exp.poids }} kg</td>
-                <td>{{ exp.volume }} m³</td>
-                <td>{{ exp.montant_total }} DA</td>
-                <td>{{ exp.get_statut_display }}</td>
-                <td>{{ exp.date_creation|date:"d/m/Y H:i" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>Ce client n'a encore effectué aucune expédition.</p>
-    {% endif %}
-    
-    {% else %}
-    
-    <!-- Tableau de tous les clients (si pas de recherche ou plusieurs résultats) -->
+    <!-- Tableau des clients -->
     <table border="1" cellpadding="10">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Nom</th>
                 <th>Prénom</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Ville</th>
                 <th>Solde</th>
                 <th>Actions</th>
             </tr>
@@ -108,21 +45,22 @@
                 <td>CL-{{ client.id|stringformat:"03d" }}</td>
                 <td>{{ client.nom }}</td>
                 <td>{{ client.prenom }}</td>
-                <td>{{ client.solde }} DA</td>
+                <td>{{ client.telephone }}</td>
+                <td>{{ client.email|default:"—" }}</td>
+                <td>{{ client.ville|default:"—" }}</td>
+                <td>{{ client.solde }}</td>
                 <td>
-                    <a href="{% url 'detail_client' client.id %}">Voir détails</a>
+                    <a href="{% url 'detail_client' client.id %}"><button>Voir</button></a>
+                    <a href="{% url 'modifier_client' client.id %}"><button>Modifier</button></a>
+                    <a href="{% url 'supprimer_client' client.id %}"><button>Supprimer</button></a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5">Aucun client trouvé.</td>
+                <td colspan="8">Aucun client trouvé</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    
-    <p>Total : {{ clients|length }} client(s)</p>
-    
-    {% endif %}
 </body>
 </html>

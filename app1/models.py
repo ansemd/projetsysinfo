@@ -285,7 +285,7 @@ class Paiement(models.Model):
     mode_paiement = models.CharField(max_length=20, choices=[('ESPECES', 'Espèces'),('CARTE', 'Carte bancaire'),('VIREMENT', 'Virement'),('CHEQUE', 'Chèque'),])
     reference_transaction = models.CharField(max_length=100, blank=True, null=True)
     remarques = models.TextField(blank=True, null=True)
-    statut = models.CharField(max_length=20, default='VALIDE')  # VALIDE ou ANNULE
+    statut = models.CharField(max_length=20, default='VALIDE')
     
     class Meta:
         ordering = ['-date_paiement']
@@ -299,6 +299,14 @@ class Paiement(models.Model):
         from django.core.exceptions import ValidationError
         
         is_new = self.pk is None
+        
+        # ========== VALIDATION CRITIQUE : Client doit correspondre ==========
+        if self.facture.client != self.client:
+            raise ValidationError(
+                f"ERREUR : Le client du paiement ({self.client}) ne correspond pas "
+                f"au client de la facture ({self.facture.client}). "
+                f"Impossible de créer ce paiement."
+            )
         
         # Validations pour nouveaux paiements uniquement
         if is_new:
@@ -329,4 +337,3 @@ class Paiement(models.Model):
             self.client.save()
             
             FacturationService.mettre_a_jour_statut_facture(self.facture)
-

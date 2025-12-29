@@ -337,33 +337,35 @@ class VehiculeService:
     
     @staticmethod
     def gerer_revision(vehicule):
-        """Gère les révisions du véhicule"""
+        """Gère les révisions du véhicule avec déblocage automatique"""
         
         # 1. Première fois : calculer date prochaine révision
         if vehicule.date_derniere_revision and not vehicule.date_prochaine_revision:
             vehicule.date_prochaine_revision = vehicule.date_derniere_revision + timedelta(days=180)
         
-        # 2. Vérifier si révision proche (< 2 jours) → bloquer véhicule
+        # 2. Vérifier le statut selon la date
         if vehicule.date_prochaine_revision:
             jours_restants = (vehicule.date_prochaine_revision - date.today()).days
             
-            # Bloquer SEULEMENT si le véhicule est DISPONIBLE
-            if jours_restants <= 2 and vehicule.statut == 'DISPONIBLE':
+            # CAS 1 : Révision proche (≤ 2 jours) → Bloquer
+            if jours_restants <= 2 and jours_restants >= 0 and vehicule.statut == 'DISPONIBLE':
                 vehicule.statut = 'EN_MAINTENANCE'
+            
+            # CAS 2 : Date de révision dépassée → Débloquer automatiquement
+            elif jours_restants < 0 and vehicule.statut == 'EN_MAINTENANCE':
+                # Automatiquement confirmer la révision
+                vehicule.date_derniere_revision = vehicule.date_prochaine_revision
+                vehicule.date_prochaine_revision = vehicule.date_derniere_revision + timedelta(days=180)
+                vehicule.statut = 'DISPONIBLE'
     
     @staticmethod
     def confirmer_revision(vehicule):
         """
-        Confirme qu'une révision a été effectuée
-        La date prochaine devient la date dernière
+        Confirme qu'une révision a été effectuée (action manuelle)
         """
-        # L'ancienne "prochaine révision" devient "dernière révision"
         vehicule.date_derniere_revision = vehicule.date_prochaine_revision
-        
-        # Calculer nouvelle prochaine révision (+6 mois)
         vehicule.date_prochaine_revision = vehicule.date_derniere_revision + timedelta(days=180)
         
-        # Remettre disponible SEULEMENT si c'était EN_MAINTENANCE
         if vehicule.statut == 'EN_MAINTENANCE':
             vehicule.statut = 'DISPONIBLE'
         
@@ -374,12 +376,12 @@ class VehiculeService:
         """Agent saisit manuellement une nouvelle date"""
         vehicule.date_prochaine_revision = nouvelle_date
         
-        # Vérifier si on peut remettre disponible
         jours_restants = (nouvelle_date - date.today()).days
         
-        # Remettre disponible SEULEMENT si EN_MAINTENANCE et délai > 2 jours
         if jours_restants > 2 and vehicule.statut == 'EN_MAINTENANCE':
-            vehicule
+            vehicule.statut = 'DISPONIBLE'
+        
+        vehicule.save()
 
 class TrackingService:
     

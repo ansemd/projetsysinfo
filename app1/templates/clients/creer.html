@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un Client</title>
+</head>
+<body>
+    <h1>Créer un Nouveau Client</h1>
+    
+    <a href="{% url 'liste_clients' %}"><button>← Retour</button></a>
+    
+    <hr>
+    
+    <!-- Messages d'erreur -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h3>Informations Personnelles</h3>
+        <table>
+            <tr>
+                <td><label>Nom *</label></td>
+                <td><input type="text" name="nom" required maxlength="20"></td>
+            </tr>
+            <tr>
+                <td><label>Prénom *</label></td>
+                <td><input type="text" name="prenom" required maxlength="20"></td>
+            </tr>
+            <tr>
+                <td><label>Date de Naissance *</label></td>
+                <td><input type="date" name="date_naissance" value="2000-01-01" required></td>
+            </tr>
+        </table>
+        
+        <h3>Coordonnées</h3>
+        <table>
+            <tr>
+                <td><label>Téléphone *</label></td>
+                <td><input type="tel" name="telephone" placeholder="+213555123456" required></td>
+            </tr>
+            <tr>
+                <td><label>Email</label></td>
+                <td><input type="email" name="email"></td>
+            </tr>
+            <tr>
+                <td><label>Adresse</label></td>
+                <td><input type="text" name="adresse"></td>
+            </tr>
+            <tr>
+                <td><label>Ville</label></td>
+                <td><input type="text" name="ville"></td>
+            </tr>
+            <tr>
+                <td><label>Wilaya</label></td>
+                <td><input type="text" name="wilaya"></td>
+            </tr>
+        </table>
+        
+        <h3>Informations Financières</h3>
+        <table>
+            <tr>
+                <td><label>Solde Initial (DA)</label></td>
+                <td><input type="number" name="solde" value="0.00" step="0.01" min="0"></td>
+            </tr>
+        </table>
+        
+        <h3>Remarques</h3>
+        <textarea name="remarques" rows="5" cols="50"></textarea>
+        
+        <br><br>
+        <button type="submit">Créer le Client</button>
+        <a href="{% url 'liste_clients' %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>
