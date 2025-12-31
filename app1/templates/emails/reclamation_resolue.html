@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #fff; }
+        .info-box { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; }
+        .compensation { background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Réclamation résolue</h1>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ client.prenom }} {{ client.nom }}</strong>,</p>
+            
+            <p>Votre réclamation <strong>{{ reclamation.numero_reclamation }}</strong> a été résolue.</p>
+            
+            <div class="info-box">
+                <p><strong>Objet:</strong> {{ reclamation.objet }}</p>
+                <p><strong>Date de résolution:</strong> {{ reclamation.date_resolution|date:"d/m/Y" }}</p>
+            </div>
+            
+            <h3>Réponse de notre équipe:</h3>
+            <p>{{ reclamation.reponse }}</p>
+            
+            {% if reclamation.actions_correctives %}
+            <h3>Actions correctives:</h3>
+            <p>{{ reclamation.actions_correctives }}</p>
+            {% endif %}
+            
+            {% if reclamation.compensation_accordee %}
+            <div class="compensation">
+                <h3>💰 Compensation accordée</h3>
+                <p><strong>Montant:</strong> {{ reclamation.montant_compensation }} DA</p>
+                <p><strong>Type:</strong> {{ reclamation.type_compensation }}</p>
+                <p>Cette compensation sera appliquée sur votre prochaine facture ou vous sera remboursée selon votre choix.</p>
+            </div>
+            {% endif %}
+            
+            <p>Nous espérons que cette solution vous convient.</p>
+            
+            <p>Si vous avez d'autres questions, n'hésitez pas à nous contacter.</p>
+            
+            <p>Merci de votre confiance.</p>
+            
+            <p>Cordialement,<br><strong>L'équipe Service Client</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>📞 Contact: +213 XXX XXX XXX | 📧 support@votreentreprise.dz</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { background: #007bff; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #fff; }
+        .info-box { background: #e7f3ff; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0; }
+        .footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; }
+        .contact { background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Information importante</h1>
+            <h2>Expédition {{ expedition.get_numero_expedition }}</h2>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour <strong>{{ client.prenom }} {{ client.nom }}</strong>,</p>
+            
+            <p>Nous souhaitons vous informer d'un incident concernant votre expédition.</p>
+            
+            <div class="info-box">
+                <p><strong>Type d'incident:</strong> {{ incident.get_type_incident_display }}</p>
+                <p><strong>Description:</strong> {{ incident.description }}</p>
+                <p><strong>Date:</strong> {{ incident.date_incident|date:"d/m/Y à H:i" }}</p>
+            </div>
+            
+            <p>Notre équipe met tout en œuvre pour résoudre cette situation dans les plus brefs délais.</p>
+            
+            <p>Nous vous tiendrons informé de l'évolution de la situation.</p>
+            
+            <div class="contact">
+                <p><strong>Pour toute question, n'hésitez pas à nous contacter :</strong></p>
+                <p>
+                    📞 Téléphone: +213 XXX XXX XXX<br>
+                    📧 Email: support@votreentreprise.dz<br>
+                    🕒 Horaires: Du dimanche au jeudi, 8h-17h
+                </p>
+            </div>
+            
+            <p>Nous vous remercions de votre compréhension.</p>
+            
+            <p>Cordialement,<br><strong>L'équipe de Votre Entreprise</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>Cet email a été généré automatiquement. Merci de ne pas y répondre directement.</p>
+            <p>Pour toute réclamation, veuillez utiliser nos canaux de contact officiels.</p>
+        </div>
+    </div>
+</body>
+</html>

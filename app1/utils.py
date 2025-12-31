@@ -688,6 +688,468 @@ class FacturationService:
         facture.statut = 'ANNULEE'
         facture.save()
 
+# ========== SECTION 4 : SERVICES INCIDENTS ==========
 
-
+class IncidentService:
+    """
+    Service gérant toutes les opérations liées aux incidents :
+    - Création et traitement des incidents
+    - Mise à jour automatique des statuts d'expéditions
+    - Génération d'alertes
+    - Statistiques et analyses
+    """
     
+    @staticmethod
+    def traiter_nouvel_incident(incident):
+        """
+        Traite un nouvel incident : mise à jour des statuts, alertes, etc.
+        """
+        from .models import TrackingExpedition
+        from django.utils import timezone
+        
+        # Mise à jour du statut de l'expédition concernée
+        if incident.expedition:
+            if incident.type_incident in ['PERTE', 'ENDOMMAGEMENT']:
+                # Incidents graves → marquer comme ÉCHEC
+                incident.expedition.statut = 'ECHEC'
+                incident.expedition.save(update_fields=['statut'])
+                
+                # Créer un suivi
+                TrackingService.creer_suivi(
+                    incident.expedition,
+                    'ECHEC',
+                    f"Incident: {incident.get_type_incident_display()} - {incident.titre}"
+                )
+            
+            elif incident.type_incident == 'RETARD':
+                # Pour les retards, ajouter simplement un suivi
+                TrackingService.creer_suivi(
+                    incident.expedition,
+                    incident.expedition.statut,  # Garder le statut actuel
+                    f"Retard signalé: {incident.description[:100]}"
+                )
+        
+        # Définir la sévérité automatiquement selon le type
+        if incident.type_incident in ['PERTE', 'ACCIDENT']:
+            incident.severite = 'CRITIQUE'
+            incident.alerte_direction = True
+            incident.alerte_client = True
+        elif incident.type_incident in ['ENDOMMAGEMENT', 'PROBLEME_TECHNIQUE']:
+            incident.severite = 'ELEVEE'
+            incident.alerte_direction = True
+        elif incident.type_incident == 'RETARD':
+            incident.severite = 'MOYENNE'
+        
+        incident.save(update_fields=['severite', 'alerte_direction', 'alerte_client'])
+        
+        # Générer les alertes si nécessaire
+        if incident.alerte_direction:
+            IncidentService.envoyer_alerte_direction(incident)
+        
+        if incident.alerte_client and incident.expedition:
+            IncidentService.envoyer_alerte_client(incident)
+    
+    @staticmethod
+    def resoudre_incident(incident, solution, agent):
+        """
+        Marque un incident comme résolu
+        """
+        from django.utils import timezone
+        
+        incident.statut = 'RESOLU'
+        incident.actions_entreprises = solution
+        incident.agent_responsable = agent
+        incident.date_resolution = timezone.now()
+        incident.save()
+    
+    @staticmethod
+    def cloturer_incident(incident):
+        """
+        Clôture définitivement un incident
+        """
+        if incident.statut != 'RESOLU':
+            raise ValidationError("Un incident doit être résolu avant d'être clôturé")
+        
+        incident.statut = 'CLOS'
+        incident.save()
+
+    @staticmethod
+    def envoyer_alerte_direction(incident):
+        """
+        Placeholder pour l'envoi d'alertes à la direction
+        Dans une vraie application : envoi d'email, notification système, SMS, etc.
+        """
+        # TODO: Implémenter l'envoi réel d'alertes
+        print(f" ALERTE DIRECTION: Incident {incident.numero_incident} - {incident.titre}")
+        print(f" Sévérité: {incident.severite}")
+        print(f" Type: {incident.get_type_incident_display()}")
+        if incident.expedition:
+            print(f" Expédition concernée: {incident.expedition.get_numero_expedition()}")
+        if incident.tournee:
+            print(f" Tournée concernée: Tournée #{incident.tournee.id}")
+    
+    @staticmethod
+    def envoyer_alerte_client(incident):
+        """
+        Placeholder pour l'envoi d'alertes au client
+        """
+        # TODO: Implémenter l'envoi réel d'alertes (email, SMS)
+        client = incident.expedition.client
+        print(f" ALERTE CLIENT: {client.prenom} {client.nom}")
+        print(f" Incident sur votre expédition {incident.expedition.get_numero_expedition()}")
+        print(f" Type: {incident.get_type_incident_display()}")
+        print(f" Description: {incident.description[:100]}")
+    
+    @staticmethod
+    def statistiques_incidents(date_debut=None, date_fin=None):
+        """
+        Génère des statistiques sur les incidents
+        """
+        from django.db.models import Count, Avg, Sum, Q
+        from datetime import datetime, timedelta
+        from .models import Incident
+        
+        # Définir la période par défaut (30 derniers jours)
+        if not date_fin:
+            date_fin = datetime.now()
+        if not date_debut:
+            date_debut = date_fin - timedelta(days=30)
+        
+        incidents = Incident.objects.filter(
+            date_heure_incident__range=[date_debut, date_fin]
+        )
+        
+        stats = {
+            'total_incidents': incidents.count(),
+            'par_type': incidents.values('type_incident').annotate(
+                count=Count('id')
+            ).order_by('-count'),
+            'par_severite': incidents.values('severite').annotate(
+                count=Count('id')
+            ),
+            'par_statut': incidents.values('statut').annotate(
+                count=Count('id')
+            ),
+            'cout_total': incidents.aggregate(Sum('cout_estime'))['cout_estime__sum'] or 0,
+            'taux_resolution': incidents.filter(
+                statut__in=['RESOLU', 'CLOS']
+            ).count() / incidents.count() * 100 if incidents.count() > 0 else 0,
+        }
+        
+        return stats
+    
+    @staticmethod
+    def incidents_par_chauffeur():
+        """
+        Analyse des incidents par chauffeur
+        """
+        from django.db.models import Count
+        from .models import Incident
+        
+        return Incident.objects.filter(
+            tournee__isnull=False
+        ).values(
+            'tournee__chauffeur__prenom',
+            'tournee__chauffeur__nom'
+        ).annotate(
+            nb_incidents=Count('id')
+        ).order_by('-nb_incidents')
+
+
+# ========== SECTION 5 : SERVICES RÉCLAMATIONS ==========
+
+class ReclamationService:
+    """
+    Service gérant toutes les opérations liées aux réclamations :
+    - Création et traitement des réclamations
+    - Assignation aux agents
+    - Calcul des délais
+    - Compensation clients
+    - Statistiques et rapports
+    """
+    
+    @staticmethod
+    def traiter_nouvelle_reclamation(reclamation):
+        """
+        Traite une nouvelle réclamation : priorité automatique, assignation, etc.
+        """
+        from .models import HistoriqueReclamation
+        
+        # Définir la priorité automatiquement selon la nature
+        if reclamation.nature in ['COLIS_PERDU', 'COLIS_ENDOMMAGE', 'REMBOURSEMENT']:
+            reclamation.priorite = 'HAUTE'
+        elif reclamation.nature == 'RETARD_LIVRAISON':
+            reclamation.priorite = 'NORMALE'
+        
+        reclamation.save(update_fields=['priorite'])
+        
+        # Créer une entrée dans l'historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation créée",
+            auteur="Système",
+            details=f"Réclamation créée par le client {reclamation.client}",
+            nouveau_statut='OUVERTE'
+        )
+        
+        # Notification (placeholder)
+        ReclamationService.notifier_nouvelle_reclamation(reclamation)
+    
+    @staticmethod
+    def assigner_agent(reclamation, agent_nom):
+        """
+        Assigne un agent à une réclamation
+        """
+        from django.utils import timezone
+        from .models import HistoriqueReclamation
+        
+        ancien_agent = reclamation.agent_responsable
+        
+        reclamation.agent_responsable = agent_nom
+        reclamation.date_assignation = timezone.now()
+        reclamation.statut = 'EN_COURS'
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Assignation agent",
+            auteur="Système",
+            details=f"Assigné à {agent_nom}" + (f" (précédemment: {ancien_agent})" if ancien_agent else ""),
+            ancien_statut='OUVERTE',
+            nouveau_statut='EN_COURS'
+        )
+    
+    @staticmethod
+    def repondre_reclamation(reclamation, reponse, solution, auteur):
+        """
+        Enregistre une réponse à la réclamation
+        """
+        from .models import HistoriqueReclamation
+        
+        ancien_statut = reclamation.statut
+        
+        reclamation.reponse_agent = reponse
+        reclamation.solution_proposee = solution
+        reclamation.statut = 'EN_ATTENTE_CLIENT'
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réponse envoyée",
+            auteur=auteur,
+            details=f"Réponse: {reponse[:100]}...",
+            ancien_statut=ancien_statut,
+            nouveau_statut='EN_ATTENTE_CLIENT'
+        )
+        
+        # Notifier le client (placeholder)
+        ReclamationService.notifier_client_reponse(reclamation)
+    
+    @staticmethod
+    def resoudre_reclamation(reclamation, auteur, accorder_compensation=False, montant_compensation=0):
+        """
+        Marque une réclamation comme résolue
+        """
+        from django.utils import timezone
+        from .models import HistoriqueReclamation
+        
+        ancien_statut = reclamation.statut
+        
+        reclamation.statut = 'RESOLUE'
+        reclamation.date_resolution = timezone.now()
+        reclamation.compensation_accordee = accorder_compensation
+        reclamation.montant_compensation = Decimal(str(montant_compensation))
+        reclamation.save()
+        
+        # Calculer le délai de traitement
+        ReclamationService.calculer_delai_traitement(reclamation)
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation résolue",
+            auteur=auteur,
+            details=f"Compensation: {montant_compensation} DA" if accorder_compensation else "Aucune compensation",
+            ancien_statut=ancien_statut,
+            nouveau_statut='RESOLUE'
+        )
+        
+        # Si compensation accordée, créditer le client
+        if accorder_compensation and montant_compensation > 0:
+            reclamation.client.solde -= Decimal(str(montant_compensation))
+            reclamation.client.save()
+    
+    @staticmethod
+    def cloturer_reclamation(reclamation, auteur):
+        """
+        Clôture définitivement une réclamation
+        """
+        from .models import HistoriqueReclamation
+        
+        if reclamation.statut != 'RESOLUE':
+            raise ValidationError("Une réclamation doit être résolue avant d'être clôturée")
+        
+        ancien_statut = reclamation.statut
+        reclamation.statut = 'CLOSE'
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation clôturée",
+            auteur=auteur,
+            ancien_statut=ancien_statut,
+            nouveau_statut='CLOSE'
+        )
+    
+    @staticmethod
+    def annuler_reclamation(reclamation, motif, auteur):
+        """
+        Annule une réclamation (demande infondée, doublon, etc.)
+        """
+        from .models import HistoriqueReclamation
+        
+        ancien_statut = reclamation.statut
+        reclamation.statut = 'ANNULEE'
+        reclamation.remarques = (reclamation.remarques or "") + f"\n[ANNULATION] {motif}"
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation annulée",
+            auteur=auteur,
+            details=f"Motif: {motif}",
+            ancien_statut=ancien_statut,
+            nouveau_statut='ANNULEE'
+        )
+    
+    @staticmethod
+    def calculer_delai_traitement(reclamation):
+        """
+        Calcule le délai de traitement en jours
+        """
+        if reclamation.date_resolution:
+            delta = reclamation.date_resolution - reclamation.date_creation
+            reclamation.delai_traitement_jours = delta.days
+            reclamation.save(update_fields=['delai_traitement_jours'])
+    
+    @staticmethod
+    def enregistrer_evaluation_client(reclamation, note, commentaire):
+        """
+        Enregistre l'évaluation du client sur le traitement de sa réclamation
+        """
+        from .models import HistoriqueReclamation
+        
+        if not (1 <= note <= 5):
+            raise ValidationError("La note doit être entre 1 et 5")
+        
+        reclamation.evaluation_client = note
+        reclamation.commentaire_client = commentaire
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Évaluation client",
+            auteur=str(reclamation.client),
+            details=f"Note: {note}/5 - {commentaire}"
+        )
+    
+    @staticmethod
+    def statistiques_reclamations(date_debut=None, date_fin=None):
+        """
+        Génère des statistiques sur les réclamations
+        """
+        from django.db.models import Count, Avg, Sum, Q, F
+        from datetime import datetime, timedelta
+        from .models import Reclamation
+        
+        # Définir la période par défaut (30 derniers jours)
+        if not date_fin:
+            date_fin = datetime.now()
+        if not date_debut:
+            date_debut = date_fin - timedelta(days=30)
+        
+        reclamations = Reclamation.objects.filter(
+            date_creation__range=[date_debut, date_fin]
+        )
+        
+        stats = {
+            'total_reclamations': reclamations.count(),
+            'par_nature': reclamations.values('nature').annotate(
+                count=Count('id')
+            ).order_by('-count'),
+            'par_statut': reclamations.values('statut').annotate(
+                count=Count('id')
+            ),
+            'par_priorite': reclamations.values('priorite').annotate(
+                count=Count('id')
+            ),
+            'delai_moyen_traitement': reclamations.filter(
+                delai_traitement_jours__isnull=False
+            ).aggregate(Avg('delai_traitement_jours'))['delai_traitement_jours__avg'] or 0,
+            'taux_resolution': reclamations.filter(
+                statut__in=['RESOLUE', 'CLOSE']
+            ).count() / reclamations.count() * 100 if reclamations.count() > 0 else 0,
+            'compensation_totale': reclamations.filter(
+                compensation_accordee=True
+            ).aggregate(Sum('montant_compensation'))['montant_compensation__sum'] or 0,
+            'note_moyenne': reclamations.filter(
+                evaluation_client__isnull=False
+            ).aggregate(Avg('evaluation_client'))['evaluation_client__avg'] or 0,
+        }
+        
+        return stats
+    
+    @staticmethod
+    def top_clients_reclamants(limite=10):
+        """
+        Retourne les clients ayant le plus de réclamations
+        """
+        from django.db.models import Count
+        from .models import Reclamation
+        
+        return Reclamation.objects.values(
+            'client__prenom',
+            'client__nom',
+            'client__id'
+        ).annotate(
+            nb_reclamations=Count('id')
+        ).order_by('-nb_reclamations')[:limite]
+    
+    @staticmethod
+    def motifs_recurrents():
+        """
+        Analyse des motifs de réclamations les plus fréquents
+        """
+        from django.db.models import Count
+        from .models import Reclamation
+        
+        return Reclamation.objects.values('nature').annotate(
+            count=Count('id'),
+            pourcentage=Count('id') * 100.0 / Reclamation.objects.count()
+        ).order_by('-count')
+    
+    @staticmethod
+    def notifier_nouvelle_reclamation(reclamation):
+        """
+        Placeholder pour notification de nouvelle réclamation
+        """
+        # TODO: Implémenter notifications réelles
+        print(f" NOUVELLE RÉCLAMATION: {reclamation.numero_reclamation}")
+        print(f" Client: {reclamation.client}")
+        print(f" Nature: {reclamation.get_nature_display()}")
+        print(f" Priorité: {reclamation.priorite}")
+    
+    @staticmethod
+    def notifier_client_reponse(reclamation):
+        """
+        Placeholder pour notification au client
+        """
+        # TODO: Implémenter envoi email/SMS au client
+        print(f" Notification envoyée au client {reclamation.client}")
+        print(f" Réclamation: {reclamation.numero_reclamation}")
+        print(f" Réponse disponible")

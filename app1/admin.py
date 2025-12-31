@@ -190,3 +190,110 @@ class PaiementAdmin(admin.ModelAdmin):
 
 admin.site.register(Facture, FactureAdmin)
 admin.site.register(Paiement, PaiementAdmin)
+
+
+from django.contrib import admin
+from .models import Incident, Reclamation, HistoriqueReclamation
+
+@admin.register(Incident)
+class IncidentAdmin(admin.ModelAdmin):
+    list_display = ['numero_incident', 'type_incident','severite', 'statut','expedition','tournee','date_heure_incident','agent_responsable','cout_estime']
+    list_filter = ['type_incident','severite','statut','alerte_direction','alerte_client','date_heure_incident',]
+    search_fields = ['numero_incident','titre','description','expedition__id','tournee__id','signale_par','agent_responsable',]
+    readonly_fields = ['numero_incident','date_creation','date_modification',]
+    date_hierarchy = 'date_heure_incident'
+    actions = ['marquer_resolu', 'marquer_clos']
+    
+    def marquer_resolu(self, request, queryset):
+        from .utils import IncidentService
+        count = 0
+        for incident in queryset:
+            if incident.statut != 'RESOLU':
+                IncidentService.resoudre_incident(
+                    incident, 
+                    "Résolu en masse depuis l'admin", 
+                    request.user.username
+                )
+                count += 1
+        self.message_user(request, f"{count} incident(s) marqué(s) comme résolu(s)")
+    marquer_resolu.short_description = "Marquer comme résolu"
+    
+    def marquer_clos(self, request, queryset):
+        from .utils import IncidentService
+        count = 0
+        for incident in queryset.filter(statut='RESOLU'):
+            IncidentService.cloturer_incident(incident)
+            count += 1
+        self.message_user(request, f"{count} incident(s) clôturé(s)")
+    marquer_clos.short_description = "Clôturer (seulement les résolus)"
+
+
+class HistoriqueReclamationInline(admin.TabularInline):
+    model = HistoriqueReclamation
+    extra = 0
+    readonly_fields = ['date_action', 'action', 'auteur', 'details', 'ancien_statut', 'nouveau_statut']
+    can_delete = False
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Reclamation)
+class ReclamationAdmin(admin.ModelAdmin):
+    list_display = ['numero_reclamation','client','nature','priorite','statut','agent_responsable','date_creation','delai_traitement_jours',]
+    list_filter = ['type_reclamation','nature','priorite','statut','compensation_accordee','date_creation',]
+    search_fields = ['numero_reclamation','objet','description','client__nom','client__prenom','agent_responsable','type_reclamation',]
+    readonly_fields = ['numero_reclamation','date_creation','date_modification','delai_traitement_jours',]
+    filter_horizontal = ['expeditions']
+    date_hierarchy = 'date_creation'
+    inlines = [HistoriqueReclamationInline]
+    actions = ['assigner_agent', 'marquer_resolue', 'cloturer']
+    
+    def assigner_agent(self, request, queryset):
+        from .utils import ReclamationService
+        # Dans une vraie application, afficher un formulaire pour choisir l'agent
+        agent_nom = request.user.username
+        count = 0
+        for reclamation in queryset.filter(statut='OUVERTE'):
+            ReclamationService.assigner_agent(reclamation, agent_nom)
+            count += 1
+        self.message_user(request, f"{count} réclamation(s) assignée(s) à {agent_nom}")
+    assigner_agent.short_description = "Assigner à moi"
+    
+    def marquer_resolue(self, request, queryset):
+        from .utils import ReclamationService
+        count = 0
+        for reclamation in queryset.filter(statut='EN_COURS'):
+            ReclamationService.resoudre_reclamation(
+                reclamation,
+                request.user.username,
+                accorder_compensation=False,
+                montant_compensation=0
+            )
+            count += 1
+        self.message_user(request, f"{count} réclamation(s) marquée(s) comme résolue(s)")
+    marquer_resolue.short_description = "Marquer comme résolue"
+    
+    def cloturer(self, request, queryset):
+        from .utils import ReclamationService
+        count = 0
+        for reclamation in queryset.filter(statut='RESOLUE'):
+            ReclamationService.cloturer_reclamation(reclamation, request.user.username)
+            count += 1
+        self.message_user(request, f"{count} réclamation(s) clôturée(s)")
+    cloturer.short_description = "Clôturer (seulement les résolues)"
+
+
+@admin.register(HistoriqueReclamation)
+class HistoriqueReclamationAdmin(admin.ModelAdmin):
+    list_display = ['reclamation', 'date_action', 'action', 'auteur', 'ancien_statut', 'nouveau_statut']
+    list_filter = ['action', 'date_action']
+    search_fields = ['reclamation__numero_reclamation', 'auteur', 'details']
+    readonly_fields = ['date_action']
+    date_hierarchy = 'date_action'
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #fff; }
+        .info-box { background: #f8f9fa; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0; }
+        .label { font-weight: bold; color: #495057; }
+        .value { color: #212529; }
+        .footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚨 ALERTE INCIDENT</h1>
+            <h2>{{ incident.numero_incident }}</h2>
+        </div>
+        
+        <div class="content">
+            <div class="info-box">
+                <p><span class="label">Gravité:</span> <span class="value">{{ incident.get_gravite_display }}</span></p>
+                <p><span class="label">Type:</span> <span class="value">{{ incident.get_type_incident_display }}</span></p>
+                <p><span class="label">Titre:</span> <span class="value">{{ incident.titre }}</span></p>
+                <p><span class="label">Date:</span> <span class="value">{{ incident.date_incident|date:"d/m/Y H:i" }}</span></p>
+            </div>
+            
+            <h3>Description</h3>
+            <p>{{ incident.description }}</p>
+            
+            {% if incident.lieu_incident %}
+            <p><span class="label">Lieu:</span> {{ incident.lieu_incident }}</p>
+            {% endif %}
+            
+            {% if incident.expedition %}
+            <h3>Expédition concernée</h3>
+            <div class="info-box">
+                <p><span class="label">Numéro:</span> {{ incident.expedition.get_numero_expedition }}</p>
+                <p><span class="label">Client:</span> {{ incident.expedition.client }}</p>
+                <p><span class="label">Destination:</span> {{ incident.expedition.destination }}</p>
+                <p><span class="label">Montant:</span> {{ incident.expedition.montant_total }} DA</p>
+            </div>
+            {% endif %}
+            
+            {% if incident.tournee %}
+            <h3>Tournée concernée</h3>
+            <div class="info-box">
+                <p><span class="label">ID:</span> Tournée #{{ incident.tournee.id }}</p>
+                <p><span class="label">Chauffeur:</span> {{ incident.tournee.chauffeur }}</p>
+                <p><span class="label">Véhicule:</span> {{ incident.tournee.vehicule }}</p>
+                <p><span class="label">Zone:</span> {{ incident.tournee.get_zone_cible_display }}</p>
+            </div>
+            {% endif %}
+            
+            {% if incident.cout_estime %}
+            <p><span class="label">Coût estimé:</span> <span class="value" style="color: #dc3545; font-size: 18px;">{{ incident.cout_estime }} DA</span></p>
+            {% endif %}
+            
+            {% if incident.agent_rapporteur %}
+            <p><span class="label">Rapporté par:</span> {{ incident.agent_rapporteur.get_full_name }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p>Cet email a été généré automatiquement par le système de gestion.</p>
+            <p><strong>Action requise :</strong> Merci de traiter cet incident rapidement.</p>
+        </div>
+    </div>
+</body>
+</html>

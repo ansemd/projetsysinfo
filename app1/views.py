@@ -373,3 +373,366 @@ def supprimer_chauffeur(request, chauffeur_id):
     return render(request, 'chauffeurs/supprimer.html', {
         'chauffeur': chauffeur,
     })
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.db.models import Count, Q
+from datetime import datetime, timedelta
+from .models import Incident, Reclamation, HistoriqueReclamation
+from .utils import IncidentService, ReclamationService
+
+# ========== VUES INCIDENTS ==========
+
+def liste_incidents(request):
+    """
+    Affiche la liste des incidents avec filtres
+    """
+    incidents = Incident.objects.all()
+    
+    # Filtres
+    type_incident = request.GET.get('type_incident')
+    severite = request.GET.get('severite')
+    statut = request.GET.get('statut')
+    
+    if type_incident:
+        incidents = incidents.filter(type_incident=type_incident)
+    if severite:
+        incidents = incidents.filter(severite=severite)
+    if statut:
+        incidents = incidents.filter(statut=statut)
+    
+    # Statistiques
+    stats = {
+        'total': incidents.count(),
+        'signales': incidents.filter(statut='SIGNALE').count(),
+        'en_cours': incidents.filter(statut='EN_COURS').count(),
+        'resolus': incidents.filter(statut='RESOLU').count(),
+        'critiques': incidents.filter(severite='CRITIQUE').count(),
+    }
+    
+    context = {
+        'incidents': incidents.order_by('-date_heure_incident'),
+        'stats': stats,
+        'type_choices': Incident.TYPE_INCIDENT_CHOICES,
+        'severite_choices': Incident.SEVERITE_CHOICES,
+        'statut_choices': Incident.STATUT_CHOICES,
+    }
+    
+    return render(request, 'incidents/liste.html', context)
+
+
+def detail_incident(request, incident_id):
+    """
+    Affiche les détails d'un incident
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    context = {
+        'incident': incident,
+    }
+    
+    return render(request, 'incidents/detail.html', context)
+
+
+def creer_incident(request):
+    """
+    Formulaire de création d'incident
+    """
+    if request.method == 'POST':
+        # Récupérer les données du formulaire
+        type_incident = request.POST.get('type_incident')
+        titre = request.POST.get('titre')
+        description = request.POST.get('description')
+        date_heure = request.POST.get('date_heure_incident')
+        signale_par = request.POST.get('signale_par')
+        expedition_id = request.POST.get('expedition_id')
+        tournee_id = request.POST.get('tournee_id')
+        
+        # Créer l'incident
+        from .models import Expedition, Tournee
+        
+        incident = Incident.objects.create(
+            type_incident=type_incident,
+            titre=titre,
+            description=description,
+            date_heure_incident=date_heure,
+            signale_par=signale_par,
+            expedition_id=expedition_id if expedition_id else None,
+            tournee_id=tournee_id if tournee_id else None,
+        )
+        
+        messages.success(request, f"Incident {incident.numero_incident} créé avec succès")
+        return redirect('detail_incident', incident_id=incident.id)
+    
+    # GET : afficher le formulaire
+    from .models import Expedition, Tournee
+    
+    context = {
+        'type_choices': Incident.TYPE_INCIDENT_CHOICES,
+        'expeditions': Expedition.objects.all(),
+        'tournees': Tournee.objects.filter(statut__in=['PREVUE', 'EN_COURS']),
+    }
+    
+    return render(request, 'incidents/creer.html', context)
+
+
+def resoudre_incident(request, incident_id):
+    """
+    Résoudre un incident
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    if request.method == 'POST':
+        solution = request.POST.get('solution')
+        agent = request.POST.get('agent', 'Agent')
+        
+        IncidentService.resoudre_incident(incident, solution, agent)
+        
+        messages.success(request, f"Incident {incident.numero_incident} résolu")
+        return redirect('detail_incident', incident_id=incident.id)
+    
+    context = {
+        'incident': incident,
+    }
+    
+    return render(request, 'incidents/resoudre.html', context)
+
+
+def statistiques_incidents(request):
+    """
+    Affiche les statistiques des incidents
+    """
+    # Période
+    date_fin = datetime.now()
+    date_debut = date_fin - timedelta(days=30)
+    
+    if request.GET.get('periode') == '90j':
+        date_debut = date_fin - timedelta(days=90)
+    elif request.GET.get('periode') == '1an':
+        date_debut = date_fin - timedelta(days=365)
+    
+    # Statistiques générales
+    stats = IncidentService.statistiques_incidents(date_debut, date_fin)
+    
+    # Incidents par chauffeur
+    stats_chauffeurs = IncidentService.incidents_par_chauffeur()
+    
+    context = {
+        'stats': stats,
+        'stats_chauffeurs': stats_chauffeurs,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+    }
+    
+    return render(request, 'incidents/statistiques.html', context)
+
+
+# ========== VUES RÉCLAMATIONS ==========
+
+def liste_reclamations(request):
+    """
+    Affiche la liste des réclamations avec filtres
+    """
+    reclamations = Reclamation.objects.all()
+    
+    # Filtres
+    nature = request.GET.get('nature')
+    priorite = request.GET.get('priorite')
+    statut = request.GET.get('statut')
+    client_id = request.GET.get('client_id')
+    
+    if nature:
+        reclamations = reclamations.filter(nature=nature)
+    if priorite:
+        reclamations = reclamations.filter(priorite=priorite)
+    if statut:
+        reclamations = reclamations.filter(statut=statut)
+    if client_id:
+        reclamations = reclamations.filter(client_id=client_id)
+    
+    # Statistiques
+    stats = {
+        'total': reclamations.count(),
+        'ouvertes': reclamations.filter(statut='OUVERTE').count(),
+        'en_cours': reclamations.filter(statut='EN_COURS').count(),
+        'resolues': reclamations.filter(statut='RESOLUE').count(),
+        'urgentes': reclamations.filter(priorite='URGENTE').count(),
+    }
+    
+    context = {
+        'reclamations': reclamations.order_by('-date_creation'),
+        'stats': stats,
+        'nature_choices': Reclamation.NATURE_CHOICES,
+        'priorite_choices': Reclamation.PRIORITE_CHOICES,
+        'statut_choices': Reclamation.STATUT_CHOICES,
+    }
+    
+    return render(request, 'reclamations/liste.html', context)
+
+
+def detail_reclamation(request, reclamation_id):
+    """
+    Affiche les détails d'une réclamation avec son historique
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    historique = reclamation.historique.all()
+    
+    context = {
+        'reclamation': reclamation,
+        'historique': historique,
+    }
+    
+    return render(request, 'reclamations/detail.html', context)
+
+
+def creer_reclamation(request):
+    """
+    Formulaire de création de réclamation
+    """
+    if request.method == 'POST':
+        # Récupérer les données
+        client_id = request.POST.get('client_id')
+        nature = request.POST.get('nature')
+        objet = request.POST.get('objet')
+        description = request.POST.get('description')
+        expedition_ids = request.POST.getlist('expeditions')
+        facture_id = request.POST.get('facture_id')
+        
+        # Créer la réclamation
+        from .models import Client
+        
+        reclamation = Reclamation.objects.create(
+            client_id=client_id,
+            nature=nature,
+            objet=objet,
+            description=description,
+            facture_id=facture_id if facture_id else None,
+        )
+        
+        # Ajouter les expéditions
+        if expedition_ids:
+            reclamation.expeditions.set(expedition_ids)
+        
+        messages.success(request, f"Réclamation {reclamation.numero_reclamation} créée avec succès")
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
+    # GET : afficher le formulaire
+    from .models import Client, Expedition, Facture
+    
+    context = {
+        'nature_choices': Reclamation.NATURE_CHOICES,
+        'clients': Client.objects.all(),
+        'expeditions': Expedition.objects.all(),
+        'factures': Facture.objects.exclude(statut='ANNULEE'),
+    }
+    
+    return render(request, 'reclamations/creer.html', context)
+
+
+def assigner_reclamation(request, reclamation_id):
+    """
+    Assigner une réclamation à un agent
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        agent_nom = request.POST.get('agent_nom')
+        
+        ReclamationService.assigner_agent(reclamation, agent_nom)
+        
+        messages.success(request, f"Réclamation assignée à {agent_nom}")
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
+    context = {
+        'reclamation': reclamation,
+    }
+    
+    return render(request, 'reclamations/assigner.html', context)
+
+
+def repondre_reclamation(request, reclamation_id):
+    """
+    Répondre à une réclamation
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        reponse = request.POST.get('reponse')
+        solution = request.POST.get('solution')
+        auteur = request.POST.get('auteur', 'Agent')
+        
+        ReclamationService.repondre_reclamation(reclamation, reponse, solution, auteur)
+        
+        messages.success(request, "Réponse envoyée au client")
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
+    context = {
+        'reclamation': reclamation,
+    }
+    
+    return render(request, 'reclamations/repondre.html', context)
+
+
+def resoudre_reclamation(request, reclamation_id):
+    """
+    Résoudre une réclamation avec compensation éventuelle
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        auteur = request.POST.get('auteur', 'Agent')
+        accorder_compensation = request.POST.get('compensation') == 'on'
+        montant_compensation = float(request.POST.get('montant_compensation', 0))
+        
+        ReclamationService.resoudre_reclamation(
+            reclamation,
+            auteur,
+            accorder_compensation,
+            montant_compensation
+        )
+        
+        messages.success(request, f"Réclamation {reclamation.numero_reclamation} résolue")
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
+    context = {
+        'reclamation': reclamation,
+    }
+    
+    return render(request, 'reclamations/resoudre.html', context)
+
+
+def statistiques_reclamations(request):
+    """
+    Affiche les statistiques des réclamations
+    """
+    # Période
+    date_fin = datetime.now()
+    date_debut = date_fin - timedelta(days=30)
+    
+    if request.GET.get('periode') == '90j':
+        date_debut = date_fin - timedelta(days=90)
+    elif request.GET.get('periode') == '1an':
+        date_debut = date_fin - timedelta(days=365)
+    
+    # Statistiques générales
+    stats = ReclamationService.statistiques_reclamations(date_debut, date_fin)
+    
+    # Top clients réclamants
+    top_clients = ReclamationService.top_clients_reclamants(10)
+    
+    # Motifs récurrents
+    motifs = ReclamationService.motifs_recurrents()
+    
+    context = {
+        'stats': stats,
+        'top_clients': top_clients,
+        'motifs': motifs,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+    }
+    
+    return render(request, 'reclamations/statistiques.html', context)

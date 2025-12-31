@@ -4,6 +4,7 @@ import math
 from decimal import Decimal
 from datetime import date, timedelta 
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 # SECTION 1 : TABLES DE BASE
 class Client(models.Model):
@@ -72,6 +73,7 @@ class Vehicule(models.Model):
 
     def __str__(self):
         return f"{self.marque} {self.modele} - {self.numero_immatriculation}"
+    
     def save(self, *args, **kwargs):
         from .utils import VehiculeService
         VehiculeService.gerer_revision(self)
@@ -141,6 +143,7 @@ class Tarification(models.Model):
         else:
             # STANDARD et INTERNATIONAL : délai de la destination
             return self.destination.delai_livraison_estime
+
 
 # SECTION 2 : Gestions
  
@@ -233,7 +236,10 @@ class Expedition(models.Model):
             
             # 4. Créer ou ajouter à une facture
             FacturationService.gerer_facture_expedition(self)
-
+    
+    def liste_expeditions(self):
+        return self.expeditions.all()
+    
 class TrackingExpedition(models.Model):
     expedition = models.ForeignKey('Expedition', on_delete=models.CASCADE, related_name='suivis')
     statut_etape = models.CharField(max_length=20, choices=[('COLIS_CREE', 'Colis créé'),('EN_ATTENTE', 'En attente'),('EN_TRANSIT', 'En transit'),('LIVRE', 'Livré'),('ECHEC', 'Échec'),])
@@ -253,10 +259,10 @@ class Facture(models.Model):
     client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='factures')
     expeditions = models.ManyToManyField('Expedition', related_name='factures')
     numero_facture = models.CharField(max_length=50, unique=True, blank=True)
-    montant_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    montant_tva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    montant_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    taux_tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.00)
+    montant_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
+    montant_tva = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
+    montant_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
+    taux_tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.00, editable=False)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_echeance = models.DateField()
     statut = models.CharField(max_length=20, choices=[('IMPAYEE', 'Impayée'),('PARTIELLEMENT_PAYEE', 'Partiellement payée'),('PAYEE', 'Payée'),('EN_RETARD', 'En retard'),('ANNULEE', 'Annulée'),], default='IMPAYEE')
@@ -285,7 +291,7 @@ class Paiement(models.Model):
     mode_paiement = models.CharField(max_length=20, choices=[('ESPECES', 'Espèces'),('CARTE', 'Carte bancaire'),('VIREMENT', 'Virement'),('CHEQUE', 'Chèque'),])
     reference_transaction = models.CharField(max_length=100, blank=True, null=True)
     remarques = models.TextField(blank=True, null=True)
-    statut = models.CharField(max_length=20, default='VALIDE')
+    statut = models.CharField(max_length=20, default='VALIDE')  # VALIDE ou ANNULE
     
     class Meta:
         ordering = ['-date_paiement']
@@ -299,14 +305,6 @@ class Paiement(models.Model):
         from django.core.exceptions import ValidationError
         
         is_new = self.pk is None
-        
-        # ========== VALIDATION CRITIQUE : Client doit correspondre ==========
-        if self.facture.client != self.client:
-            raise ValidationError(
-                f"ERREUR : Le client du paiement ({self.client}) ne correspond pas "
-                f"au client de la facture ({self.facture.client}). "
-                f"Impossible de créer ce paiement."
-            )
         
         # Validations pour nouveaux paiements uniquement
         if is_new:
@@ -337,3 +335,203 @@ class Paiement(models.Model):
             self.client.save()
             
             FacturationService.mettre_a_jour_statut_facture(self.facture)
+
+
+class Incident(models.Model):
+
+    #ici une exp/tourne peuvent avoir pleusieur incidents 
+    #pour le delete alors si on supprime une exp l'icident sera automatiquement supprimer de la liste 
+    expedition = models.ForeignKey(
+        'Expedition', on_delete=models.CASCADE, related_name='incidents',null=True,blank=True,
+        help_text="Expédition concernée (si applicable)")
+    
+    tournee = models.ForeignKey('Tournee', on_delete=models.CASCADE, related_name='incidents',null=True,
+        blank=True,help_text="Tournée concernée (si applicable)")
+    
+    numero_incident = models.CharField(max_length=50, unique=True, blank=True, editable=False)
+    
+    type_incident = models.CharField(max_length=30, choices=[
+        ('RETARD', 'Retard de livraison'),('PERTE', 'Perte de colis'),('ENDOMMAGEMENT', 'Endommagement'),
+        ('PROBLEME_TECHNIQUE', 'Problème technique véhicule'), ('ACCIDENT', 'Accident'),('REFUS_DESTINATAIRE', 'Refus du destinataire'),
+        ('ADRESSE_INCORRECTE', 'Adresse incorrecte'),('DESTINATAIRE_ABSENT', 'Destinataire absent'),('AUTRE', 'Autre'),])
+    
+    severite = models.CharField(max_length=20, choices=[('FAIBLE', 'Faible'), ('MOYENNE', 'Moyenne'), ('ELEVEE', 'Élevée'),
+        ('CRITIQUE', 'Critique'),], default='MOYENNE')
+    
+    titre = models.CharField(max_length=200, help_text="Résumé court de l'incident")
+    description = models.TextField(help_text="Description détaillée de l'incident")
+    lieu_incident = models.CharField(max_length=200, blank=True, null=True)
+    date_heure_incident = models.DateTimeField(help_text="Date et heure de survenue de l'incident")\
+    
+    statut = models.CharField(max_length=20, choices=[ ('SIGNALE', 'Signalé'), ('EN_COURS', 'En cours de traitement'),
+        ('RESOLU', 'Résolu'),('CLOS', 'Clôturé'),] , default='SIGNALE')
+    
+    signale_par = models.CharField(max_length=100, help_text="Nom de la personne ayant signalé")
+    agent_responsable = models.CharField(max_length=100, blank=True, null=True, help_text="Agent en charge du traitement")
+    actions_entreprises = models.TextField(blank=True, null=True, help_text="Actions effectuées pour résoudre l'incident")
+    date_resolution = models.DateTimeField(blank=True, null=True)
+    cout_estime = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Coût estimé en DA")
+
+    #On ne peut pas justifier l'incident par un seul document et si on met plus que 2 on risque de Complexité inutile
+    #exemple des justification document1 → rapport du chauffeur document2 → rapport de l’agence / assurance
+    #photo1 → photo du colis abîmé photo2 → photo du véhicule ou du lieu 
+
+    document1 = models.FileField(upload_to='incidents/documents/', blank=True, null=True)
+    document2 = models.FileField(upload_to='incidents/documents/', blank=True, null=True)
+    photo1 = models.ImageField(upload_to='incidents/photos/', blank=True, null=True)
+    photo2 = models.ImageField(upload_to='incidents/photos/', blank=True, null=True)
+    alerte_direction = models.BooleanField(default=False, help_text="Alerter la direction")
+    alerte_client = models.BooleanField(default=False, help_text="Alerter le client")
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    remarques = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_heure_incident']
+        verbose_name = "Incident"
+        verbose_name_plural = "Incidents"
+    
+    def __str__(self):
+        cible = "Non lié"
+        if self.expedition:
+            cible = f"Expédition #{self.expedition.id}"
+        elif self.tournee:
+            cible = f"Tournée #{self.tournee.id}"
+
+        return f"{self.numero_incident} - {self.get_type_incident_display()} ({cible})"
+    
+    def save(self, *args, **kwargs):
+        from .utils import IncidentService
+        
+        is_new = self.pk is None
+        
+        # Générer le numéro d'incident
+        if not self.numero_incident:
+            super().save(*args, **kwargs)
+            self.numero_incident = f"INC-{self.date_creation.strftime('%Y%m%d')}-{self.id:05d}"
+            kwargs['force_insert'] = False
+        
+        super().save(*args, **kwargs)
+        
+        # Traitement post-sauvegarde
+        if is_new:
+            IncidentService.traiter_nouvel_incident(self)
+
+    def clean(self):
+        if self.Expedition and self.tournee:
+         raise ValidationError(
+            "Un incident ne peut pas être lié à une expédition ET une tournée."
+        )
+
+        if not self.expedition and not self.tournee:
+         raise ValidationError(
+            "Un incident doit être lié soit à une expédition soit à une tournée."
+        )
+
+
+class Reclamation(models.Model):
+
+    numero_reclamation = models.CharField(max_length=50, unique=True, blank=True, editable=False)
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='reclamations')
+    
+    type_reclamation = models.CharField(max_length=20,choices=[('EXPEDITION', 'Liée à une expédition'),('FACTURE', 'Liée à une facture'),
+        ('SERVICE', 'Liée à un service'),('AUTRE', 'Autre'),],default='EXPEDITION',help_text="Type de réclamation")
+
+    expeditions = models.ManyToManyField('Expedition', related_name='reclamations',blank=True,help_text="Expéditions concernées")
+
+    facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, related_name='reclamations',null=True,blank=True,
+        help_text="Facture concernée (si applicable)")
+    
+    service_concerne = models.CharField(max_length=50,blank=True,null=True,choices=[('LIVRAISON', 'Service de livraison'),
+        ('FACTURATION', 'Service facturation'),('CLIENT', 'Service client'),('TECHNIQUE', 'Service technique'),
+        ('COMMERCIAL', 'Service commercial'),('AUTRE', 'Autre'),],help_text="Service concerné (si type = SERVICE)")
+    
+    nature = models.CharField(max_length=30, choices=[('RETARD_LIVRAISON', 'Retard de livraison'),('COLIS_ENDOMMAGE', 'Colis endommagé'),
+        ('COLIS_PERDU', 'Colis perdu'),('ERREUR_FACTURATION', 'Erreur de facturation'),('MAUVAIS_SERVICE', 'Mauvais service'),
+        ('COMPORTEMENT_CHAUFFEUR', 'Comportement du chauffeur'),('COLIS_INCOMPLET', 'Colis incomplet'),
+        ('REMBOURSEMENT', 'Demande de remboursement'),('AUTRE', 'Autre'),])
+    
+    priorite = models.CharField(max_length=20, choices=[('BASSE', 'Basse'),('NORMALE', 'Normale'),
+        ('HAUTE', 'Haute'),('URGENTE', 'Urgente'),], default='NORMALE')
+    
+    objet = models.CharField(max_length=200, help_text="Objet de la réclamation")
+    description = models.TextField(help_text="Description détaillée de la réclamation")
+
+    statut = models.CharField(max_length=30, choices=[('OUVERTE', 'Ouverte'),('EN_COURS', 'En cours de traitement'),
+        ('EN_ATTENTE_CLIENT', 'En attente de réponse du client'),('RESOLUE', 'Résolue'),
+        ('CLOSE', 'Clôturée'),('ANNULEE', 'Annulée'),], default='OUVERTE')
+    
+    agent_responsable = models.CharField(max_length=100, blank=True, null=True, help_text="Agent assigné")
+    date_assignation = models.DateTimeField(blank=True, null=True)
+    reponse_agent = models.TextField(blank=True, null=True, help_text="Réponse de l'agent")
+    solution_proposee = models.TextField(blank=True, null=True)
+    date_resolution = models.DateTimeField(blank=True, null=True)
+    delai_traitement_jours = models.IntegerField(blank=True, null=True, editable=False, help_text="Calculé automatiquement")
+    commentaire_client = models.TextField(blank=True, null=True)
+    piece_jointe1 = models.FileField(upload_to='reclamations/documents/', blank=True, null=True)
+    piece_jointe2 = models.FileField(upload_to='reclamations/documents/', blank=True, null=True)
+    compensation_accordee = models.BooleanField(default=False)
+    montant_compensation = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Montant en DA")
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    remarques = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_creation']
+        verbose_name = "Réclamation"
+        verbose_name_plural = "Réclamations"
+    
+    def __str__(self):
+        return f"{self.numero_reclamation} - {self.client} - {self.get_nature_display()}"
+    
+    def save(self, *args, **kwargs):
+        from .utils import ReclamationService
+        
+        is_new = self.pk is None
+        
+        # Générer le numéro de réclamation
+        if not self.numero_reclamation:
+            super().save(*args, **kwargs)
+            self.numero_reclamation = f"REC-{self.date_creation.strftime('%Y%m%d')}-{self.id:05d}"
+            kwargs['force_insert'] = False
+        
+        super().save(*args, **kwargs)
+        
+        # Traitement post-sauvegarde
+        if is_new:
+            ReclamationService.traiter_nouvelle_reclamation(self)
+        else:
+            ReclamationService.calculer_delai_traitement(self)
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.type_reclamation == 'SERVICE' and not self.service_concerne:
+            raise ValidationError(
+            "Le service concerné est obligatoire pour une réclamation de type SERVICE."
+        )
+
+        if self.type_reclamation != 'SERVICE' and self.service_concerne:
+            raise ValidationError(
+            "Le service concerné doit être vide si la réclamation n'est pas de type SERVICE."
+        )
+
+class HistoriqueReclamation(models.Model):
+    """
+    Historique des actions effectuées sur une réclamation
+    """
+    reclamation = models.ForeignKey('Reclamation', on_delete=models.CASCADE, related_name='historique')
+    date_action = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=100, help_text="Type d'action effectuée")
+    auteur = models.CharField(max_length=100, help_text="Qui a effectué l'action")
+    details = models.TextField(blank=True, null=True)
+    ancien_statut = models.CharField(max_length=30, blank=True, null=True)
+    nouveau_statut = models.CharField(max_length=30, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_action']
+        verbose_name = "Historique de réclamation"
+        verbose_name_plural = "Historiques de réclamations"
+    
+    def __str__(self):
+        return f"{self.reclamation.numero_reclamation} - {self.action} - {self.date_action.strftime('%d/%m/%Y %H:%M')}"
