@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Véhicule - {{ vehicule.numero_immatriculation }}</title>
+</head>
+<body>
+    <h1>Supprimer le véhicule</h1>
+    
+    <a href="{% url 'detail_vehicule' vehicule.id %}"><button>← Annuler</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="background: #ffcccc; padding: 20px; border: 2px solid #cc0000; margin: 20px 0;">
+        <h2 style="color: #cc0000;">⚠️ Attention : Suppression Définitive</h2>
+        
+        <p><strong>Êtes-vous sûr de vouloir supprimer ce véhicule ?</strong></p>
+        
+        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
+            <tr>
+                <th>Immatriculation</th>
+                <td>{{ vehicule.numero_immatriculation }}</td>
+            </tr>
+            <tr>
+                <th>Marque/Modèle</th>
+                <td>{{ vehicule.marque }} {{ vehicule.modele }}</td>
+            </tr>
+            <tr>
+                <th>Type</th>
+                <td>{{ vehicule.get_type_vehicule_display }}</td>
+            </tr>
+            <tr>
+                <th>Statut</th>
+                <td>{{ vehicule.get_statut_display }}</td>
+            </tr>
+        </table>
+        
+        <p style="color: #cc0000;"><strong>⚠️ Cette action est IRRÉVERSIBLE !</strong></p>
+        <p>Toutes les informations liées à ce véhicule seront supprimées définitivement.</p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" style="background: #cc0000; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                OUI, SUPPRIMER DÉFINITIVEMENT
+            </button>
+            <a href="{% url 'detail_vehicule' vehicule.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Non, annuler
+                </button>
+            </a>
+        </form>
+    </div>
+    
+</body>
+</html>

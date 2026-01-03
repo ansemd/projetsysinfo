@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi des Expéditions (Tracking)</title>
+</head>
+<body>
+    <h1>📍 Suivi Global des Expéditions</h1>
+    
+    <a href="{% url 'liste_expeditions' %}"><button>← Retour aux expéditions</button></a>
+    
+    <hr>
+    
+    <h2>Vue d'ensemble du suivi</h2>
+    <p>Cliquez sur une expédition pour voir son historique de tracking complet.</p>
+    
+    <hr>
+    
+    <!-- Liste globale -->
+    <h2>Liste des Expéditions ({{ expeditions_data|length }})</h2>
+    
+    {% if expeditions_data %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Expédition</th>
+                <th>Client</th>
+                <th>Destination</th>
+                <th>Tournée</th>
+                <th>Statut Tournée</th>
+                <th>Dernier Statut Exp</th>
+                <th>Date/Heure</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in expeditions_data %}
+            <tr>
+                <td><strong>{{ data.expedition.get_numero_expedition }}</strong></td>
+                <td>{{ data.expedition.client.prenom }} {{ data.expedition.client.nom }}</td>
+                <td>{{ data.expedition.destination.ville }} - {{ data.expedition.destination.wilaya }}</td>
+                <td>
+                    {% if data.tournee %}
+                        <a href="{% url 'detail_tournee' data.tournee.id %}">
+                            {{ data.tournee.get_numero_tournee }}
+                        </a>
+                    {% else %}
+                        <span style="color: gray;">Aucune</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if data.statut_tournee == 'Prévue' %}
+                        <span style="color: blue;">⏱️ {{ data.statut_tournee }}</span>
+                    {% elif data.statut_tournee == 'En cours' %}
+                        <span style="color: orange;">🚚 {{ data.statut_tournee }}</span>
+                    {% elif data.statut_tournee == 'Terminée' %}
+                        <span style="color: green;">✅ {{ data.statut_tournee }}</span>
+                    {% else %}
+                        <span style="color: gray;">{{ data.statut_tournee }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if data.dernier_tracking %}
+                        <strong>{{ data.dernier_tracking.get_statut_etape_display }}</strong>
+                    {% else %}
+                        <span style="color: gray;">Aucun tracking</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if data.dernier_tracking %}
+                        {{ data.dernier_tracking.date_heure|date:"d/m/Y à H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'detail_expedition' data.expedition.id %}">
+                        <button>📍 Voir tracking détaillé</button>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune expédition trouvée.</p>
+    {% endif %}
+    
+</body>
+</html>

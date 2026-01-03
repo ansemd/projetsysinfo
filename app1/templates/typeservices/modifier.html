@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Type de Service - {{ typeservice.type_service }}</title>
+</head>
+<body>
+    <h1>Modifier le type de service "{{ typeservice.get_type_service_display }}"</h1>
+    
+    <a href="{% url 'detail_typeservice' typeservice.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table>
+            <tr>
+                <td><label>Type de service *</label></td>
+                <td>
+                    {{ form.type_service }}
+                    {% if form.type_service.errors %}
+                        <br><span style="color: red;">{{ form.type_service.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Description</label></td>
+                <td>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <br><span style="color: red;">{{ form.description.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Enregistrer les modifications</button>
+        <a href="{% url 'detail_typeservice' typeservice.id %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Expédition - {{ expedition.get_numero_expedition }}</title>
+</head>
+<body>
+    <h1>Modifier l'Expédition {{ expedition.get_numero_expedition }}</h1>
+    
+    <a href="{% url 'detail_expedition' expedition.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h2>Client et Destination</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.client.label }}</label></td>
+                <td>
+                    {{ form.client }}
+                    {% if form.client.errors %}
+                        <br><span style="color: red;">{{ form.client.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.destination.label }}</label></td>
+                <td>
+                    {{ form.destination }}
+                    {% if form.destination.errors %}
+                        <br><span style="color: red;">{{ form.destination.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.type_service.label }}</label></td>
+                <td>
+                    {{ form.type_service }}
+                    {% if form.type_service.errors %}
+                        <br><span style="color: red;">{{ form.type_service.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Informations Destinataire</h2>
+        <table>
+            <tr>
+                <td><label>Nom du destinataire *</label></td>
+                <td>
+                    {{ form.nom_destinataire }}
+                    {% if form.nom_destinataire.errors %}
+                        <br><span style="color: red;">{{ form.nom_destinataire.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Téléphone destinataire *</label></td>
+                <td>
+                    {{ form.telephone_destinataire }}
+                    {% if form.telephone_destinataire.errors %}
+                        <br><span style="color: red;">{{ form.telephone_destinataire.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Email destinataire *</label></td>
+                <td>
+                    {{ form.email_destinataire }}
+                    {% if form.email_destinataire.errors %}
+                        <br><span style="color: red;">{{ form.email_destinataire.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Adresse destinataire *</label></td>
+                <td>
+                    {{ form.adresse_destinataire }}
+                    {% if form.adresse_destinataire.errors %}
+                        <br><span style="color: red;">{{ form.adresse_destinataire.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Colis</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.poids.label }}</label></td>
+                <td>
+                    {{ form.poids }}
+                    {% if form.poids.errors %}
+                        <br><span style="color: red;">{{ form.poids.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.volume.label }}</label></td>
+                <td>
+                    {{ form.volume }}
+                    {% if form.volume.errors %}
+                        <br><span style="color: red;">{{ form.volume.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Description</label></td>
+                <td>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <br><span style="color: red;">{{ form.description.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Affectation Tournée</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.tournee.label }}</label></td>
+                <td>
+                    {{ form.tournee }}
+                    {% if form.tournee.errors %}
+                        <br><span style="color: red;">{{ form.tournee.errors.0 }}</span>
+                    {% endif %}
+                    <br><small style="color: gray;">{{ form.tournee.help_text }}</small>
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Remarques</h2>
+        <table>
+            <tr>
+                <td><label>Remarques</label></td>
+                <td>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                        <br><span style="color: red;">{{ form.remarques.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Enregistrer les modifications</button>
+        <a href="{% url 'detail_expedition' expedition.id %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

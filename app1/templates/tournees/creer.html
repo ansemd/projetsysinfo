@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer une Tournée</title>
+</head>
+<body>
+    <h1>Créer une nouvelle tournée</h1>
+    
+    <a href="{% url 'liste_tournees' %}"><button>← Retour à la liste</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h2>Ressources</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.chauffeur.label }}</label></td>
+                <td>
+                    {{ form.chauffeur }}
+                    {% if form.chauffeur.errors %}
+                        <br><span style="color: red;">{{ form.chauffeur.errors.0 }}</span>
+                    {% endif %}
+                    <br><small style="color: gray;">Seuls les chauffeurs DISPONIBLES sont affichés</small>
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.vehicule.label }}</label></td>
+                <td>
+                    {{ form.vehicule }}
+                    {% if form.vehicule.errors %}
+                        <br><span style="color: red;">{{ form.vehicule.errors.0 }}</span>
+                    {% endif %}
+                    <br><small style="color: gray;">Seuls les véhicules DISPONIBLES sont affichés</small>
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Dates et Zone</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.date_depart.label }}</label></td>
+                <td>
+                    {{ form.date_depart }}
+                    {% if form.date_depart.errors %}
+                        <br><span style="color: red;">{{ form.date_depart.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.date_retour_prevue.label }}</label></td>
+                <td>
+                    {{ form.date_retour_prevue }}
+                    {% if form.date_retour_prevue.errors %}
+                        <br><span style="color: red;">{{ form.date_retour_prevue.errors.0 }}</span>
+                    {% endif %}
+                    <br><small style="color: gray;">{{ form.date_retour_prevue.help_text }}</small>
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.zone_cible.label }}</label></td>
+                <td>
+                    {{ form.zone_cible }}
+                    {% if form.zone_cible.errors %}
+                        <br><span style="color: red;">{{ form.zone_cible.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Options</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.est_privee.label }}</label></td>
+                <td>
+                    {{ form.est_privee }}
+                    {% if form.est_privee.errors %}
+                        <br><span style="color: red;">{{ form.est_privee.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Remarques</label></td>
+                <td>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                        <br><span style="color: red;">{{ form.remarques.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Créer la tournée</button>
+        <a href="{% url 'liste_tournees' %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

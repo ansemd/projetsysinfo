@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer une Destination</title>
+</head>
+<body>
+    <h1>Créer une nouvelle destination</h1>
+    
+    <a href="{% url 'liste_destinations' %}"><button>← Retour à la liste</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h2>Localisation</h2>
+        <table>
+            <tr>
+                <td><label>Ville</label></td>
+                <td>
+                    {{ form.ville }}
+                    {% if form.ville.errors %}
+                        <br><span style="color: red;">{{ form.ville.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Wilaya *</label></td>
+                <td>
+                    {{ form.wilaya }}
+                    {% if form.wilaya.errors %}
+                        <br><span style="color: red;">{{ form.wilaya.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Pays *</label></td>
+                <td>
+                    {{ form.pays }}
+                    {% if form.pays.errors %}
+                        <br><span style="color: red;">{{ form.pays.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Code postal</label></td>
+                <td>
+                    {{ form.code_postal }}
+                    {% if form.code_postal.errors %}
+                        <br><span style="color: red;">{{ form.code_postal.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Zones</h2>
+        <table>
+            <tr>
+                <td><label>Zone Géographique *</label></td>
+                <td>
+                    {{ form.zone_geographique }}
+                    {% if form.zone_geographique.errors %}
+                        <br><span style="color: red;">{{ form.zone_geographique.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Zone Logistique *</label></td>
+                <td>
+                    {{ form.zone_logistique }}
+                    {% if form.zone_logistique.errors %}
+                        <br><span style="color: red;">{{ form.zone_logistique.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Tarification et Délais</h2>
+        <table>
+            <tr>
+                <td><label>Distance estimée (km) *</label></td>
+                <td>
+                    {{ form.distance_estimee }}
+                    {% if form.distance_estimee.errors %}
+                        <br><span style="color: red;">{{ form.distance_estimee.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Tarif de base (DA) *</label></td>
+                <td>
+                    {{ form.tarif_base }}
+                    {% if form.tarif_base.errors %}
+                        <br><span style="color: red;">{{ form.tarif_base.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Délai de livraison estimé (jours) *</label></td>
+                <td>
+                    {{ form.delai_livraison_estime }}
+                    {% if form.delai_livraison_estime.errors %}
+                        <br><span style="color: red;">{{ form.delai_livraison_estime.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Remarques</h2>
+        <table>
+            <tr>
+                <td><label>Remarques</label></td>
+                <td>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                        <br><span style="color: red;">{{ form.remarques.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Créer la destination</button>
+        <a href="{% url 'liste_destinations' %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

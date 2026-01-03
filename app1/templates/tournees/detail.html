@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Tournée #{{ tournee.id }}</title>
+</head>
+<body>
+    <h1>Détails de la Tournée #{{ tournee.id }}</h1>
+    
+    <a href="{% url 'liste_tournees' %}"><button>← Retour à la liste</button></a>
+    {% if tournee.statut == 'PREVUE' %}
+        <a href="{% url 'modifier_tournee' tournee.id %}"><button>Modifier</button></a>
+        <a href="{% url 'supprimer_tournee' tournee.id %}"><button>Supprimer</button></a>
+    {% endif %}
+    {% if tournee.statut == 'EN_COURS' %}
+        <a href="{% url 'terminer_tournee' tournee.id %}"><button style="background: green; color: white;">✅ Terminer la tournée</button></a>
+    {% endif %}
+    <a href="{% url 'exporter_tournee_detail_pdf' tournee.id %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations de la tournée -->
+    <h2>Informations de la Tournée</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Chauffeur</th>
+            <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }} ({{ tournee.chauffeur.get_id_chauffeur }})</td>
+        </tr>
+        <tr>
+            <th>Véhicule</th>
+            <td>{{ tournee.vehicule.marque }} {{ tournee.vehicule.modele }} - {{ tournee.vehicule.numero_immatriculation }}</td>
+        </tr>
+        <tr>
+            <th>Date de départ</th>
+            <td>{{ tournee.date_depart|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Date de retour prévue</th>
+            <td>{{ tournee.date_retour_prevue|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        {% if tournee.date_retour_reelle %}
+        <tr>
+            <th>Date de retour réelle</th>
+            <td>{{ tournee.date_retour_reelle|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Zone cible</th>
+            <td>{{ tournee.get_zone_cible_display }}</td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>
+                {% if tournee.statut == 'PREVUE' %}
+                    <span style="color: blue;">⏱️ {{ tournee.get_statut_display }}</span>
+                {% elif tournee.statut == 'EN_COURS' %}
+                    <span style="color: orange;">🚚 {{ tournee.get_statut_display }}</span>
+                {% else %}
+                    <span style="color: green;">✅ {{ tournee.get_statut_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Tournée privée (EXPRESS)</th>
+            <td>{{ tournee.est_privee|yesno:"Oui,Non" }}</td>
+        </tr>
+        {% if tournee.kilometrage_depart %}
+        <tr>
+            <th>Kilométrage départ</th>
+            <td>{{ tournee.kilometrage_depart }} km</td>
+        </tr>
+        {% endif %}
+        {% if tournee.kilometrage_arrivee %}
+        <tr>
+            <th>Kilométrage arrivée</th>
+            <td>{{ tournee.kilometrage_arrivee }} km</td>
+        </tr>
+        {% endif %}
+        {% if tournee.kilometrage_parcouru %}
+        <tr>
+            <th>Kilométrage parcouru</th>
+            <td><strong>{{ tournee.kilometrage_parcouru }} km</strong></td>
+        </tr>
+        {% endif %}
+        {% if tournee.consommation_carburant %}
+        <tr>
+            <th>Consommation carburant</th>
+            <td>{{ tournee.consommation_carburant|floatformat:2 }} L</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Date de création</th>
+            <td>{{ tournee.date_creation|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% if tournee.remarques %}
+        <tr>
+            <th>Remarques</th>
+            <td>{{ tournee.remarques }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!-- Liste des expéditions affectées -->
+    <h2>Expéditions affectées ({{ stats_expeditions.total }})</h2>
+    
+    {% if stats_expeditions.total > 0 %}
+    <p><strong>En attente :</strong> {{ stats_expeditions.en_attente }}</p>
+    <p><strong>En transit :</strong> {{ stats_expeditions.en_transit }}</p>
+    <p><strong>Livrées :</strong> {{ stats_expeditions.livrees }}</p>
+    
+    <table border="1" cellpadding="10" style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>N° Expédition</th>
+                <th>Client</th>
+                <th>Destination</th>
+                <th>Type Service</th>
+                <th>Poids</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in expeditions %}
+            <tr>
+                <td><strong>{{ exp.get_numero_expedition }}</strong></td>
+                <td>{{ exp.client.prenom }} {{ exp.client.nom }}</td>
+                <td>{{ exp.destination.ville }} - {{ exp.destination.wilaya }}</td>
+                <td>{{ exp.type_service.get_type_service_display }}</td>
+                <td>{{ exp.poids }} kg</td>
+                <td>
+                    {% if exp.statut == 'EN_ATTENTE' %}
+                        <span style="color: blue;">⏱️ {{ exp.get_statut_display }}</span>
+                    {% elif exp.statut == 'EN_TRANSIT' %}
+                        <span style="color: orange;">🚚 {{ exp.get_statut_display }}</span>
+                    {% elif exp.statut == 'LIVRE' %}
+                        <span style="color: green;">✅ {{ exp.get_statut_display }}</span>
+                    {% else %}
+                        <span style="color: red;">❌ {{ exp.get_statut_display }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: orange;">⚠️ Aucune expédition affectée à cette tournée</p>
+    {% endif %}
+    
+</body>
+</html>

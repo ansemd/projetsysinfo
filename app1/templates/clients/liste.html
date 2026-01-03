@@ -5,7 +5,13 @@
     <title>Liste des Clients</title>
 </head>
 <body>
-    <h1>Liste des Clients</h1>
+    <h1>Gestion des Clients</h1>
+    
+    <!-- AJOUTER CE BOUTON -->
+    <a href="{% url 'creer_client' %}"><button>+ Nouveau Client</button></a>
+    <a href="{% url 'exporter_clients_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
     
     <!-- Messages -->
     {% if messages %}
@@ -14,18 +20,34 @@
         {% endfor %}
     {% endif %}
     
-    <!-- Recherche -->
-    <form method="get">
-        <input type="text" name="search" placeholder="Rechercher..." value="{{ search }}">
-        <button type="submit">Rechercher</button>
-    </form>
-    
-    <br>
-    <a href="{% url 'creer_client' %}"><button>+ Nouveau Client</button></a>
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total clients :</strong> {{ stats.total_clients }}</p>
+    <p><strong>Clients avec dettes :</strong> {{ stats.clients_dettes }}</p>
+    <p><strong>Clients avec crédit :</strong> {{ stats.clients_credit }}</p>
     
     <hr>
     
-    <!-- Tableau des clients -->
+    <!-- Recherche -->
+    <h2>Recherche</h2>
+    <form method="GET">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Rechercher par nom, prénom, téléphone..." 
+            value="{{ search }}"
+            size="50"
+        >
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_clients' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste des clients -->
+    <h2>Liste des Clients ({{ clients.count }})</h2>
+    
+    {% if clients %}
     <table border="1" cellpadding="10">
         <thead>
             <tr>
@@ -33,9 +55,8 @@
                 <th>Nom</th>
                 <th>Prénom</th>
                 <th>Téléphone</th>
-                <th>Email</th>
-                <th>Ville</th>
-                <th>Solde</th>
+                <th>Wilaya</th>
+                <th>Solde (DA)</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -46,21 +67,27 @@
                 <td>{{ client.nom }}</td>
                 <td>{{ client.prenom }}</td>
                 <td>{{ client.telephone }}</td>
-                <td>{{ client.email|default:"—" }}</td>
-                <td>{{ client.ville|default:"—" }}</td>
-                <td>{{ client.solde }}</td>
-                <td>
-                    <a href="{% url 'detail_client' client.id %}"><button>Voir</button></a>
-                    <a href="{% url 'modifier_client' client.id %}"><button>Modifier</button></a>
-                    <a href="{% url 'supprimer_client' client.id %}"><button>Supprimer</button></a>
+                <td>{{ client.wilaya|default:"-" }}</td>
+                <td
+                {% if client.solde > 0 %}
+                    style="color: green;"
+                {% elif client.solde < 0 %}
+                    style="color: red;"
+                {% endif %}
+                >
+                    {{ client.solde|floatformat:2 }}
                 </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8">Aucun client trouvé</td>
+                <td>
+                    <a href="{% url 'detail_client' client.id %}"><button>Détails</button></a>
+                    <a href="{% url 'modifier_client' client.id %}"><button>Modifier</button></a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <p>Aucun client trouvé.</p>
+    {% endif %}
+    
 </body>
 </html>

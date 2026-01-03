@@ -1,9 +1,64 @@
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.db.models import Max
-from .models import Client, Chauffeur, Vehicule, Destination, TypeService, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement
+from django import forms
+from .models import Client, Chauffeur, Vehicule, Destination, TypeService, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Notification
 
-# ========== CLIENT ==========
+
+
+class TourneeAdminForm(forms.ModelForm):
+    """
+    Formulaire personnalisé pour TOURNÉE
+    Affiche SEULEMENT les chauffeurs et véhicules DISPONIBLES
+    """
+    chauffeur = forms.ModelChoiceField(
+        queryset=Chauffeur.objects.filter(statut_disponibilite='DISPONIBLE'),
+        label="Chauffeur"
+    )
+    
+    vehicule = forms.ModelChoiceField(
+        queryset=Vehicule.objects.filter(statut='DISPONIBLE'),
+        label="Véhicule"
+    )
+    
+    class Meta:
+        model = Tournee
+        fields = '__all__'
+
+
+class ExpeditionAdminForm(forms.ModelForm):
+    """
+    Formulaire personnalisé pour EXPÉDITION
+    Affiche SEULEMENT les tournées PREVUES (pas EN_COURS ou TERMINEE)
+    """
+    tournee = forms.ModelChoiceField(
+        queryset=Tournee.objects.filter(statut='PREVUE'),
+        label="Tournée",
+        required=False,  # Pas obligatoire
+        help_text="Choisir une tournée PREVUE ou laisser vide pour affectation automatique"
+    )
+    
+    class Meta:
+        model = Expedition
+        fields = '__all__'
+
+
+class PaiementAdminForm(forms.ModelForm):
+    """
+    Formulaire personnalisé pour PAIEMENT
+    Affiche SEULEMENT les factures NON PAYÉES et NON ANNULÉES
+    """
+    facture = forms.ModelChoiceField(
+        queryset=Facture.objects.exclude(statut__in=['PAYEE', 'ANNULEE']),
+        label="Facture",
+        help_text="Seules les factures impayées ou partiellement payées sont affichées"
+    )
+    
+    class Meta:
+        model = Paiement
+        fields = '__all__'
+
+
 class ClientAdmin(admin.ModelAdmin):
     list_display = ['get_id', 'nom', 'prenom', 'solde']
     search_fields = ['nom', 'prenom', 'email']
@@ -15,7 +70,7 @@ class ClientAdmin(admin.ModelAdmin):
 
 admin.site.register(Client, ClientAdmin)
 
-# ========== CHAUFFEUR ==========
+
 class ChauffeurAdmin(admin.ModelAdmin):
     list_display = ['get_id', 'nom', 'prenom', 'statut_disponibilite']
     list_filter = ['statut_disponibilite']
@@ -28,14 +83,14 @@ class ChauffeurAdmin(admin.ModelAdmin):
 
 admin.site.register(Chauffeur, ChauffeurAdmin)
 
-# ========== VEHICULE ==========
+
 class VehiculeAdmin(admin.ModelAdmin):
     list_display = ['numero_immatriculation', 'marque', 'modele', 'type_vehicule', 'statut']
     search_fields = ['numero_immatriculation', 'marque', 'modele']
 
 admin.site.register(Vehicule, VehiculeAdmin)
 
-# ========== DESTINATION ==========
+
 class DestinationAdmin(admin.ModelAdmin):
     list_display = ['ville', 'wilaya', 'pays', 'zone_geographique', 'tarif_base']
     list_filter = ['zone_geographique', 'zone_logistique']
@@ -43,19 +98,19 @@ class DestinationAdmin(admin.ModelAdmin):
 
 admin.site.register(Destination, DestinationAdmin)
 
-# ========== TYPE SERVICE ==========
+
 class TypeServiceAdmin(admin.ModelAdmin):
     list_display = ['type_service', 'description']
 
 admin.site.register(TypeService, TypeServiceAdmin)
 
-# ========== TARIFICATION ==========
+
 class TarificationAdmin(admin.ModelAdmin):
     list_display = ['destination', 'type_service', 'tarif_poids', 'tarif_volume']
 
 admin.site.register(Tarification, TarificationAdmin)
 
-# ========== TOURNEE ==========
+
 class ExpeditionInline(admin.TabularInline):
     model = Expedition
     extra = 0
@@ -67,18 +122,21 @@ class ExpeditionInline(admin.TabularInline):
         return obj.get_numero_expedition() if obj.id else "Nouveau"
     get_numero.short_description = "N° Expédition"
 
+
 class TourneeAdmin(admin.ModelAdmin):
+    form = TourneeAdminForm  
+    
     list_display = ['zone_cible', 'chauffeur', 'vehicule', 'date_depart', 'statut', 'est_privee']
     list_filter = ['statut', 'zone_cible', 'est_privee']
     inlines = [ExpeditionInline]
 
 admin.site.register(Tournee, TourneeAdmin)
 
-# ========== EXPEDITION ==========
+
 class HistoriqueInline(admin.TabularInline):
     model = TrackingExpedition
     extra = 0
-    can_delete = False  # ← Garde False
+    can_delete = False
     fields = ['statut_etape', 'date_heure', 'commentaire']
     readonly_fields = ['statut_etape', 'date_heure', 'commentaire']
     verbose_name = "Étape de suivi"
@@ -94,7 +152,10 @@ class HistoriqueInline(admin.TabularInline):
         qs = super().get_queryset(request)
         return qs.order_by('-date_heure')
 
+
 class ExpeditionAdmin(admin.ModelAdmin):
+    form = ExpeditionAdminForm  
+    
     list_display = ['get_numero_expedition', 'client', 'destination', 'tournee', 'poids', 'montant_total', 'statut']
     list_filter = ['statut', 'type_service']
     readonly_fields = ['montant_total', 'date_livraison_prevue']
@@ -108,7 +169,7 @@ class ExpeditionAdmin(admin.ModelAdmin):
 
 admin.site.register(Expedition, ExpeditionAdmin)
 
-# ========== TRACKING ==========
+
 class TrackingExpeditionAdmin(admin.ModelAdmin):
     list_display = ['get_expedition', 'get_tournee', 'get_statut', 'date_heure']
     list_filter = ['expedition__tournee', 'expedition__statut']
@@ -149,7 +210,6 @@ class TrackingExpeditionAdmin(admin.ModelAdmin):
 
 admin.site.register(TrackingExpedition, TrackingExpeditionAdmin)
 
-# ========== SECTION 3 : FACTURATION ==========
 
 class PaiementInline(admin.TabularInline):
     """
@@ -177,16 +237,39 @@ class FactureAdmin(admin.ModelAdmin):
         return f"{FacturationService.calculer_montant_restant(obj)} DA"
     get_montant_restant.short_description = "Reste à payer"
 
-
 class PaiementAdmin(admin.ModelAdmin):
     """
     Configuration de l'administration des paiements
     """
+    form = PaiementAdminForm  
+    
     list_display = ['facture', 'client', 'montant_paye', 'mode_paiement', 'statut', 'date_paiement']
     list_filter = ['mode_paiement', 'statut', 'date_paiement']
     search_fields = ['facture__numero_facture', 'client__nom', 'reference_transaction']
     readonly_fields = ['date_paiement']
 
-
 admin.site.register(Facture, FactureAdmin)
 admin.site.register(Paiement, PaiementAdmin)
+
+
+class NotificationAdmin(admin.ModelAdmin):
+    """
+    Administration des notifications
+    """
+    list_display = ['type_notification', 'titre', 'statut', 'get_cible', 'date_creation']
+    list_filter = ['type_notification', 'statut', 'date_creation']
+    search_fields = ['titre', 'message']
+    readonly_fields = ['date_creation']
+    
+    def get_cible(self, obj):
+        """Affiche à qui est destinée la notification"""
+        if obj.client:
+            return f"Client: {obj.client.nom} {obj.client.prenom}"
+        elif obj.chauffeur:
+            return f"Chauffeur: {obj.chauffeur.nom} {obj.chauffeur.prenom}"
+        elif obj.vehicule:
+            return f"Véhicule: {obj.vehicule.numero_immatriculation}"
+        return "Général"
+    get_cible.short_description = "Destinataire"
+
+admin.site.register(Notification, NotificationAdmin)

@@ -20,6 +20,7 @@ class Client(models.Model):
     date_inscription = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     remarques = models.TextField(blank=True, null=True)
+    compensation_autorisee = models.BooleanField(default=True,help_text="Autoriser la compensation automatique du crédit sur les factures")
 
     def __str__(self):
         return f"CL-{self.id:03d} {self.prenom} {self.nom}"
@@ -163,6 +164,20 @@ class Tournee(models.Model):
     
     def __str__(self):
         return f"Tournée #{self.id} - {self.chauffeur} - {self.statut}"
+    
+    def get_numero_tournee(self):
+        """
+        Génère un ID personnalisé : TR-{ZONE}-{DD-MM}-{NomChauffeur}
+        Exemple : TR-CENTRE-04-01-Benali
+        """
+        if self.date_depart:
+            date_str = self.date_depart.strftime('%d-%m')
+        else:
+            date_str = "00-00"
+        
+        nom_chauffeur = self.chauffeur.nom[:10] if self.chauffeur else "INCONNU"
+        
+        return f"TR-{self.zone_cible}-{date_str}-{nom_chauffeur}"
     
     def save(self, *args, **kwargs):
         from .utils import TourneeService
@@ -337,3 +352,32 @@ class Paiement(models.Model):
             self.client.save()
             
             FacturationService.mettre_a_jour_statut_facture(self.facture)
+
+class Notification(models.Model):
+    """
+    Système de notifications pour l'agent
+    Exemples : maintenance véhicule, alertes, etc.
+    """
+    
+    type_notification = models.CharField(max_length=30, choices=[('MAINTENANCE_AVANT', 'Maintenance prévue demain'),('MAINTENANCE_APRES', 'Véhicule en maintenance - Retour?'),('SOLDE_NEGATIF', 'Client en crédit'),('INFO', 'Information'),('ALERTE', 'Alerte'),])
+    titre = models.CharField(max_length=200)
+    message = models.TextField()
+    statut = models.CharField(max_length=20, choices=[('NON_LUE', 'Non lue'),('LUE', 'Lue'),('TRAITEE', 'Traitée'),], default='NON_LUE')
+    
+    # Liens vers les objets concernés (optionnels)
+    vehicule = models.ForeignKey('Vehicule', on_delete=models.CASCADE, null=True, blank=True)
+    chauffeur = models.ForeignKey('Chauffeur', on_delete=models.CASCADE, null=True, blank=True)
+    tournee = models.ForeignKey('Tournee', on_delete=models.CASCADE, null=True, blank=True)
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, null=True, blank=True)
+    
+    action_effectuee = models.CharField(max_length=50, blank=True, null=True, help_text="Action effectuée par l'agent (ex: COMPENSATION_AUTORISEE, REMBOURSE, REVISION_CONFIRMEE)")
+    commentaire_traitement = models.TextField(blank=True, null=True, help_text="Commentaire de l'agent lors du traitement")
+
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_traitement = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-date_creation']
+    
+    def __str__(self):
+        return f"{self.get_type_notification_display()} - {self.titre}"

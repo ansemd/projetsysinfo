@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Type de Service - {{ typeservice.type_service }}</title>
+</head>
+<body>
+    <h1>Détails du Type de Service</h1>
+    
+    <a href="{% url 'liste_typeservices' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_typeservice' typeservice.id %}"><button>Modifier</button></a>
+    <a href="{% url 'supprimer_typeservice' typeservice.id %}"><button>Supprimer</button></a>
+
+    <a href="{% url 'exporter_typeservice_detail_pdf' typeservice.id %}"><button style="background: #dc3545; color: white;">📄 Exporter Fiche PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations du type de service -->
+    <h2>Informations</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Type de Service</th>
+            <td><strong>{{ typeservice.get_type_service_display }}</strong></td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td>{{ typeservice.description|default:"Aucune description" }}</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Statistiques d'utilisation -->
+    <h2>Statistiques d'Utilisation</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Nombre d'expéditions</th>
+            <td><strong>{{ nb_expeditions }}</strong></td>
+        </tr>
+    </table>
+    
+    {% if nb_expeditions > 0 or nb_tarifications > 0 %}
+    <p style="color: orange; margin-top: 20px;">
+        ⚠️ <strong>Attention :</strong> Ce type de service est actuellement utilisé. 
+        La suppression sera impossible tant qu'il reste des expéditions ou tarifications associées.
+    </p>
+    {% endif %}
+    
+</body>
+</html>

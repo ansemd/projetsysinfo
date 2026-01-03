@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Types de Service</title>
+</head>
+<body>
+    <h1>Gestion des Types de Service</h1>
+    
+    <a href="{% url 'creer_typeservice' %}"><button>+ Nouveau Type</button></a>
+    <a href="{% url 'exporter_typeservices_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Liste des types de service -->
+    <h2>Liste des Types de Service ({{ typeservices.count }})</h2>
+    
+    {% if typeservices %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Type de Service</th>
+                <th>Description</th>
+                <th>Nb Expéditions</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ts in typeservices %}
+            <tr>
+                <td><strong>{{ ts.get_type_service_display }}</strong></td>
+                <td>{{ ts.description|truncatewords:15|default:"Aucune description" }}</td>
+                <td style="text-align: center;">{{ ts.expedition_set.count }}</td>
+                <td>
+                    <a href="{% url 'detail_typeservice' ts.id %}"><button>Détails</button></a>
+                    <a href="{% url 'modifier_typeservice' ts.id %}"><button>Modifier</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun type de service trouvé.</p>
+    {% endif %}
+    
+</body>
+</html>

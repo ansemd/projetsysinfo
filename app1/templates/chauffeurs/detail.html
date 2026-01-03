@@ -10,6 +10,8 @@
     <a href="{% url 'liste_chauffeurs' %}"><button>← Retour à la liste</button></a>
     <a href="{% url 'modifier_chauffeur' chauffeur.id %}"><button>Modifier</button></a>
     <a href="{% url 'supprimer_chauffeur' chauffeur.id %}"><button>Supprimer</button></a>
+
+    <a href="{% url 'exporter_chauffeur_detail_pdf' chauffeur.id %}"><button style="background: #dc3545; color: white;">📄 Exporter Fiche PDF</button></a>
     
     <hr>
     

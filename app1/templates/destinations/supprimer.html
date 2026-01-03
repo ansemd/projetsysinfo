@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Destination - {{ destination.ville }} {{ destination.wilaya }}</title>
+</head>
+<body>
+    <h1>Supprimer la destination</h1>
+    
+    <a href="{% url 'detail_destination' destination.id %}"><button>← Annuler</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="background: #ffcccc; padding: 20px; border: 2px solid #cc0000; margin: 20px 0;">
+        <h2 style="color: #cc0000;">⚠️ Attention : Suppression Définitive</h2>
+        
+        <p><strong>Êtes-vous sûr de vouloir supprimer cette destination ?</strong></p>
+        
+        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
+            <tr>
+                <th>Ville</th>
+                <td>{{ destination.ville|default:"-" }}</td>
+            </tr>
+            <tr>
+                <th>Wilaya</th>
+                <td>{{ destination.wilaya }}</td>
+            </tr>
+            <tr>
+                <th>Pays</th>
+                <td>{{ destination.pays }}</td>
+            </tr>
+            <tr>
+                <th>Zone Logistique</th>
+                <td>{{ destination.get_zone_logistique_display }}</td>
+            </tr>
+            <tr>
+                <th>Tarifications utilisant cette destination</th>
+                <td><strong>{{ nb_tarifications }}</strong></td>
+            </tr>
+            <tr>
+                <th>Expéditions utilisant cette destination</th>
+                <td><strong>{{ nb_expeditions }}</strong></td>
+            </tr>
+        </table>
+        
+        {% if nb_tarifications > 0 or nb_expeditions > 0 %}
+        <p style="color: #cc0000; background: #fff3cd; padding: 15px; border: 2px solid #ffc107;">
+            <strong>❌ SUPPRESSION IMPOSSIBLE !</strong><br>
+            Cette destination est actuellement utilisée par {{ nb_expeditions }} expédition(s) et {{ nb_tarifications }} tarification(s).
+            <br><br>
+            Vous devez d'abord supprimer ou modifier toutes les expéditions et tarifications associées.
+        </p>
+        {% else %}
+        <p style="color: #cc0000;"><strong>⚠️ Cette action est IRRÉVERSIBLE !</strong></p>
+        <p>Toutes les informations liées à cette destination seront supprimées définitivement.</p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" style="background: #cc0000; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                OUI, SUPPRIMER DÉFINITIVEMENT
+            </button>
+            <a href="{% url 'detail_destination' destination.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Non, annuler
+                </button>
+            </a>
+        </form>
+        {% endif %}
+    </div>
+    
+</body>
+</html>

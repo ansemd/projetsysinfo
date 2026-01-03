@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Tournée #{{ tournee.id }}</title>
+</head>
+<body>
+    <h1>Supprimer la Tournée #{{ tournee.id }}</h1>
+    
+    <a href="{% url 'detail_tournee' tournee.id %}"><button>← Annuler</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="background: #ffcccc; padding: 20px; border: 2px solid #cc0000; margin: 20px 0;">
+        <h2 style="color: #cc0000;">⚠️ Attention : Suppression Définitive</h2>
+        
+        <p><strong>Êtes-vous sûr de vouloir supprimer cette tournée ?</strong></p>
+        
+        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
+            <tr>
+                <th>ID Tournée</th>
+                <td>#{{ tournee.id }}</td>
+            </tr>
+            <tr>
+                <th>Chauffeur</th>
+                <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }}</td>
+            </tr>
+            <tr>
+                <th>Véhicule</th>
+                <td>{{ tournee.vehicule.numero_immatriculation }}</td>
+            </tr>
+            <tr>
+                <th>Date de départ</th>
+                <td>{{ tournee.date_depart|date:"d/m/Y à H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Zone</th>
+                <td>{{ tournee.get_zone_cible_display }}</td>
+            </tr>
+            <tr>
+                <th>Statut</th>
+                <td>{{ tournee.get_statut_display }}</td>
+            </tr>
+            <tr>
+                <th>Expéditions affectées</th>
+                <td><strong>{{ nb_expeditions }}</strong></td>
+            </tr>
+        </table>
+        
+        {% if tournee.statut != 'PREVUE' %}
+        <p style="color: #cc0000; background: #fff3cd; padding: 15px; border: 2px solid #ffc107;">
+            <strong>❌ SUPPRESSION IMPOSSIBLE !</strong><br>
+            Cette tournée est {{ tournee.get_statut_display }}.<br>
+            Seules les tournées PRÉVUES peuvent être supprimées.
+        </p>
+        {% elif nb_expeditions > 0 %}
+        <p style="color: orange; background: #fff3cd; padding: 15px; border: 2px solid #ffc107;">
+            <strong>⚠️ ATTENTION !</strong><br>
+            Cette tournée contient {{ nb_expeditions }} expédition(s).<br>
+            Si vous supprimez cette tournée, les expéditions seront libérées et devront être réaffectées.
+        </p>
+        
+        <p style="color: #cc0000;"><strong>⚠️ Cette action est IRRÉVERSIBLE !</strong></p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" style="background: #cc0000; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                OUI, SUPPRIMER DÉFINITIVEMENT
+            </button>
+            <a href="{% url 'detail_tournee' tournee.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Non, annuler
+                </button>
+            </a>
+        </form>
+        {% else %}
+        <p style="color: #cc0000;"><strong>⚠️ Cette action est IRRÉVERSIBLE !</strong></p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" style="background: #cc0000; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                OUI, SUPPRIMER DÉFINITIVEMENT
+            </button>
+            <a href="{% url 'detail_tournee' tournee.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Non, annuler
+                </button>
+            </a>
+        </form>
+        {% endif %}
+    </div>
+    
+</body>
+</html>

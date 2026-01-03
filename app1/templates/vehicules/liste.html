@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Véhicules</title>
+</head>
+<body>
+    <h1>Gestion des Véhicules</h1>
+    
+    <a href="{% url 'creer_vehicule' %}"><button>+ Nouveau Véhicule</button></a>
+    <a href="{% url 'exporter_vehicules_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total véhicules :</strong> {{ stats.total_vehicules }}</p>
+    <p><strong>Disponibles :</strong> {{ stats.disponibles }}</p>
+    <p><strong>En tournée :</strong> {{ stats.en_tournee }}</p>
+    <p><strong>En maintenance :</strong> {{ stats.en_maintenance }}</p>
+    <p><strong>Hors service :</strong> {{ stats.hors_service }}</p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche</h2>
+    <form method="GET">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Rechercher par immatriculation, marque, modèle..." 
+            value="{{ search }}"
+            size="50"
+        >
+        
+        <select name="statut">
+            <option value="">-- Tous les statuts --</option>
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if filtre_statut == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_vehicules' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste des véhicules -->
+    <h2>Liste des Véhicules ({{ vehicules.count }})</h2>
+    
+    {% if vehicules %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Immatriculation</th>
+                <th>Marque / Modèle</th>
+                <th>Type</th>
+                <th>Capacité</th>
+                <th>Kilométrage</th>
+                <th>Statut</th>
+                <th>Prochaine révision</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehicule in vehicules %}
+            <tr>
+                <td><strong>{{ vehicule.numero_immatriculation }}</strong></td>
+                <td>{{ vehicule.marque }} {{ vehicule.modele }}</td>
+                <td>{{ vehicule.get_type_vehicule_display }}</td>
+                <td>{{ vehicule.capacite_poids }} kg</td>
+                <td>{{ vehicule.kilometrage }} km</td>
+                <td>
+                    <!-- Statut modifiable inline -->
+                    <form method="POST" action="{% url 'modifier_statut_vehicule' vehicule.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <select name="statut" onchange="this.form.submit()">
+                            <option value="DISPONIBLE" {% if vehicule.statut == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
+                            <option value="EN_TOURNEE" {% if vehicule.statut == 'EN_TOURNEE' %}selected{% endif %}>En tournée</option>
+                            <option value="EN_MAINTENANCE" {% if vehicule.statut == 'EN_MAINTENANCE' %}selected{% endif %}>En maintenance</option>
+                            <option value="HORS_SERVICE" {% if vehicule.statut == 'HORS_SERVICE' %}selected{% endif %}>Hors service</option>
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    {% if vehicule.date_prochaine_revision %}
+                        {{ vehicule.date_prochaine_revision|date:"d/m/Y" }}
+                    {% else %}
+                        <span style="color: #999;">Non définie</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'detail_vehicule' vehicule.id %}"><button>Détails</button></a>
+                    <a href="{% url 'modifier_vehicule' vehicule.id %}"><button>Modifier</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun véhicule trouvé.</p>
+    {% endif %}
+    
+</body>
+</html>

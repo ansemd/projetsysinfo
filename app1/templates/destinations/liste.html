@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Destinations</title>
+</head>
+<body>
+    <h1>Gestion des Destinations</h1>
+    
+    <a href="{% url 'creer_destination' %}"><button>+ Nouvelle Destination</button></a>
+    <a href="{% url 'exporter_destinations_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total destinations :</strong> {{ stats.total_destinations }}</p>
+    <p><strong>Zone Centre :</strong> {{ stats.zone_centre }}</p>
+    <p><strong>Zone Est :</strong> {{ stats.zone_est }}</p>
+    <p><strong>Zone Ouest :</strong> {{ stats.zone_ouest }}</p>
+    <p><strong>Zone Sud :</strong> {{ stats.zone_sud }}</p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche</h2>
+    <form method="GET">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Rechercher par ville, wilaya, pays..." 
+            value="{{ search }}"
+            size="50"
+        >
+        
+        <select name="zone">
+            <option value="">-- Toutes les zones --</option>
+            {% for value, label in zones %}
+                <option value="{{ value }}" {% if zone_filtre == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_destinations' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste des destinations -->
+    <h2>Liste des Destinations ({{ destinations.count }})</h2>
+    
+    {% if destinations %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Ville</th>
+                <th>Wilaya</th>
+                <th>Pays</th>
+                <th>Zone Logistique</th>
+                <th>Distance (km)</th>
+                <th>Tarif Base (DA)</th>
+                <th>Délai (j)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for destination in destinations %}
+            <tr>
+                <td>{{ destination.ville|default:"-" }}</td>
+                <td><strong>{{ destination.wilaya }}</strong></td>
+                <td>{{ destination.pays }}</td>
+                <td>{{ destination.get_zone_logistique_display }}</td>
+                <td>{{ destination.distance_estimee }}</td>
+                <td>{{ destination.tarif_base|floatformat:2 }}</td>
+                <td>{{ destination.delai_livraison_estime }}</td>
+                <td>
+                    <a href="{% url 'detail_destination' destination.id %}"><button>Détails</button></a>
+                    <a href="{% url 'modifier_destination' destination.id %}"><button>Modifier</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune destination trouvée.</p>
+    {% endif %}
+    
+</body>
+</html>

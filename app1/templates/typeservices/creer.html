@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un Type de Service</title>
+</head>
+<body>
+    <h1>Créer un nouveau type de service</h1>
+    
+    <a href="{% url 'liste_typeservices' %}"><button>← Retour à la liste</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table>
+            <tr>
+                <td><label>Type de service *</label></td>
+                <td>
+                    {{ form.type_service }}
+                    <br><small>Ex: STANDARD, EXPRESS, INTERNATIONAL, CUSTOM...</small>
+                    {% if form.type_service.errors %}
+                        <br><span style="color: red;">{{ form.type_service.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Description</label></td>
+                <td>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <br><span style="color: red;">{{ form.description.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Créer le type de service</button>
+        <a href="{% url 'liste_typeservices' %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

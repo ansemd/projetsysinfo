@@ -11,6 +11,9 @@
     <a href="{% url 'modifier_client' client.id %}"><button>Modifier</button></a>
     <a href="{% url 'supprimer_client' client.id %}"><button>Supprimer</button></a>
     
+    <!-- AJOUTER CE BOUTON -->
+    <a href="{% url 'exporter_client_detail_pdf' client.id %}"><button style="background: #dc3545; color: white;">📄 Exporter Fiche PDF</button></a>
+    
     <hr>
     
     <!-- Messages -->

@@ -1,10 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.db.models import Q, Count, Sum
-from .models import Client, Chauffeur
+from django.http import HttpResponse
+from django.core.exceptions import ValidationError
+from django.db.models import Q, Count, Sum, Prefetch
+from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition
+from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm
+from .utils import generer_pdf_fiche, generer_pdf_liste
+from django.utils import timezone
 
 
-# ========== LISTE DES CLIENTS (PAGE PRINCIPALE) ==========
 def liste_clients(request):
     """
     Page principale : Liste de tous les clients avec recherche et statistiques
@@ -37,7 +41,12 @@ def liste_clients(request):
         'stats': stats,
     })
 
-# ========== DÉTAILS D'UN CLIENT ==========
+def exporter_clients_pdf(request):
+    clients = Client.objects.all()
+    headers = ['Id', 'Nom', 'Prénom', 'Téléphone', 'Solde']
+    data = [[f"CL-{c.id:03d}", c.nom, c.prenom, c.telephone, c.solde] for c in clients]
+    return generer_pdf_liste("Liste Clients", headers, data, "clients")
+
 def detail_client(request, client_id):
     """
     Affiche tous les détails d'un client + ses expéditions
@@ -66,37 +75,97 @@ def detail_client(request, client_id):
         'factures': factures,
     })
 
-# ========== CRÉER UN CLIENT ==========
+def exporter_client_detail_pdf(request, client_id):
+    client = get_object_or_404(Client, id=client_id)
+    
+    # Récupérer expéditions et factures
+    expeditions = client.expedition_set.all()
+    factures = Facture.objects.filter(client=client).order_by('-date_creation')[:5]
+    
+    # ========== UNE SEULE SECTION AVEC TOUS LES CHAMPS ==========
+    sections = [
+        {
+            'titre': 'Informations du Client',
+            'data': [
+                ['ID Client', f"CL-{client.id:03d}"],
+                ['Nom', client.nom],
+                ['Prénom', client.prenom],
+                ['Date de Naissance', client.date_naissance.strftime('%d/%m/%Y') if client.date_naissance else 'Non renseignée'],
+                ['Téléphone', client.telephone],
+                ['Email', client.email or 'Non renseigné'],
+                ['Adresse', client.adresse or 'Non renseignée'],
+                ['Ville', client.ville or 'Non renseignée'],
+                ['Wilaya', client.wilaya or 'Non renseignée'],
+                ['Solde', f"{client.solde:,.2f} DA"],
+                ['Date d\'inscription', client.date_inscription.strftime('%d/%m/%Y %H:%M')],
+                ['Dernière modification', client.date_modification.strftime('%d/%m/%Y %H:%M')],
+                ['Remarques', client.remarques or 'Aucune remarque'],
+            ]
+        }
+    ]
+    
+    # ========== Expéditions ==========
+    if expeditions.exists():
+        exp_headers = ['N° Expédition', 'Destination', 'Montant', 'Statut']
+        exp_data = [exp_headers]
+        
+        for exp in expeditions[:10]:
+            exp_data.append([
+                exp.get_numero_expedition(),
+                f"{exp.destination.ville}",
+                f"{exp.montant_total:,.2f} DA",
+                exp.get_statut_display()
+            ])
+        
+        sections.append({
+            'titre': f'Historique des Expéditions ({expeditions.count()})',
+            'data': exp_data
+        })
+    
+    # ========== Factures ==========
+    if factures.exists():
+        facture_headers = ['N° Facture', 'Date', 'Montant TTC', 'Statut']
+        facture_data = [facture_headers]
+        
+        for f in factures:
+            facture_data.append([
+                f.numero_facture,
+                f.date_creation.strftime('%d/%m/%Y'),
+                f"{f.montant_ttc:,.2f} DA",
+                f.get_statut_display()
+            ])
+        
+        sections.append({
+            'titre': 'Factures Récentes (5 dernières)',
+            'data': facture_data
+        })
+    
+    # Générer le PDF
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Client - {client.prenom} {client.nom}",
+        sections=sections,
+        nom_fichier_base=f"client_{client.id:03d}",
+        remarques=None  # Déjà dans la table
+    )
+
 def creer_client(request):
     """
     Formulaire de création d'un nouveau client
     """
     if request.method == 'POST':
-        try:
-            # Récupérer les données du formulaire
-            client = Client(
-                nom=request.POST['nom'],
-                prenom=request.POST['prenom'],
-                date_naissance=request.POST['date_naissance'],
-                telephone=request.POST['telephone'],
-                email=request.POST.get('email', ''),
-                adresse=request.POST.get('adresse', ''),
-                ville=request.POST.get('ville', ''),
-                wilaya=request.POST.get('wilaya', ''),
-                solde=request.POST.get('solde', 0.00),
-                remarques=request.POST.get('remarques', ''),
-            )
-            client.save()
-            
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            client = form.save()
             messages.success(request, f'Client {client.prenom} {client.nom} créé avec succès!')
             return redirect('detail_client', client_id=client.id)
-            
-        except Exception as e:
-            messages.error(request, f'Erreur lors de la création du client: {str(e)}')
+        else:
+            # Les erreurs sont automatiquement passées au template via form.errors
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = ClientForm()
     
-    return render(request, 'clients/creer.html')
+    return render(request, 'clients/creer.html', {'form': form})
 
-# ========== MODIFIER UN CLIENT ==========
 def modifier_client(request, client_id):
     """
     Formulaire de modification d'un client existant
@@ -104,33 +173,21 @@ def modifier_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
     
     if request.method == 'POST':
-        try:
-            # Mettre à jour les données du client
-            client.nom = request.POST['nom']
-            client.prenom = request.POST['prenom']
-            client.date_naissance = request.POST['date_naissance']
-            client.telephone = request.POST['telephone']
-            client.email = request.POST.get('email', '')
-            client.adresse = request.POST.get('adresse', '')
-            client.ville = request.POST.get('ville', '')
-            client.wilaya = request.POST.get('wilaya', '')
-            client.solde = request.POST.get('solde', 0.00)
-            client.remarques = request.POST.get('remarques', '')
-            
-            # La date_modification sera mise à jour automatiquement (auto_now=True)
-            client.save()
-            
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            client = form.save()
             messages.success(request, f'Client {client.prenom} {client.nom} modifié avec succès!')
             return redirect('detail_client', client_id=client.id)
-            
-        except Exception as e:
-            messages.error(request, f'Erreur lors de la modification: {str(e)}')
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = ClientForm(instance=client)
     
     return render(request, 'clients/modifier.html', {
+        'form': form,
         'client': client,
     })
 
-# ========== SUPPRIMER UN CLIENT ==========
 def supprimer_client(request, client_id):
     """
     Suppression d'un client (avec confirmation)
@@ -153,15 +210,12 @@ def supprimer_client(request, client_id):
         'client': client,
     })
 
-
-
-# ========== LISTE DES CHAUFFEURS (PAGE PRINCIPALE) ==========
 def liste_chauffeurs(request):
     """
     Page principale : Liste de tous les chauffeurs avec recherche et filtrage par statut
     """
     search = request.GET.get('search', '')
-    filtre_statut = request.GET.get('statut', '')  # Filtre par statut
+    filtre_statut = request.GET.get('statut', '')  
     
     # Base queryset
     chauffeurs = Chauffeur.objects.all()
@@ -208,7 +262,32 @@ def liste_chauffeurs(request):
         'stats': stats,
     })
 
-# ========== MODIFIER STATUT CHAUFFEUR (AJAX) ==========
+def exporter_chauffeurs_pdf(request):
+    """
+    Export PDF de la liste complète des chauffeurs
+    """
+    chauffeurs = Chauffeur.objects.all().order_by('nom', 'prenom')
+    
+    headers = ['ID', 'Nom', 'Prénom', 'Téléphone', 'Permis', 'Statut']
+    
+    data = []
+    for chauffeur in chauffeurs:
+        data.append([
+            f"CH-{chauffeur.id:03d}",
+            chauffeur.nom,
+            chauffeur.prenom,
+            chauffeur.telephone,
+            chauffeur.numero_permis,
+            chauffeur.get_statut_disponibilite_display()
+        ])
+    
+    return generer_pdf_liste(
+        titre_document="Liste des Chauffeurs",
+        headers=headers,
+        data_rows=data,
+        nom_fichier_base="chauffeurs"
+    )
+
 def modifier_statut_chauffeur(request, chauffeur_id):
     """
     Modifie uniquement le statut d'un chauffeur (appelé depuis la liste)
@@ -226,7 +305,6 @@ def modifier_statut_chauffeur(request, chauffeur_id):
     
     return redirect('liste_chauffeurs')
 
-# ========== DÉTAILS D'UN CHAUFFEUR ==========
 def detail_chauffeur(request, chauffeur_id):
     """
     Affiche tous les détails d'un chauffeur + sa tournée actuelle (EN_COURS ou PREVUE)
@@ -253,55 +331,84 @@ def detail_chauffeur(request, chauffeur_id):
         'stats_chauffeur': stats_chauffeur,
     })
 
-# ========== CRÉER UN CHAUFFEUR ==========
+def exporter_chauffeur_detail_pdf(request, chauffeur_id):
+    """
+    Export PDF de la fiche détaillée d'un chauffeur
+    """
+    chauffeur = get_object_or_404(Chauffeur, id=chauffeur_id)
+    
+    # Récupérer les tournées du chauffeur
+    tournees = chauffeur.tournee_set.all()
+    
+    # ========== UNE SEULE SECTION AVEC TOUS LES CHAMPS ==========
+    sections = [
+        {
+            'titre': 'Informations du Chauffeur',
+            'data': [
+                ['ID Chauffeur', f"CH-{chauffeur.id:03d}"],
+                ['Nom', chauffeur.nom],
+                ['Prénom', chauffeur.prenom],
+                ['Date de Naissance', chauffeur.date_naissance.strftime('%d/%m/%Y') if chauffeur.date_naissance else 'Non renseignée'],
+                ['Téléphone', chauffeur.telephone],
+                ['Email', chauffeur.email or 'Non renseigné'],
+                ['Adresse', chauffeur.adresse or 'Non renseignée'],
+                ['Numéro de Permis', chauffeur.numero_permis],
+                ['Date d\'obtention permis', chauffeur.date_obtention_permis.strftime('%d/%m/%Y') if chauffeur.date_obtention_permis else 'Non renseignée'],
+                ['Date d\'expiration permis', chauffeur.date_expiration_permis.strftime('%d/%m/%Y') if chauffeur.date_expiration_permis else 'Non renseignée'],
+                ['Date d\'embauche', chauffeur.date_embauche.strftime('%d/%m/%Y') if chauffeur.date_embauche else 'Non renseignée'],
+                ['Salaire', f"{chauffeur.salaire:,.2f} DA" if chauffeur.salaire else 'Non renseigné'],
+                ['Statut', chauffeur.get_statut_disponibilite_display()],
+                ['Date de création', chauffeur.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Dernière modification', chauffeur.date_modification.strftime('%d/%m/%Y %H:%M')],
+                ['Remarques', chauffeur.remarques or 'Aucune remarque'],
+            ]
+        }
+    ]
+    
+    # ========== Tournées ==========
+    if tournees.exists():
+        tournee_headers = ['Zone', 'Date Départ', 'Véhicule', 'Statut']
+        tournee_data = [tournee_headers]
+        
+        for t in tournees[:10]:  # Limiter à 10
+            tournee_data.append([
+                t.zone_cible,
+                t.date_depart.strftime('%d/%m/%Y %H:%M'),
+                t.vehicule.numero_immatriculation if t.vehicule else '-',
+                t.get_statut_display()
+            ])
+        
+        sections.append({
+            'titre': f'Historique des Tournées ({tournees.count()})',
+            'data': tournee_data
+        })
+    
+    # Générer le PDF
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Chauffeur - {chauffeur.prenom} {chauffeur.nom}",
+        sections=sections,
+        nom_fichier_base=f"chauffeur_{chauffeur.id:03d}",
+        remarques=None  # Déjà dans la table
+    )
+
 def creer_chauffeur(request):
     """
     Formulaire de création d'un nouveau chauffeur
     """
     if request.method == 'POST':
-        try:
-            from datetime import datetime
-            
-            # Récupérer et valider les dates
-            date_obtention = datetime.strptime(request.POST['date_obtention_permis'], '%Y-%m-%d').date()
-            date_expiration = datetime.strptime(request.POST['date_expiration_permis'], '%Y-%m-%d').date()
-            
-            # VALIDATION : date obtention doit être AVANT date expiration
-            if date_obtention >= date_expiration:
-                messages.error(
-                    request, 
-                    'Erreur : La date d\'obtention du permis doit être antérieure à la date d\'expiration !'
-                )
-                return render(request, 'chauffeurs/creer.html')
-            
-            chauffeur = Chauffeur(
-                nom=request.POST['nom'],
-                prenom=request.POST['prenom'],
-                date_naissance=request.POST['date_naissance'],
-                telephone=request.POST['telephone'],
-                email=request.POST.get('email', ''),
-                adresse=request.POST.get('adresse', ''),
-                ville=request.POST.get('ville', ''),
-                wilaya=request.POST.get('wilaya', ''),
-                numero_permis=request.POST['numero_permis'],
-                date_obtention_permis=date_obtention,
-                date_expiration_permis=date_expiration,
-                date_embauche=request.POST['date_embauche'],
-                salaire=request.POST.get('salaire', None),
-                statut_disponibilite=request.POST.get('statut_disponibilite', 'DISPONIBLE'),
-                remarques=request.POST.get('remarques', ''),
-            )
-            chauffeur.save()
-            
+        form = ChauffeurForm(request.POST)
+        if form.is_valid():
+            chauffeur = form.save()
             messages.success(request, f'Chauffeur {chauffeur.prenom} {chauffeur.nom} créé avec succès!')
             return redirect('detail_chauffeur', chauffeur_id=chauffeur.id)
-            
-        except Exception as e:
-            messages.error(request, f'Erreur lors de la création du chauffeur: {str(e)}')
+        else:
+            # Les erreurs sont automatiquement passées au template via form.errors
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = ChauffeurForm()
     
-    return render(request, 'chauffeurs/creer.html')
+    return render(request, 'chauffeurs/creer.html', {'form': form})
 
-# ========== MODIFIER UN CHAUFFEUR ==========
 def modifier_chauffeur(request, chauffeur_id):
     """
     Formulaire de modification d'un chauffeur existant
@@ -309,50 +416,21 @@ def modifier_chauffeur(request, chauffeur_id):
     chauffeur = get_object_or_404(Chauffeur, id=chauffeur_id)
     
     if request.method == 'POST':
-        try:
-            from datetime import datetime
-            
-            # Récupérer et valider les dates
-            date_obtention = datetime.strptime(request.POST['date_obtention_permis'], '%Y-%m-%d').date()
-            date_expiration = datetime.strptime(request.POST['date_expiration_permis'], '%Y-%m-%d').date()
-            
-            # VALIDATION : date obtention doit être AVANT date expiration
-            if date_obtention >= date_expiration:
-                messages.error(
-                    request, 
-                    'Erreur : La date d\'obtention du permis doit être antérieure à la date d\'expiration !'
-                )
-                return render(request, 'chauffeurs/modifier.html', {'chauffeur': chauffeur})
-            
-            chauffeur.nom = request.POST['nom']
-            chauffeur.prenom = request.POST['prenom']
-            chauffeur.date_naissance = request.POST['date_naissance']
-            chauffeur.telephone = request.POST['telephone']
-            chauffeur.email = request.POST.get('email', '')
-            chauffeur.adresse = request.POST.get('adresse', '')
-            chauffeur.ville = request.POST.get('ville', '')
-            chauffeur.wilaya = request.POST.get('wilaya', '')
-            chauffeur.numero_permis = request.POST['numero_permis']
-            chauffeur.date_obtention_permis = date_obtention
-            chauffeur.date_expiration_permis = date_expiration
-            chauffeur.date_embauche = request.POST['date_embauche']
-            chauffeur.salaire = request.POST.get('salaire', None)
-            chauffeur.statut_disponibilite = request.POST.get('statut_disponibilite', 'DISPONIBLE')
-            chauffeur.remarques = request.POST.get('remarques', '')
-            
-            chauffeur.save()
-            
+        form = ChauffeurForm(request.POST, instance=chauffeur)
+        if form.is_valid():
+            chauffeur = form.save()
             messages.success(request, f'Chauffeur {chauffeur.prenom} {chauffeur.nom} modifié avec succès!')
             return redirect('detail_chauffeur', chauffeur_id=chauffeur.id)
-            
-        except Exception as e:
-            messages.error(request, f'Erreur lors de la modification: {str(e)}')
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = ChauffeurForm(instance=chauffeur)
     
     return render(request, 'chauffeurs/modifier.html', {
+        'form': form,
         'chauffeur': chauffeur,
     })
 
-# ========== SUPPRIMER UN CHAUFFEUR ==========
 def supprimer_chauffeur(request, chauffeur_id):
     """
     Suppression d'un chauffeur (avec confirmation)
@@ -373,3 +451,1392 @@ def supprimer_chauffeur(request, chauffeur_id):
     return render(request, 'chauffeurs/supprimer.html', {
         'chauffeur': chauffeur,
     })
+
+def liste_vehicules(request):
+    """
+    Page principale : Liste de tous les véhicules avec recherche et filtrage par statut
+    """
+    search = request.GET.get('search', '')
+    filtre_statut = request.GET.get('statut', '')
+    
+    # Base queryset
+    vehicules = Vehicule.objects.all()
+    
+    # Recherche
+    if search:
+        vehicules = vehicules.filter(
+            Q(numero_immatriculation__icontains=search) | 
+            Q(marque__icontains=search) |
+            Q(modele__icontains=search)
+        )
+    
+    # Filtrage par statut
+    if filtre_statut:
+        vehicules = vehicules.filter(statut=filtre_statut)
+    
+    vehicules = vehicules.order_by('-date_creation')
+    
+    # Statistiques globales
+    stats = {
+        'total_vehicules': Vehicule.objects.count(),
+        'disponibles': Vehicule.objects.filter(statut='DISPONIBLE').count(),
+        'en_tournee': Vehicule.objects.filter(statut='EN_TOURNEE').count(),
+        'en_maintenance': Vehicule.objects.filter(statut='EN_MAINTENANCE').count(),
+        'hors_service': Vehicule.objects.filter(statut='HORS_SERVICE').count(),
+    }
+    
+    # Liste des statuts pour le filtre
+    statuts = [
+        ('DISPONIBLE', 'Disponible'),
+        ('EN_TOURNEE', 'En tournée'),
+        ('EN_MAINTENANCE', 'En maintenance'),
+        ('HORS_SERVICE', 'Hors service'),
+    ]
+    
+    return render(request, 'vehicules/liste.html', {
+        'vehicules': vehicules,
+        'search': search,
+        'filtre_statut': filtre_statut,
+        'statuts': statuts,
+        'stats': stats,
+    })
+
+def exporter_vehicules_pdf(request):
+    """
+    Export PDF de la liste complète des véhicules
+    """
+    vehicules = Vehicule.objects.all().order_by('numero_immatriculation')
+    
+    headers = ['Immatriculation', 'Marque', 'Modèle', 'Type', 'Capacité (kg)', 'Statut']
+    
+    data = []
+    for vehicule in vehicules:
+        data.append([
+            vehicule.numero_immatriculation,
+            vehicule.marque,
+            vehicule.modele,
+            vehicule.get_type_vehicule_display(),
+            str(vehicule.capacite_poids),
+            vehicule.get_statut_display()
+        ])
+    
+    return generer_pdf_liste(
+        titre_document="Liste des Véhicules",
+        headers=headers,
+        data_rows=data,
+        nom_fichier_base="vehicules"
+    )
+
+def modifier_statut_vehicule(request, vehicule_id):
+    """
+    Modifie uniquement le statut d'un véhicule (appelé depuis la liste)
+    """
+    if request.method == 'POST':
+        vehicule = get_object_or_404(Vehicule, id=vehicule_id)
+        nouveau_statut = request.POST.get('statut')
+        
+        if nouveau_statut in ['DISPONIBLE', 'EN_TOURNEE', 'EN_MAINTENANCE', 'HORS_SERVICE']:
+            vehicule.statut = nouveau_statut
+            vehicule.save()
+            messages.success(request, f'Statut du véhicule {vehicule.numero_immatriculation} modifié avec succès!')
+        else:
+            messages.error(request, 'Statut invalide')
+    
+    return redirect('liste_vehicules')
+
+def detail_vehicule(request, vehicule_id):
+    """
+    Affiche tous les détails d'un véhicule + sa tournée actuelle (EN_COURS ou PREVUE)
+    """
+    vehicule = get_object_or_404(Vehicule, id=vehicule_id)
+    
+    # Récupérer SEULEMENT la tournée actuelle (EN_COURS ou PREVUE)
+    tournee_actuelle = vehicule.tournee_set.filter(
+        statut__in=['EN_COURS', 'PREVUE']
+    ).order_by('-date_creation').first()
+    
+    # Statistiques du véhicule (toutes les tournées)
+    all_tournees = vehicule.tournee_set.all()
+    stats_vehicule = {
+        'total_tournees': all_tournees.count(),
+        'tournees_prevues': all_tournees.filter(statut='PREVUE').count(),
+        'tournees_en_cours': all_tournees.filter(statut='EN_COURS').count(),
+        'tournees_terminees': all_tournees.filter(statut='TERMINEE').count(),
+    }
+    
+    return render(request, 'vehicules/detail.html', {
+        'vehicule': vehicule,
+        'tournee_actuelle': tournee_actuelle,
+        'stats_vehicule': stats_vehicule,
+    })
+
+def exporter_vehicule_detail_pdf(request, vehicule_id):
+    """
+    Export PDF de la fiche détaillée d'un véhicule
+    """
+    vehicule = get_object_or_404(Vehicule, id=vehicule_id)
+    
+    # Récupérer les tournées du véhicule
+    tournees = vehicule.tournee_set.all()
+    
+    # ========== UNE SEULE SECTION AVEC TOUS LES CHAMPS ==========
+    sections = [
+        {
+            'titre': 'Informations du Véhicule',
+            'data': [
+                ['Immatriculation', vehicule.numero_immatriculation],
+                ['Marque', vehicule.marque],
+                ['Modèle', vehicule.modele],
+                ['Année', str(vehicule.annee) if vehicule.annee else 'Non renseignée'],
+                ['Type de véhicule', vehicule.get_type_vehicule_display()],
+                ['État', vehicule.get_etat_display()],
+                ['Statut', vehicule.get_statut_display()],
+                ['Date d\'acquisition', vehicule.date_acquisition.strftime('%d/%m/%Y')],
+                ['Capacité poids', f"{vehicule.capacite_poids} kg"],
+                ['Capacité volume', f"{vehicule.capacite_volume} m³" if vehicule.capacite_volume else 'Non renseignée'],
+                ['Consommation moyenne', f"{vehicule.consommation_moyenne} L/100km"],
+                ['Kilométrage', f"{vehicule.kilometrage} km"],
+                ['Dernière révision', vehicule.date_derniere_revision.strftime('%d/%m/%Y') if vehicule.date_derniere_revision else 'Aucune révision'],
+                ['Prochaine révision', vehicule.date_prochaine_revision.strftime('%d/%m/%Y') if vehicule.date_prochaine_revision else 'Non calculée'],
+                ['Date de création', vehicule.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Dernière modification', vehicule.date_modification.strftime('%d/%m/%Y %H:%M')],
+                ['Remarques', vehicule.remarques or 'Aucune remarque'],
+            ]
+        }
+    ]
+    
+    # ========== Tournées ==========
+    if tournees.exists():
+        tournee_headers = ['Zone', 'Date Départ', 'Chauffeur', 'Statut']
+        tournee_data = [tournee_headers]
+        
+        for t in tournees[:10]:  # Limiter à 10
+            tournee_data.append([
+                t.zone_cible,
+                t.date_depart.strftime('%d/%m/%Y %H:%M'),
+                f"{t.chauffeur.prenom} {t.chauffeur.nom}" if t.chauffeur else '-',
+                t.get_statut_display()
+            ])
+        
+        sections.append({
+            'titre': f'Historique des Tournées ({tournees.count()})',
+            'data': tournee_data
+        })
+    
+    # Générer le PDF
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Véhicule - {vehicule.numero_immatriculation}",
+        sections=sections,
+        nom_fichier_base=f"vehicule_{vehicule.numero_immatriculation}",
+        remarques=None  # Déjà dans la table
+    )
+
+def creer_vehicule(request):
+    if request.method == 'POST':
+        form = VehiculeForm(request.POST)
+        if form.is_valid():
+            vehicule = form.save()  
+            
+            messages.success(request, f'Véhicule {vehicule.numero_immatriculation} créé avec succès!')
+            return redirect('detail_vehicule', vehicule_id=vehicule.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = VehiculeForm()
+    
+    return render(request, 'vehicules/creer.html', {'form': form})
+
+def modifier_vehicule(request, vehicule_id):
+    vehicule = get_object_or_404(Vehicule, id=vehicule_id)
+    
+    if request.method == 'POST':
+        form = VehiculeForm(request.POST, instance=vehicule)
+        if form.is_valid():
+            vehicule = form.save() 
+            
+            messages.success(request, f'Véhicule {vehicule.numero_immatriculation} modifié avec succès!')
+            return redirect('detail_vehicule', vehicule_id=vehicule.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = VehiculeForm(instance=vehicule)
+    
+    return render(request, 'vehicules/modifier.html', {
+        'form': form,
+        'vehicule': vehicule,
+    })
+
+def supprimer_vehicule(request, vehicule_id):
+    """
+    Suppression d'un véhicule (avec confirmation)
+    """
+    vehicule = get_object_or_404(Vehicule, id=vehicule_id)
+    
+    if request.method == 'POST':
+        try:
+            numero = vehicule.numero_immatriculation
+            vehicule.delete()
+            messages.success(request, f'Véhicule {numero} supprimé avec succès!')
+            return redirect('liste_vehicules')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+            return redirect('detail_vehicule', vehicule_id=vehicule_id)
+    
+    return render(request, 'vehicules/supprimer.html', {
+        'vehicule': vehicule,
+    })
+
+def liste_typeservices(request):
+    """
+    Page principale : Liste de tous les types de service
+    """
+    typeservices = TypeService.objects.all().order_by('type_service')
+    
+    return render(request, 'typeservices/liste.html', {
+        'typeservices': typeservices,
+    })
+
+def exporter_typeservices_pdf(request):
+    """
+    Export PDF de la liste complète des types de service
+    """
+    typeservices = TypeService.objects.all().order_by('type_service')
+    
+    headers = ['Type de Service', 'Description', 'Expéditions', 'Tarifications']
+    
+    data = []
+    for ts in typeservices:
+        description = ts.description[:50] + '...' if ts.description and len(ts.description) > 50 else (ts.description or '-')
+        data.append([
+            ts.get_type_service_display(),
+            description,
+            str(ts.expedition_set.count()),
+            str(ts.tarification_set.count())
+        ])
+    
+    return generer_pdf_liste(
+        titre_document="Liste des Types de Service",
+        headers=headers,
+        data_rows=data,
+        nom_fichier_base="types_service"
+    )
+
+def detail_typeservice(request, typeservice_id):
+    """
+    Affiche tous les détails d'un type de service
+    + Nombre d'expéditions utilisant ce type
+    """
+    typeservice = get_object_or_404(TypeService, id=typeservice_id)
+    
+    # Statistiques
+    nb_expeditions = typeservice.expedition_set.count()
+    
+    return render(request, 'typeservices/detail.html', {
+        'typeservice': typeservice,
+        'nb_expeditions': nb_expeditions,
+    })
+
+def exporter_typeservice_detail_pdf(request, typeservice_id):
+    """
+    Export PDF de la fiche détaillée d'un type de service
+    """
+    typeservice = get_object_or_404(TypeService, id=typeservice_id)
+    
+    # Récupérer les expéditions et tarifications
+    expeditions = typeservice.expedition_set.all()
+    tarifications = typeservice.tarification_set.all()
+    
+    # ========== UNE SEULE SECTION AVEC TOUS LES CHAMPS ==========
+    sections = [
+        {
+            'titre': 'Informations du Type de Service',
+            'data': [
+                ['Type de Service', typeservice.get_type_service_display()],
+                ['Description', typeservice.description or 'Aucune description'],
+            ]
+        },
+        {
+            'titre': 'Statistiques d\'Utilisation',
+            'data': [
+                ['Nombre d\'expéditions', str(expeditions.count())],
+                ['Nombre de tarifications', str(tarifications.count())],
+            ]
+        }
+    ]
+    
+    # Générer le PDF
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Type de Service - {typeservice.get_type_service_display()}",
+        sections=sections,
+        nom_fichier_base=f"typeservice_{typeservice.type_service}",
+        remarques=None
+    )
+
+def creer_typeservice(request):
+    """
+    Formulaire de création d'un nouveau type de service
+    """
+    if request.method == 'POST':
+        form = TypeServiceForm(request.POST)
+        if form.is_valid():
+            typeservice = form.save()
+            messages.success(request, f'Type de service "{typeservice.type_service}" créé avec succès!')
+            return redirect('detail_typeservice', typeservice_id=typeservice.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = TypeServiceForm()
+    
+    return render(request, 'typeservices/creer.html', {'form': form})
+
+def modifier_typeservice(request, typeservice_id):
+    """
+    Formulaire de modification d'un type de service existant
+    """
+    typeservice = get_object_or_404(TypeService, id=typeservice_id)
+    
+    if request.method == 'POST':
+        form = TypeServiceForm(request.POST, instance=typeservice)
+        if form.is_valid():
+            typeservice = form.save()
+            messages.success(request, f'Type de service "{typeservice.type_service}" modifié avec succès!')
+            return redirect('detail_typeservice', typeservice_id=typeservice.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = TypeServiceForm(instance=typeservice)
+    
+    return render(request, 'typeservices/modifier.html', {
+        'form': form,
+        'typeservice': typeservice,
+    })
+
+def supprimer_typeservice(request, typeservice_id):
+    """
+    Suppression d'un type de service (avec validation)
+    ATTENTION : Ne pas supprimer si utilisé dans des expéditions ou tarifications
+    """
+    typeservice = get_object_or_404(TypeService, id=typeservice_id)
+    
+    # Vérifier si utilisé
+    nb_expeditions = typeservice.expedition_set.count()
+    nb_tarifications = typeservice.tarification_set.count()
+    
+    if request.method == 'POST':
+        try:
+            if nb_expeditions > 0:
+                raise ValidationError(
+                    f"Impossible de supprimer : {nb_expeditions} expédition(s) utilisent ce type de service."
+                )
+            
+            if nb_tarifications > 0:
+                raise ValidationError(
+                    f"Impossible de supprimer : {nb_tarifications} tarification(s) utilisent ce type de service."
+                )
+            
+            type_nom = typeservice.type_service
+            typeservice.delete()
+            messages.success(request, f'Type de service "{type_nom}" supprimé avec succès!')
+            return redirect('liste_typeservices')
+            
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('detail_typeservice', typeservice_id=typeservice_id)
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+            return redirect('detail_typeservice', typeservice_id=typeservice_id)
+    
+    return render(request, 'typeservices/supprimer.html', {
+        'typeservice': typeservice,
+        'nb_expeditions': nb_expeditions,
+        'nb_tarifications': nb_tarifications,
+    })
+
+def liste_destinations(request):
+    """
+    Liste de toutes les destinations avec recherche
+    """
+    search = request.GET.get('search', '')
+    zone = request.GET.get('zone', '')
+    
+    destinations = Destination.objects.all()
+    
+    if search:
+        destinations = destinations.filter(
+            Q(ville__icontains=search) |
+            Q(wilaya__icontains=search) |
+            Q(pays__icontains=search)
+        )
+    
+    if zone:
+        destinations = destinations.filter(zone_logistique=zone)
+    
+    destinations = destinations.order_by('wilaya', 'ville')
+    
+    # Stats
+    stats = {
+        'total_destinations': Destination.objects.count(),
+        'zone_centre': Destination.objects.filter(zone_logistique='CENTRE').count(),
+        'zone_est': Destination.objects.filter(zone_logistique='EST').count(),
+        'zone_ouest': Destination.objects.filter(zone_logistique='OUEST').count(),
+        'zone_sud': Destination.objects.filter(zone_logistique='SUD').count(),
+    }
+    
+    zones = [
+        ('CENTRE', 'Centre'),
+        ('EST', 'Est'),
+        ('OUEST', 'Ouest'),
+        ('SUD', 'Sud'),
+    ]
+    
+    return render(request, 'destinations/liste.html', {
+        'destinations': destinations,
+        'search': search,
+        'zone_filtre': zone,
+        'zones': zones,
+        'stats': stats,
+    })
+
+def exporter_destinations_pdf(request):
+    """
+    Export PDF de la liste complète des destinations
+    """
+    destinations = Destination.objects.all().order_by('wilaya', 'ville')
+    
+    headers = ['Ville', 'Wilaya', 'Zone', 'Distance (km)', 'Tarif Base (DA)', 'Délai (j)']
+    
+    data = []
+    for dest in destinations:
+        data.append([
+            dest.ville or '-',
+            dest.wilaya,
+            dest.get_zone_logistique_display(),
+            str(dest.distance_estimee),
+            f"{dest.tarif_base:,.2f}",
+            str(dest.delai_livraison_estime)
+        ])
+    
+    return generer_pdf_liste(
+        titre_document="Liste des Destinations",
+        headers=headers,
+        data_rows=data,
+        nom_fichier_base="destinations"
+    )
+
+def detail_destination(request, destination_id):
+    """
+    Détails d'une destination + statistiques
+    """
+    destination = get_object_or_404(Destination, id=destination_id)
+    
+    # Stats
+    nb_tarifications = destination.tarification_set.count()
+    nb_expeditions = destination.expedition_set.count()
+    
+    return render(request, 'destinations/detail.html', {
+        'destination': destination,
+        'nb_tarifications': nb_tarifications,
+        'nb_expeditions': nb_expeditions,
+    })
+
+def exporter_destination_detail_pdf(request, destination_id):
+    """
+    Export PDF de la fiche détaillée d'une destination
+    """
+    destination = get_object_or_404(Destination, id=destination_id)
+    
+    # Stats
+    nb_tarifications = destination.tarification_set.count()
+    nb_expeditions = destination.expedition_set.count()
+    
+    # Une seule section avec tous les champs
+    sections = [
+        {
+            'titre': 'Informations de la Destination',
+            'data': [
+                ['Ville', destination.ville or 'Non renseignée'],
+                ['Wilaya', destination.wilaya],
+                ['Pays', destination.pays],
+                ['Zone Géographique', destination.get_zone_geographique_display()],
+                ['Zone Logistique', destination.get_zone_logistique_display()],
+                ['Distance estimée', f"{destination.distance_estimee} km"],
+                ['Tarif de base', f"{destination.tarif_base:,.2f} DA"],
+                ['Délai de livraison estimé', f"{destination.delai_livraison_estime} jour(s)"],
+                ['Code postal', destination.code_postal or 'Non renseigné'],
+                ['Date de création', destination.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Dernière modification', destination.date_modification.strftime('%d/%m/%Y %H:%M')],
+                ['Remarques', destination.remarques or 'Aucune remarque'],
+            ]
+        },
+        {
+            'titre': 'Statistiques d\'Utilisation',
+            'data': [
+                ['Nombre de tarifications', str(nb_tarifications)],
+                ['Nombre d\'expéditions', str(nb_expeditions)],
+            ]
+        }
+    ]
+    
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Destination - {destination.ville} - {destination.wilaya}",
+        sections=sections,
+        nom_fichier_base=f"destination_{destination.id:03d}",
+        remarques=None
+    )
+
+def creer_destination(request):
+    """
+    Créer une nouvelle destination
+    """
+    if request.method == 'POST':
+        form = DestinationForm(request.POST)
+        if form.is_valid():
+            destination = form.save()
+            messages.success(request, f'Destination "{destination.ville} - {destination.wilaya}" créée avec succès!')
+            return redirect('detail_destination', destination_id=destination.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = DestinationForm()
+    
+    return render(request, 'destinations/creer.html', {'form': form})
+
+def modifier_destination(request, destination_id):
+    """
+    Modifier une destination existante
+    """
+    destination = get_object_or_404(Destination, id=destination_id)
+    
+    if request.method == 'POST':
+        form = DestinationForm(request.POST, instance=destination)
+        if form.is_valid():
+            destination = form.save()
+            messages.success(request, f'Destination "{destination.ville} - {destination.wilaya}" modifiée avec succès!')
+            return redirect('detail_destination', destination_id=destination.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = DestinationForm(instance=destination)
+    
+    return render(request, 'destinations/modifier.html', {
+        'form': form,
+        'destination': destination,
+    })
+
+def supprimer_destination(request, destination_id):
+    """
+    Supprimer une destination (avec validation)
+    """
+    destination = get_object_or_404(Destination, id=destination_id)
+    
+    # Vérifier si utilisée
+    nb_tarifications = destination.tarification_set.count()
+    nb_expeditions = destination.expedition_set.count()
+    
+    if request.method == 'POST':
+        try:
+            if nb_expeditions > 0:
+                messages.error(request, f"Impossible de supprimer : {nb_expeditions} expédition(s) utilisent cette destination.")
+                return redirect('detail_destination', destination_id=destination_id)
+            
+            if nb_tarifications > 0:
+                messages.error(request, f"Impossible de supprimer : {nb_tarifications} tarification(s) utilisent cette destination.")
+                return redirect('detail_destination', destination_id=destination_id)
+            
+            ville = destination.ville
+            wilaya = destination.wilaya
+            destination.delete()
+            messages.success(request, f'Destination "{ville} - {wilaya}" supprimée avec succès!')
+            return redirect('liste_destinations')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+            return redirect('detail_destination', destination_id=destination_id)
+    
+    return render(request, 'destinations/supprimer.html', {
+        'destination': destination,
+        'nb_tarifications': nb_tarifications,
+        'nb_expeditions': nb_expeditions,
+    })
+
+def liste_tarifications(request):
+    """
+    Liste de toutes les tarifications avec recherche et filtres
+    """
+    search = request.GET.get('search', '')
+    type_service_filter = request.GET.get('type_service', '')
+    zone_filter = request.GET.get('zone', '')
+    
+    tarifications = Tarification.objects.all().select_related('destination', 'type_service')
+    
+    if search:
+        tarifications = tarifications.filter(
+            Q(destination__ville__icontains=search) |
+            Q(destination__wilaya__icontains=search)
+        )
+    
+    if type_service_filter:
+        tarifications = tarifications.filter(type_service__type_service=type_service_filter)
+    
+    if zone_filter:
+        tarifications = tarifications.filter(destination__zone_logistique=zone_filter)
+    
+    tarifications = tarifications.order_by('destination__wilaya', 'destination__ville', 'type_service')
+    
+    # Stats
+    stats = {
+        'total_tarifications': Tarification.objects.count(),
+        'standard': Tarification.objects.filter(type_service__type_service='STANDARD').count(),
+        'express': Tarification.objects.filter(type_service__type_service='EXPRESS').count(),
+        'international': Tarification.objects.filter(type_service__type_service='INTERNATIONAL').count(),
+    }
+    
+    types_service = TypeService.objects.all()
+    zones = [
+        ('CENTRE', 'Centre'),
+        ('EST', 'Est'),
+        ('OUEST', 'Ouest'),
+        ('SUD', 'Sud'),
+    ]
+    
+    return render(request, 'tarifications/liste.html', {
+        'tarifications': tarifications,
+        'search': search,
+        'type_service_filter': type_service_filter,
+        'zone_filter': zone_filter,
+        'types_service': types_service,
+        'zones': zones,
+        'stats': stats,
+    })
+
+def exporter_tarifications_pdf(request):
+    """
+    Export PDF de la liste complète des tarifications
+    """
+    tarifications = Tarification.objects.all().select_related('destination', 'type_service').order_by('destination__wilaya')
+    
+    headers = ['Destination', 'Type Service', 'Tarif Poids (DA/kg)', 'Tarif Volume (DA/m³)', 'Délai (j)']
+    
+    data = []
+    for tarif in tarifications:
+        data.append([
+            f"{tarif.destination.ville} - {tarif.destination.wilaya}",
+            tarif.type_service.get_type_service_display(),
+            f"{tarif.tarif_poids:,.2f}",
+            f"{tarif.tarif_volume:,.2f}",
+            str(tarif.calculer_delai())
+        ])
+    
+    return generer_pdf_liste(
+        titre_document="Liste des Tarifications",
+        headers=headers,
+        data_rows=data,
+        nom_fichier_base="tarifications"
+    )
+
+def detail_tarification(request, tarification_id):
+    """
+    Détails d'une tarification + statistiques
+    """
+    tarification = get_object_or_404(Tarification, id=tarification_id)
+    
+    # Stats
+    nb_expeditions = tarification.destination.expedition_set.filter(
+        type_service=tarification.type_service
+    ).count()
+    
+    return render(request, 'tarifications/detail.html', {
+        'tarification': tarification,
+        'nb_expeditions': nb_expeditions,
+    })
+
+def exporter_tarification_detail_pdf(request, tarification_id):
+    """
+    Export PDF de la fiche détaillée d'une tarification
+    """
+    tarification = get_object_or_404(Tarification, id=tarification_id)
+    
+    # Stats
+    nb_expeditions = tarification.destination.expedition_set.filter(
+        type_service=tarification.type_service
+    ).count()
+    
+    # Une seule section avec tous les champs
+    sections = [
+        {
+            'titre': 'Informations de la Tarification',
+            'data': [
+                ['Destination', f"{tarification.destination.ville} - {tarification.destination.wilaya}"],
+                ['Pays', tarification.destination.pays],
+                ['Zone Logistique', tarification.destination.get_zone_logistique_display()],
+                ['Type de Service', tarification.type_service.get_type_service_display()],
+                ['Tarif Poids', f"{tarification.tarif_poids:,.2f} DA/kg"],
+                ['Tarif Volume', f"{tarification.tarif_volume:,.2f} DA/m³"],
+                ['Délai de livraison', f"{tarification.calculer_delai()} jour(s)"],
+            ]
+        },
+        {
+            'titre': 'Statistiques d\'Utilisation',
+            'data': [
+                ['Nombre d\'expéditions', str(nb_expeditions)],
+            ]
+        }
+    ]
+    
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Tarification - {tarification.destination.ville} - {tarification.type_service.get_type_service_display()}",
+        sections=sections,
+        nom_fichier_base=f"tarification_{tarification.id:03d}",
+        remarques=None
+    )
+
+def creer_tarification(request):
+    """
+    Créer une nouvelle tarification
+    """
+    if request.method == 'POST':
+        form = TarificationForm(request.POST)
+        if form.is_valid():
+            tarification = form.save()
+            messages.success(request, f'Tarification créée avec succès!')
+            return redirect('detail_tarification', tarification_id=tarification.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = TarificationForm()
+    
+    return render(request, 'tarifications/creer.html', {'form': form})
+
+def modifier_tarification(request, tarification_id):
+    """
+    Modifier une tarification existante
+    """
+    tarification = get_object_or_404(Tarification, id=tarification_id)
+    
+    if request.method == 'POST':
+        form = TarificationForm(request.POST, instance=tarification)
+        if form.is_valid():
+            tarification = form.save()
+            messages.success(request, f'Tarification modifiée avec succès!')
+            return redirect('detail_tarification', tarification_id=tarification.id)
+        else:
+            messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
+    else:
+        form = TarificationForm(instance=tarification)
+    
+    return render(request, 'tarifications/modifier.html', {
+        'form': form,
+        'tarification': tarification,
+    })
+
+def supprimer_tarification(request, tarification_id):
+    """
+    Supprimer une tarification (avec validation)
+    """
+    tarification = get_object_or_404(Tarification, id=tarification_id)
+    
+    # Vérifier si utilisée
+    nb_expeditions = tarification.destination.expedition_set.filter(
+        type_service=tarification.type_service
+    ).count()
+    
+    if request.method == 'POST':
+        try:
+            if nb_expeditions > 0:
+                messages.error(request, f"Impossible de supprimer : {nb_expeditions} expédition(s) utilisent cette tarification.")
+                return redirect('detail_tarification', tarification_id=tarification_id)
+            
+            tarification.delete()
+            messages.success(request, f'Tarification supprimée avec succès!')
+            return redirect('liste_tarifications')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+            return redirect('detail_tarification', tarification_id=tarification_id)
+    
+    return render(request, 'tarifications/supprimer.html', {
+        'tarification': tarification,
+        'nb_expeditions': nb_expeditions,
+    })
+
+def liste_tournees(request):
+    """
+    Liste des tournées avec recherche, filtres et statistiques
+    """
+    tournees = Tournee.objects.all().select_related('chauffeur', 'vehicule')
+    
+    # ========== RECHERCHE ==========
+    search = request.GET.get('search', '')
+    if search:
+        tournees = tournees.filter(
+            Q(chauffeur__nom__icontains=search) |
+            Q(chauffeur__prenom__icontains=search) |
+            Q(vehicule__numero_immatriculation__icontains=search)
+        )
+    
+    # ========== FILTRES ==========
+    statut_filter = request.GET.get('statut', '')
+    if statut_filter:
+        tournees = tournees.filter(statut=statut_filter)
+    
+    zone_filter = request.GET.get('zone', '')
+    if zone_filter:
+        tournees = tournees.filter(zone_cible=zone_filter)
+    
+    # ========== ANNOTATION : Nombre d'expéditions par tournée ==========
+    tournees = tournees.annotate(nb_expeditions=Count('expeditions'))
+    
+    tournees = tournees.order_by('-date_depart')
+    
+    # ========== STATISTIQUES ==========
+    stats = {
+        'total_tournees': Tournee.objects.count(),
+        'prevues': Tournee.objects.filter(statut='PREVUE').count(),
+        'en_cours': Tournee.objects.filter(statut='EN_COURS').count(),
+        'terminees': Tournee.objects.filter(statut='TERMINEE').count(),
+    }
+    
+    statuts = [
+        ('PREVUE', 'Prévue'),
+        ('EN_COURS', 'En cours'),
+        ('TERMINEE', 'Terminée'),
+    ]
+    
+    zones = [
+        ('CENTRE', 'Centre'),
+        ('EST', 'Est'),
+        ('OUEST', 'Ouest'),
+        ('SUD', 'Sud'),
+    ]
+    
+    return render(request, 'tournees/liste.html', {
+        'tournees': tournees,
+        'search': search,
+        'statut_filter': statut_filter,
+        'zone_filter': zone_filter,
+        'stats': stats,
+        'statuts': statuts,
+        'zones': zones,
+    })
+
+def exporter_tournees_pdf(request):
+    """
+    Exporte la liste de toutes les tournées en PDF
+    """
+    tournees = Tournee.objects.all().select_related('chauffeur', 'vehicule').order_by('-date_depart')
+    
+    headers = ['ID', 'Chauffeur', 'Véhicule', 'Date départ', 'Zone', 'Statut']
+    
+    data = [
+        [
+            f"#{t.id}",
+            f"{t.chauffeur.prenom} {t.chauffeur.nom}",
+            t.vehicule.numero_immatriculation,
+            t.date_depart.strftime('%d/%m/%Y %H:%M'),
+            t.get_zone_cible_display(),
+            t.get_statut_display()
+        ]
+        for t in tournees
+    ]
+    
+    return generer_pdf_liste("Liste des Tournées", headers, data, "tournees")
+
+def detail_tournee(request, tournee_id):
+    """
+    Détails d'une tournée + liste des expéditions affectées
+    """
+    tournee = get_object_or_404(
+        Tournee.objects.select_related('chauffeur', 'vehicule'),
+        id=tournee_id
+    )
+    
+    expeditions = tournee.expeditions.all().select_related(
+        'client', 'destination', 'type_service'
+    ).order_by('date_creation')
+    
+    stats_expeditions = {
+        'total': expeditions.count(),
+        'en_attente': expeditions.filter(statut='EN_ATTENTE').count(),
+        'en_transit': expeditions.filter(statut='EN_TRANSIT').count(),
+        'livrees': expeditions.filter(statut='LIVRE').count(),
+    }
+    
+    return render(request, 'tournees/detail.html', {
+        'tournee': tournee,
+        'expeditions': expeditions,
+        'stats_expeditions': stats_expeditions,
+    })
+
+def exporter_tournee_detail_pdf(request, tournee_id):
+    """
+    Exporte les détails d'une tournée en PDF
+    """
+    tournee = get_object_or_404(
+        Tournee.objects.select_related('chauffeur', 'vehicule'),
+        id=tournee_id
+    )
+    
+    # Récupérer les expéditions
+    expeditions = tournee.expeditions.all().select_related('client', 'destination', 'type_service')
+    
+    # ========== UNE SEULE SECTION AVEC TOUS LES CHAMPS ==========
+    sections = [
+        {
+            'titre': 'Informations de la Tournée',
+            'data': [
+                ['ID Tournée', f"#{tournee.id}"],
+                ['Chauffeur', f"{tournee.chauffeur.prenom} {tournee.chauffeur.nom} ({tournee.chauffeur.get_id_chauffeur()})"],
+                ['Téléphone chauffeur', str(tournee.chauffeur.telephone)],
+                ['Véhicule', f"{tournee.vehicule.marque} {tournee.vehicule.modele}"],
+                ['Immatriculation', tournee.vehicule.numero_immatriculation],
+                ['Date de départ', tournee.date_depart.strftime('%d/%m/%Y à %H:%M')],
+                ['Date retour prévue', tournee.date_retour_prevue.strftime('%d/%m/%Y à %H:%M') if tournee.date_retour_prevue else 'Non définie'],
+                ['Date retour réelle', tournee.date_retour_reelle.strftime('%d/%m/%Y à %H:%M') if tournee.date_retour_reelle else 'En cours'],
+                ['Zone cible', tournee.get_zone_cible_display()],
+                ['Statut', tournee.get_statut_display()],
+                ['Tournée privée (EXPRESS)', 'Oui' if tournee.est_privee else 'Non'],
+                ['Kilométrage départ', f"{tournee.kilometrage_depart} km" if tournee.kilometrage_depart else 'Non enregistré'],
+                ['Kilométrage arrivée', f"{tournee.kilometrage_arrivee} km" if tournee.kilometrage_arrivee else 'Non enregistré'],
+                ['Kilométrage parcouru', f"{tournee.kilometrage_parcouru} km" if tournee.kilometrage_parcouru else 'Non calculé'],
+                ['Consommation carburant', f"{tournee.consommation_carburant:.2f} L" if tournee.consommation_carburant else 'Non calculée'],
+                ['Date de création', tournee.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Remarques', tournee.remarques or 'Aucune remarque'],
+            ]
+        }
+    ]
+    
+    # ========== Expéditions affectées ==========
+    if expeditions.exists():
+        exp_headers = ['N° Expédition', 'Client', 'Destination', 'Type', 'Poids', 'Statut']
+        exp_data = [exp_headers]
+        
+        for exp in expeditions:
+            exp_data.append([
+                exp.get_numero_expedition(),
+                f"{exp.client.prenom} {exp.client.nom}",
+                f"{exp.destination.ville} - {exp.destination.wilaya}",
+                exp.type_service.get_type_service_display(),
+                f"{exp.poids} kg",
+                exp.get_statut_display()
+            ])
+        
+        sections.append({
+            'titre': f'Expéditions affectées ({expeditions.count()})',
+            'data': exp_data
+        })
+    
+    # Générer le PDF
+    return generer_pdf_fiche(
+        titre_document=f"Fiche Tournée #{tournee.id}",
+        sections=sections,
+        nom_fichier_base=f"tournee_{tournee.id}",
+        remarques=None  # Déjà dans la table
+    )
+
+def creer_tournee(request):
+    """
+    Création d'une tournée manuelle
+    """
+    if request.method == 'POST':
+        form = TourneeForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                # ✅ Pas de calcul de date_retour_prevue ici !
+                # C'est déjà géré dans utils.py TourneeService.traiter_tournee()
+                tournee = form.save()
+                
+                messages.success(request, f"Tournée #{tournee.id} créée avec succès !")
+                return redirect('detail_tournee', tournee_id=tournee.id)
+            
+            except Exception as e:
+                messages.error(request, f"Erreur lors de la création : {str(e)}")
+    else:
+        form = TourneeForm()
+    
+    return render(request, 'tournees/creer.html', {
+        'form': form,
+    })
+
+def modifier_tournee(request, tournee_id):
+    """
+    Modification d'une tournée (PREVUE uniquement)
+    """
+    tournee = get_object_or_404(Tournee, id=tournee_id)
+    
+    if tournee.statut != 'PREVUE':
+        messages.error(
+            request, 
+            f"Impossible de modifier : la tournée est {tournee.get_statut_display()}. "
+            "Seules les tournées PRÉVUES peuvent être modifiées."
+        )
+        return redirect('detail_tournee', tournee_id=tournee_id)
+    
+    if request.method == 'POST':
+        form = TourneeForm(request.POST, instance=tournee)
+        
+        if form.is_valid():
+            try:
+                # ✅ Pas de calcul ici non plus !
+                tournee = form.save()
+                
+                messages.success(request, f"Tournée #{tournee.id} modifiée avec succès !")
+                return redirect('detail_tournee', tournee_id=tournee.id)
+            
+            except Exception as e:
+                messages.error(request, f"Erreur lors de la modification : {str(e)}")
+    else:
+        form = TourneeForm(instance=tournee)
+    
+    return render(request, 'tournees/modifier.html', {
+        'form': form,
+        'tournee': tournee,
+    })
+
+def supprimer_tournee(request, tournee_id):
+    """
+    Suppression d'une tournée (PREVUE uniquement)
+    """
+    tournee = get_object_or_404(Tournee, id=tournee_id)
+    
+    nb_expeditions = tournee.expeditions.count()
+    
+    if request.method == 'POST':
+        try:
+            tournee.delete()
+            messages.success(request, f"Tournée #{tournee_id} supprimée avec succès")
+            return redirect('liste_tournees')
+        
+        except Exception as e:
+            messages.error(request, f"Erreur : {str(e)}")
+            return redirect('detail_tournee', tournee_id=tournee_id)
+    
+    return render(request, 'tournees/supprimer.html', {
+        'tournee': tournee,
+        'nb_expeditions': nb_expeditions,
+    })
+
+def terminer_tournee(request, tournee_id):
+    """
+    Permet de terminer manuellement une tournée EN_COURS
+    """
+    tournee = get_object_or_404(Tournee, id=tournee_id)
+    
+    if tournee.statut != 'EN_COURS':
+        messages.error(
+            request,
+            f"Impossible de terminer : la tournée est {tournee.get_statut_display()}. "
+            "Seules les tournées EN_COURS peuvent être terminées."
+        )
+        return redirect('detail_tournee', tournee_id=tournee_id)
+    
+    if request.method == 'POST':
+        try:
+            kilometrage_arrivee = request.POST.get('kilometrage_arrivee')
+            
+            if not kilometrage_arrivee:
+                messages.error(request, "Le kilométrage d'arrivée est obligatoire")
+                return redirect('detail_tournee', tournee_id=tournee_id)
+            
+            tournee.kilometrage_arrivee = int(kilometrage_arrivee)
+            tournee.date_retour_reelle = timezone.now()
+            tournee.statut = 'TERMINEE'
+            tournee.save()
+            
+            messages.success(request, f"Tournée #{tournee.id} terminée avec succès !")
+            return redirect('detail_tournee', tournee_id=tournee.id)
+        
+        except Exception as e:
+            messages.error(request, f"Erreur : {str(e)}")
+            return redirect('detail_tournee', tournee_id=tournee_id)
+    
+    return render(request, 'tournees/terminer.html', {
+        'tournee': tournee,
+    })
+
+def liste_expeditions(request):
+    """
+    Liste des expéditions avec recherche et filtres
+    """
+    expeditions = Expedition.objects.all().select_related(
+        'client', 'destination', 'type_service', 'tournee'
+    )
+    
+    # Recherche
+    search = request.GET.get('search', '')
+    if search:
+        expeditions = expeditions.filter(
+            Q(client__nom__icontains=search) |
+            Q(client__prenom__icontains=search) |
+            Q(destination__ville__icontains=search) |
+            Q(destination__wilaya__icontains=search) |
+            Q(nom_destinataire__icontains=search)
+        )
+    
+    # Filtres
+    statut_filter = request.GET.get('statut', '')
+    if statut_filter:
+        expeditions = expeditions.filter(statut=statut_filter)
+    
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        expeditions = expeditions.filter(type_service__type_service=type_filter)
+    
+    expeditions = expeditions.order_by('-date_creation')
+    
+    # Stats
+    stats = {
+        'total': Expedition.objects.count(),
+        'en_attente': Expedition.objects.filter(statut='EN_ATTENTE').count(),
+        'en_transit': Expedition.objects.filter(statut='EN_TRANSIT').count(),
+        'livrees': Expedition.objects.filter(statut='LIVRE').count(),
+    }
+    
+    statuts = [
+        ('EN_ATTENTE', 'En attente'),
+        ('EN_TRANSIT', 'En transit'),
+        ('LIVRE', 'Livré'),
+        ('ECHEC', 'Échec'),
+    ]
+    
+    types = [
+        ('STANDARD', 'Standard'),
+        ('EXPRESS', 'Express'),
+        ('INTERNATIONAL', 'International'),
+    ]
+    
+    return render(request, 'expeditions/liste.html', {
+        'expeditions': expeditions,
+        'search': search,
+        'statut_filter': statut_filter,
+        'type_filter': type_filter,
+        'stats': stats,
+        'statuts': statuts,
+        'types': types,
+    })
+
+def exporter_expeditions_pdf(request):
+    """Export PDF liste expéditions"""
+    expeditions = Expedition.objects.all().select_related(
+        'client', 'destination', 'type_service'
+    ).order_by('-date_creation')
+    
+    headers = ['N° Exp', 'Client', 'Destination', 'Type', 'Poids', 'Statut']
+    data = [
+        [
+            e.get_numero_expedition(),
+            f"{e.client.prenom} {e.client.nom}",
+            f"{e.destination.ville} - {e.destination.wilaya}",
+            e.type_service.get_type_service_display(),
+            f"{e.poids} kg",
+            e.get_statut_display()
+        ]
+        for e in expeditions
+    ]
+    
+    return generer_pdf_liste("Liste des Expéditions", headers, data, "expeditions")
+
+def detail_expedition(request, expedition_id):
+    """
+    Détails d'une expédition + table tracking détaillée dessous
+    """
+    expedition = get_object_or_404(
+        Expedition.objects.select_related(
+            'client', 'destination', 'type_service', 'tournee'
+        ),
+        id=expedition_id
+    )
+    
+    # ✅ Récupérer TOUT l'historique de tracking pour affichage en table
+    trackings = expedition.suivis.all().order_by('-date_heure')
+    
+    return render(request, 'expeditions/detail.html', {
+        'expedition': expedition,
+        'trackings': trackings,
+    })
+
+def exporter_expedition_detail_pdf(request, expedition_id):
+    """Export PDF détail expédition avec tracking"""
+    expedition = get_object_or_404(
+        Expedition.objects.select_related('client', 'destination', 'type_service', 'tournee'),
+        id=expedition_id
+    )
+    trackings = expedition.suivis.all().order_by('-date_heure')
+    
+    # Section principale
+    sections = [
+        {
+            'titre': 'Informations de l\'Expédition',
+            'data': [
+                ['N° Expédition', expedition.get_numero_expedition()],
+                ['Client', f"{expedition.client.prenom} {expedition.client.nom}"],
+                ['Téléphone client', str(expedition.client.telephone)],
+                ['Destination', f"{expedition.destination.ville} - {expedition.destination.wilaya}"],
+                ['Pays', expedition.destination.pays],
+                ['Type de service', expedition.type_service.get_type_service_display()],
+                ['Destinataire', expedition.nom_destinataire],
+                ['Téléphone destinataire', str(expedition.telephone_destinataire)],
+                ['Email destinataire', expedition.email_destinataire],
+                ['Adresse destinataire', expedition.adresse_destinataire],
+                ['Poids', f"{expedition.poids} kg"],
+                ['Volume', f"{expedition.volume} m³" if expedition.volume else 'Non spécifié'],
+                ['Montant total', f"{expedition.montant_total:,.2f} DA"],
+                ['Statut', expedition.get_statut_display()],
+                ['Tournée', expedition.tournee.get_numero_tournee() if expedition.tournee else 'Aucune tournée affectée'],
+                ['Date livraison prévue', expedition.date_livraison_prevue.strftime('%d/%m/%Y') if expedition.date_livraison_prevue else 'Non calculée'],
+                ['Date livraison réelle', expedition.date_livraison_reelle.strftime('%d/%m/%Y') if expedition.date_livraison_reelle else '-'],
+                ['Date création', expedition.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Description', expedition.description or 'Aucune description'],
+                ['Remarques', expedition.remarques or 'Aucune remarque'],
+            ]
+        }
+    ]
+    
+    # Historique tracking
+    if trackings.exists():
+        tracking_data = [['Date/Heure', 'Statut', 'Commentaire']]
+        for t in trackings:
+            tracking_data.append([
+                t.date_heure.strftime('%d/%m/%Y %H:%M'),
+                t.get_statut_etape_display(),
+                t.commentaire or '-'
+            ])
+        
+        sections.append({
+            'titre': f'Historique de suivi ({trackings.count()} étapes)',
+            'data': tracking_data
+        })
+    
+    return generer_pdf_fiche(
+        f"Fiche Expédition - {expedition.get_numero_expedition()}",
+        sections,
+        f"expedition_{expedition.id}",
+        remarques=None  # Déjà dans la table
+    )
+
+def creer_expedition(request):
+    if request.method == 'POST':
+        form = ExpeditionForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                expedition = form.save()
+                messages.success(request, f"Expédition {expedition.get_numero_expedition()} créée avec succès !")
+                return redirect('detail_expedition', expedition_id=expedition.id)
+            
+            except Exception as e:
+                messages.error(request, f"Erreur : {str(e)}")
+    else:
+        form = ExpeditionForm()
+    
+    return render(request, 'expeditions/creer.html', {
+        'form': form,
+    })
+
+def modifier_expedition(request, expedition_id):
+    """
+    Modification d'une expédition (EN_ATTENTE uniquement)
+    """
+    expedition = get_object_or_404(Expedition, id=expedition_id)
+    
+    # Validation : Seules les expéditions EN_ATTENTE peuvent être modifiées
+    if expedition.statut not in ['EN_ATTENTE']:
+        messages.error(
+            request,
+            f"Impossible de modifier : l'expédition est {expedition.get_statut_display()}. "
+            "Seules les expéditions EN_ATTENTE peuvent être modifiées."
+        )
+        return redirect('detail_expedition', expedition_id=expedition_id)
+    
+    if request.method == 'POST':
+        form = ExpeditionForm(request.POST, instance=expedition)
+        
+        if form.is_valid():
+            try:
+                expedition = form.save()
+                messages.success(request, f"Expédition {expedition.get_numero_expedition()} modifiée avec succès !")
+                return redirect('detail_expedition', expedition_id=expedition.id)
+            
+            except Exception as e:
+                messages.error(request, f"Erreur : {str(e)}")
+    else:
+        form = ExpeditionForm(instance=expedition)
+    
+    return render(request, 'expeditions/modifier.html', {
+        'form': form,
+        'expedition': expedition,
+    })
+
+def supprimer_expedition(request, expedition_id):
+    """
+    Suppression d'une expédition
+    La logique de validation est dans le signal pre_delete
+    """
+    expedition = get_object_or_404(Expedition, id=expedition_id)
+    
+    if request.method == 'POST':
+        try:
+            # Le signal pre_delete va gérer toute la logique
+            expedition.delete()
+            messages.success(request, f"Expédition {expedition.get_numero_expedition()} supprimée avec succès")
+            return redirect('liste_expeditions')
+        
+        except Exception as e:
+            messages.error(request, f"Erreur : {str(e)}")
+            return redirect('detail_expedition', expedition_id=expedition_id)
+    
+    return render(request, 'expeditions/supprimer.html', {
+        'expedition': expedition,
+    })
+
+def liste_trackings(request):
+    """
+    Vue globale : Liste de TOUTES les expéditions avec :
+    - Expédition
+    - Tournée affectée
+    - Statut de la tournée
+    - Dernier statut de l'expédition
+    - Date/heure du dernier statut
+    
+    Clic sur une ligne → Redirige vers detail_expedition (qui a table tracking dessous)
+    """
+    # Récupérer toutes les expéditions avec leurs relations
+    expeditions = Expedition.objects.all().select_related(
+        'client',
+        'destination',
+        'tournee',
+        'tournee__chauffeur',
+        'tournee__vehicule'
+    ).prefetch_related(
+        # Précharger seulement le dernier tracking de chaque expédition
+        Prefetch(
+            'suivis',
+            queryset=TrackingExpedition.objects.order_by('-date_heure')[:1],
+            to_attr='dernier_tracking_list'
+        )
+    ).order_by('-date_creation')
+    
+    # Construire les données pour le template
+    expeditions_data = []
+    for exp in expeditions:
+        # Récupérer le dernier tracking (premier élément de la liste préchargée)
+        dernier_tracking = exp.dernier_tracking_list[0] if exp.dernier_tracking_list else None
+        
+        expeditions_data.append({
+            'expedition': exp,
+            'tournee': exp.tournee,
+            'statut_tournee': exp.tournee.get_statut_display() if exp.tournee else '-',
+            'dernier_tracking': dernier_tracking,
+        })
+    
+    return render(request, 'trackings/liste.html', {
+        'expeditions_data': expeditions_data,
+    })
+
+def detail_tracking(request, expedition_id):
+    """
+    Redirige vers la page de détails de l'expédition
+    (qui contient la table tracking détaillée en dessous)
+    """
+    return redirect('detail_expedition', expedition_id=expedition_id)

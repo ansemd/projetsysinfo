@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer une Tarification</title>
+</head>
+<body>
+    <h1>Créer une nouvelle tarification</h1>
+    
+    <a href="{% url 'liste_tarifications' %}"><button>← Retour à la liste</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h2>Sélection</h2>
+        <table>
+            <tr>
+                <td><label>Destination *</label></td>
+                <td>
+                    {{ form.destination }}
+                    {% if form.destination.errors %}
+                        <br><span style="color: red;">{{ form.destination.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Type de Service *</label></td>
+                <td>
+                    {{ form.type_service }}
+                    {% if form.type_service.errors %}
+                        <br><span style="color: red;">{{ form.type_service.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Tarifs</h2>
+        <table>
+            <tr>
+                <td><label>Tarif Poids (DA/kg) *</label></td>
+                <td>
+                    {{ form.tarif_poids }}
+                    {% if form.tarif_poids.errors %}
+                        <br><span style="color: red;">{{ form.tarif_poids.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Tarif Volume (DA/m³) *</label></td>
+                <td>
+                    {{ form.tarif_volume }}
+                    {% if form.tarif_volume.errors %}
+                        <br><span style="color: red;">{{ form.tarif_volume.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Créer la tarification</button>
+        <a href="{% url 'liste_tarifications' %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

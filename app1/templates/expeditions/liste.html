@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Expéditions</title>
+</head>
+<body>
+    <h1>Gestion des Expéditions</h1>
+    
+    <a href="{% url 'creer_expedition' %}"><button>+ Nouvelle Expédition</button></a>
+    <a href="{% url 'exporter_expeditions_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total expéditions :</strong> {{ stats.total }}</p>
+    <p><strong>En attente :</strong> {{ stats.en_attente }}</p>
+    <p><strong>En transit :</strong> {{ stats.en_transit }}</p>
+    <p><strong>Livrées :</strong> {{ stats.livrees }}</p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche</h2>
+    <form method="GET">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Rechercher par client, destination, destinataire..." 
+            value="{{ search }}"
+            size="50"
+        >
+        
+        <select name="statut">
+            <option value="">-- Tous les statuts --</option>
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if statut_filter == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <select name="type">
+            <option value="">-- Tous les types --</option>
+            {% for value, label in types %}
+                <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_expeditions' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste des expéditions -->
+    <h2>Liste des Expéditions ({{ expeditions.count }})</h2>
+    
+    {% if expeditions %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Expédition</th>
+                <th>Client</th>
+                <th>Destination</th>
+                <th>Destinataire</th>
+                <th>Type</th>
+                <th>Poids</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in expeditions %}
+            <tr>
+                <td><strong>{{ exp.get_numero_expedition }}</strong></td>
+                <td>{{ exp.client.prenom }} {{ exp.client.nom }}</td>
+                <td>{{ exp.destination.ville }} - {{ exp.destination.wilaya }}</td>
+                <td>{{ exp.nom_destinataire }}</td>
+                <td>{{ exp.type_service.get_type_service_display }}</td>
+                <td>{{ exp.poids }} kg</td>
+                <td>
+                    {% if exp.statut == 'EN_ATTENTE' %}
+                        <span style="color: blue;">⏱️ {{ exp.get_statut_display }}</span>
+                    {% elif exp.statut == 'EN_TRANSIT' %}
+                        <span style="color: orange;">🚚 {{ exp.get_statut_display }}</span>
+                    {% elif exp.statut == 'LIVRE' %}
+                        <span style="color: green;">✅ {{ exp.get_statut_display }}</span>
+                    {% else %}
+                        <span style="color: red;">❌ {{ exp.get_statut_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'detail_expedition' exp.id %}"><button>Détails</button></a>
+                    {% if exp.statut == 'EN_ATTENTE' %}
+                        <a href="{% url 'modifier_expedition' exp.id %}"><button>Modifier</button></a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune expédition trouvée.</p>
+    {% endif %}
+    
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Terminer Tournée #{{ tournee.id }}</title>
+</head>
+<body>
+    <h1>Terminer la Tournée #{{ tournee.id }}</h1>
+    
+    <a href="{% url 'detail_tournee' tournee.id %}"><button>← Annuler</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="background: #d4edda; padding: 20px; border: 2px solid #28a745; margin: 20px 0;">
+        <h2 style="color: #28a745;">✅ Terminer la tournée</h2>
+        
+        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
+            <tr>
+                <th>ID Tournée</th>
+                <td>#{{ tournee.id }}</td>
+            </tr>
+            <tr>
+                <th>Chauffeur</th>
+                <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }}</td>
+            </tr>
+            <tr>
+                <th>Véhicule</th>
+                <td>{{ tournee.vehicule.numero_immatriculation }}</td>
+            </tr>
+            <tr>
+                <th>Date de départ</th>
+                <td>{{ tournee.date_depart|date:"d/m/Y à H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Kilométrage de départ</th>
+                <td>{{ tournee.kilometrage_depart }} km</td>
+            </tr>
+        </table>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            
+            <h3>Informations de fin de tournée</h3>
+            <table>
+                <tr>
+                    <td><label><strong>Kilométrage d'arrivée (obligatoire) :</strong></label></td>
+                    <td>
+                        <input type="number" name="kilometrage_arrivee" required min="{{ tournee.kilometrage_depart }}" step="1">
+                        km
+                        <br><small style="color: gray;">Doit être supérieur à {{ tournee.kilometrage_depart }} km</small>
+                    </td>
+                </tr>
+            </table>
+            
+            <br>
+            
+            <p style="color: #28a745;">
+                <strong>ℹ️ Actions automatiques lors de la clôture :</strong>
+            </p>
+            <ul>
+                <li>Le kilométrage parcouru sera calculé automatiquement</li>
+                <li>La consommation de carburant sera estimée</li>
+                <li>Le chauffeur et le véhicule seront remis DISPONIBLES</li>
+                <li>Toutes les expéditions EN_TRANSIT seront marquées LIVRÉES</li>
+                <li>Le kilométrage du véhicule sera mis à jour</li>
+            </ul>
+            
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                ✅ Terminer la tournée
+            </button>
+            <a href="{% url 'detail_tournee' tournee.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Annuler
+                </button>
+            </a>
+        </form>
+    </div>
+    
+</body>
+</html>

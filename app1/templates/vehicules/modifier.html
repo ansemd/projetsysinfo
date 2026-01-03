@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Véhicule - {{ vehicule.numero_immatriculation }}</title>
+</head>
+<body>
+    <h1>Modifier le véhicule {{ vehicule.numero_immatriculation }}</h1>
+    
+    <a href="{% url 'detail_vehicule' vehicule.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h2>Informations générales</h2>
+        <table>
+            <tr>
+                <td><label>Numéro d'immatriculation *</label></td>
+                <td>
+                    {{ form.numero_immatriculation }}
+                    {% if form.numero_immatriculation.errors %}
+                        <br><span style="color: red;">{{ form.numero_immatriculation.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Marque *</label></td>
+                <td>
+                    {{ form.marque }}
+                    {% if form.marque.errors %}
+                        <br><span style="color: red;">{{ form.marque.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Modèle *</label></td>
+                <td>
+                    {{ form.modele }}
+                    {% if form.modele.errors %}
+                        <br><span style="color: red;">{{ form.modele.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Année</label></td>
+                <td>
+                    {{ form.annee }}
+                    {% if form.annee.errors %}
+                        <br><span style="color: red;">{{ form.annee.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Type de véhicule *</label></td>
+                <td>
+                    {{ form.type_vehicule }}
+                    {% if form.type_vehicule.errors %}
+                        <br><span style="color: red;">{{ form.type_vehicule.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>État *</label></td>
+                <td>
+                    {{ form.etat }}
+                    {% if form.etat.errors %}
+                        <br><span style="color: red;">{{ form.etat.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Statut *</label></td>
+                <td>
+                    {{ form.statut }}
+                    {% if form.statut.errors %}
+                        <br><span style="color: red;">{{ form.statut.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Date d'acquisition *</label></td>
+                <td>
+                    {{ form.date_acquisition }}
+                    {% if form.date_acquisition.errors %}
+                        <br><span style="color: red;">{{ form.date_acquisition.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Capacités</h2>
+        <table>
+            <tr>
+                <td><label>Capacité poids (kg) *</label></td>
+                <td>
+                    {{ form.capacite_poids }}
+                    {% if form.capacite_poids.errors %}
+                        <br><span style="color: red;">{{ form.capacite_poids.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Capacité volume (m³)</label></td>
+                <td>
+                    {{ form.capacite_volume }}
+                    {% if form.capacite_volume.errors %}
+                        <br><span style="color: red;">{{ form.capacite_volume.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Consommation (L/100km) *</label></td>
+                <td>
+                    {{ form.consommation_moyenne }}
+                    {% if form.consommation_moyenne.errors %}
+                        <br><span style="color: red;">{{ form.consommation_moyenne.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Kilométrage actuel (km) *</label></td>
+                <td>
+                    {{ form.kilometrage }}
+                    {% if form.kilometrage.errors %}
+                        <br><span style="color: red;">{{ form.kilometrage.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Maintenance</h2>
+        
+        <!-- Prochaine révision en READONLY -->
+        {% if vehicule.date_prochaine_revision %}
+        <p style="background: #ffffcc; padding: 10px; border: 1px solid #ffcc00;">
+            <strong>Prochaine révision prévue :</strong> {{ vehicule.date_prochaine_revision|date:"d/m/Y" }}
+        </p>
+        {% endif %}
+        
+        <table>
+            <tr>
+                <td><label>Date dernière révision</label></td>
+                <td>
+                    {{ form.date_derniere_revision }}
+                    <br><small>Si vous modifiez cette date, la prochaine révision sera recalculée automatiquement (+180 jours)</small>
+                    {% if form.date_derniere_revision.errors %}
+                        <br><span style="color: red;">{{ form.date_derniere_revision.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <h2>Remarques</h2>
+        <table>
+            <tr>
+                <td><label>Remarques</label></td>
+                <td>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                        <br><span style="color: red;">{{ form.remarques.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Enregistrer les modifications</button>
+        <a href="{% url 'detail_vehicule' vehicule.id %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>

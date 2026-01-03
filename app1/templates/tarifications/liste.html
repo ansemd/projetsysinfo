@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Tarifications</title>
+</head>
+<body>
+    <h1>Gestion des Tarifications</h1>
+    
+    <a href="{% url 'creer_tarification' %}"><button>+ Nouvelle Tarification</button></a>
+    <a href="{% url 'exporter_tarifications_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total tarifications :</strong> {{ stats.total_tarifications }}</p>
+    <p><strong>Standard :</strong> {{ stats.standard }}</p>
+    <p><strong>Express :</strong> {{ stats.express }}</p>
+    <p><strong>International :</strong> {{ stats.international }}</p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche</h2>
+    <form method="GET">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Rechercher par ville, wilaya..." 
+            value="{{ search }}"
+            size="40"
+        >
+        
+        <select name="type_service">
+            <option value="">-- Tous les types --</option>
+            {% for ts in types_service %}
+                <option value="{{ ts.type_service }}" {% if type_service_filter == ts.type_service %}selected{% endif %}>
+                    {{ ts.get_type_service_display }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <select name="zone">
+            <option value="">-- Toutes les zones --</option>
+            {% for value, label in zones %}
+                <option value="{{ value }}" {% if zone_filter == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_tarifications' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste des tarifications -->
+    <h2>Liste des Tarifications ({{ tarifications.count }})</h2>
+    
+    {% if tarifications %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Destination</th>
+                <th>Type Service</th>
+                <th>Tarif Poids (DA/kg)</th>
+                <th>Tarif Volume (DA/m³)</th>
+                <th>Délai (j)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tarif in tarifications %}
+            <tr>
+                <td><strong>{{ tarif.destination.ville }} - {{ tarif.destination.wilaya }}</strong></td>
+                <td>{{ tarif.type_service.get_type_service_display }}</td>
+                <td>{{ tarif.tarif_poids|floatformat:2 }}</td>
+                <td>{{ tarif.tarif_volume|floatformat:2 }}</td>
+                <td>{{ tarif.calculer_delai }}</td>
+                <td>
+                    <a href="{% url 'detail_tarification' tarif.id %}"><button>Détails</button></a>
+                    <a href="{% url 'modifier_tarification' tarif.id %}"><button>Modifier</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune tarification trouvée.</p>
+    {% endif %}
+    
+</body>
+</html>

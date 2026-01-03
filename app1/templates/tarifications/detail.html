@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Tarification</title>
+</head>
+<body>
+    <h1>Détails de la Tarification</h1>
+    
+    <a href="{% url 'liste_tarifications' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_tarification' tarification.id %}"><button>Modifier</button></a>
+    <a href="{% url 'supprimer_tarification' tarification.id %}"><button>Supprimer</button></a>
+    <a href="{% url 'exporter_tarification_detail_pdf' tarification.id %}"><button style="background: #dc3545; color: white;">📄 Exporter Fiche PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations de la tarification -->
+    <h2>Informations de la Tarification</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Destination</th>
+            <td><strong>{{ tarification.destination.ville }} - {{ tarification.destination.wilaya }}</strong></td>
+        </tr>
+        <tr>
+            <th>Pays</th>
+            <td>{{ tarification.destination.pays }}</td>
+        </tr>
+        <tr>
+            <th>Zone Logistique</th>
+            <td>{{ tarification.destination.get_zone_logistique_display }}</td>
+        </tr>
+        <tr>
+            <th>Type de Service</th>
+            <td><strong>{{ tarification.type_service.get_type_service_display }}</strong></td>
+        </tr>
+        <tr>
+            <th>Tarif Poids</th>
+            <td>{{ tarification.tarif_poids|floatformat:2 }} DA/kg</td>
+        </tr>
+        <tr>
+            <th>Tarif Volume</th>
+            <td>{{ tarification.tarif_volume|floatformat:2 }} DA/m³</td>
+        </tr>
+        <tr>
+            <th>Délai de livraison</th>
+            <td>{{ tarification.calculer_delai }} jour(s)</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Statistiques -->
+    <h2>Statistiques d'Utilisation</h2>
+    <p><strong>Nombre d'expéditions :</strong> {{ nb_expeditions }}</p>
+    
+    {% if nb_expeditions > 0 %}
+    <p style="color: orange; margin-top: 20px;">
+        ⚠️ <strong>Attention :</strong> Cette tarification est actuellement utilisée. 
+        La suppression sera impossible tant qu'il reste des expéditions associées.
+    </p>
+    {% endif %}
+    
+</body>
+</html>

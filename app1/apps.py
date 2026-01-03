@@ -8,3 +8,5 @@ class App1Config(AppConfig):
     def ready(self):
         # Importer les signals pour qu'ils soient actifs
         import app1.signals
+        from .scheduler import demarrer_scheduler
+        demarrer_scheduler()

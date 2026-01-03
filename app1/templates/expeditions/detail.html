@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Expédition - {{ expedition.get_numero_expedition }}</title>
+</head>
+<body>
+    <h1>Détails de l'Expédition {{ expedition.get_numero_expedition }}</h1>
+    
+    <a href="{% url 'liste_expeditions' %}"><button>← Retour à la liste</button></a>
+    {% if expedition.statut == 'EN_ATTENTE' %}
+        <a href="{% url 'modifier_expedition' expedition.id %}"><button>Modifier</button></a>
+        <a href="{% url 'supprimer_expedition' expedition.id %}"><button>Supprimer</button></a>
+    {% endif %}
+    <a href="{% url 'exporter_expedition_detail_pdf' expedition.id %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations de l'expédition -->
+    <h2>Informations de l'Expédition</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>N° Expédition</th>
+            <td><strong>{{ expedition.get_numero_expedition }}</strong></td>
+        </tr>
+        <tr>
+            <th>Client</th>
+            <td>{{ expedition.client.prenom }} {{ expedition.client.nom }} ({{ expedition.client }})</td>
+        </tr>
+        <tr>
+            <th>Téléphone client</th>
+            <td>{{ expedition.client.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Destination</th>
+            <td>{{ expedition.destination.ville }} - {{ expedition.destination.wilaya }}, {{ expedition.destination.pays }}</td>
+        </tr>
+        <tr>
+            <th>Type de service</th>
+            <td><strong>{{ expedition.type_service.get_type_service_display }}</strong></td>
+        </tr>
+        <tr>
+            <th>Destinataire</th>
+            <td>{{ expedition.nom_destinataire }}</td>
+        </tr>
+        <tr>
+            <th>Téléphone destinataire</th>
+            <td>{{ expedition.telephone_destinataire }}</td>
+        </tr>
+        <tr>
+            <th>Email destinataire</th>
+            <td>{{ expedition.email_destinataire }}</td>
+        </tr>
+        <tr>
+            <th>Adresse destinataire</th>
+            <td>{{ expedition.adresse_destinataire }}</td>
+        </tr>
+        <tr>
+            <th>Poids</th>
+            <td>{{ expedition.poids }} kg</td>
+        </tr>
+        <tr>
+            <th>Volume</th>
+            <td>{{ expedition.volume|default:"Non spécifié" }} m³</td>
+        </tr>
+        <tr>
+            <th>Montant total</th>
+            <td><strong>{{ expedition.montant_total|floatformat:2 }} DA</strong></td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>
+                {% if expedition.statut == 'EN_ATTENTE' %}
+                    <span style="color: blue;">⏱️ {{ expedition.get_statut_display }}</span>
+                {% elif expedition.statut == 'EN_TRANSIT' %}
+                    <span style="color: orange;">🚚 {{ expedition.get_statut_display }}</span>
+                {% elif expedition.statut == 'LIVRE' %}
+                    <span style="color: green;">✅ {{ expedition.get_statut_display }}</span>
+                {% else %}
+                    <span style="color: red;">❌ {{ expedition.get_statut_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Tournée</th>
+            <td>
+                {% if expedition.tournee %}
+                    <a href="{% url 'detail_tournee' expedition.tournee.id %}">
+                        {{ expedition.tournee.get_numero_tournee }}
+                    </a>
+                {% else %}
+                    Aucune tournée affectée
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date livraison prévue</th>
+            <td>{{ expedition.date_livraison_prevue|date:"d/m/Y"|default:"Non calculée" }}</td>
+        </tr>
+        {% if expedition.date_livraison_reelle %}
+        <tr>
+            <th>Date livraison réelle</th>
+            <td>{{ expedition.date_livraison_reelle|date:"d/m/Y" }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Date de création</th>
+            <td>{{ expedition.date_creation|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% if expedition.description %}
+        <tr>
+            <th>Description</th>
+            <td>{{ expedition.description }}</td>
+        </tr>
+        {% endif %}
+        {% if expedition.remarques %}
+        <tr>
+            <th>Remarques</th>
+            <td>{{ expedition.remarques }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!--  TABLE TRACKING DÉTAILLÉE DESSOUS -->
+    <h2>📍 Historique de Suivi (Tracking)</h2>
+    
+    {% if trackings %}
+    <table border="1" cellpadding="10" style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Date et Heure</th>
+                <th>Statut</th>
+                <th>Commentaire</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tracking in trackings %}
+            <tr>
+                <td>{{ tracking.date_heure|date:"d/m/Y à H:i" }}</td>
+                <td>
+                    <strong>{{ tracking.get_statut_etape_display }}</strong>
+                </td>
+                <td>{{ tracking.commentaire|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: orange;">⚠️ Aucun historique de suivi disponible</p>
+    {% endif %}
+    
+</body>
+</html>

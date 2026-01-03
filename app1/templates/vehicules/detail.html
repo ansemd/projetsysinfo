@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Véhicule - {{ vehicule.numero_immatriculation }}</title>
+</head>
+<body>
+    <h1>Détails du Véhicule</h1>
+    
+    <a href="{% url 'liste_vehicules' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_vehicule' vehicule.id %}"><button>Modifier</button></a>
+    <a href="{% url 'supprimer_vehicule' vehicule.id %}"><button>Supprimer</button></a>
+
+    <a href="{% url 'exporter_vehicule_detail_pdf' vehicule.id %}"><button style="background: #dc3545; color: white;">📄 Exporter Fiche PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations du véhicule -->
+    <h2>Informations du Véhicule</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Immatriculation</th>
+            <td><strong>{{ vehicule.numero_immatriculation }}</strong></td>
+        </tr>
+        <tr>
+            <th>Marque</th>
+            <td>{{ vehicule.marque }}</td>
+        </tr>
+        <tr>
+            <th>Modèle</th>
+            <td>{{ vehicule.modele }}</td>
+        </tr>
+        <tr>
+            <th>Année</th>
+            <td>{{ vehicule.annee|default:"Non renseignée" }}</td>
+        </tr>
+        <tr>
+            <th>Type de véhicule</th>
+            <td>{{ vehicule.get_type_vehicule_display }}</td>
+        </tr>
+        <tr>
+            <th>État</th>
+            <td>{{ vehicule.get_etat_display }}</td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>{{ vehicule.get_statut_display }}</td>
+        </tr>
+        <tr>
+            <th>Date d'acquisition</th>
+            <td>{{ vehicule.date_acquisition|date:"d/m/Y" }}</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Capacités -->
+    <h2>Capacités et Consommation</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Capacité poids</th>
+            <td><strong>{{ vehicule.capacite_poids }}</strong> kg</td>
+        </tr>
+        <tr>
+            <th>Capacité volume</th>
+            <td>{{ vehicule.capacite_volume|default:"Non définie" }} m³</td>
+        </tr>
+        <tr>
+            <th>Consommation moyenne</th>
+            <td>{{ vehicule.consommation_moyenne }} L/100km</td>
+        </tr>
+        <tr>
+            <th>Kilométrage actuel</th>
+            <td><strong>{{ vehicule.kilometrage }}</strong> km</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Maintenance -->
+    <h2>Informations de Maintenance</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Dernière révision</th>
+            <td>
+                {% if vehicule.date_derniere_revision %}
+                    {{ vehicule.date_derniere_revision|date:"d/m/Y" }}
+                {% else %}
+                    <span style="color: #999;">Aucune révision enregistrée</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Prochaine révision</th>
+            <td>
+                {% if vehicule.date_prochaine_revision %}
+                    <strong>{{ vehicule.date_prochaine_revision|date:"d/m/Y" }}</strong>
+                {% else %}
+                    <span style="color: #999;">Non calculée</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Tournée actuelle -->
+    {% if tournee_actuelle %}
+    <h2>Tournée Actuelle</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Zone</th>
+            <td>{{ tournee_actuelle.zone_cible }}</td>
+        </tr>
+        <tr>
+            <th>Chauffeur</th>
+            <td>{{ tournee_actuelle.chauffeur.prenom }} {{ tournee_actuelle.chauffeur.nom }}</td>
+        </tr>
+        <tr>
+            <th>Date de départ</th>
+            <td>{{ tournee_actuelle.date_depart|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>{{ tournee_actuelle.get_statut_display }}</td>
+        </tr>
+    </table>
+    {% else %}
+    <p><em>Aucune tournée en cours ou prévue</em></p>
+    {% endif %}
+    
+    <hr>
+    
+    <!-- Statistiques tournées -->
+    <h2>Statistiques des Tournées</h2>
+    <p><strong>Total tournées :</strong> {{ stats_vehicule.total_tournees }}</p>
+    <p><strong>Prévues :</strong> {{ stats_vehicule.tournees_prevues }}</p>
+    <p><strong>En cours :</strong> {{ stats_vehicule.tournees_en_cours }}</p>
+    <p><strong>Terminées :</strong> {{ stats_vehicule.tournees_terminees }}</p>
+    
+    <!-- Remarques -->
+    {% if vehicule.remarques %}
+    <hr>
+    <h2>Remarques</h2>
+    <p>{{ vehicule.remarques }}</p>
+    {% endif %}
+    
+</body>
+</html>
