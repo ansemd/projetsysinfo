@@ -1,0 +1,15 @@
+{% block title %}Analyse Commerciale{% endblock %}
+
+{% block content %}
+<h2>Analyse Commerciale – {{ annee }}</h2>
+
+<ul class="list-group mb-4">
+    {% for client in top_clients %}
+        <li class="list-group-item">
+            {{ client.nom }} – {{ client.total }} DA
+        </li>
+    {% empty %}
+        <li class="list-group-item">Aucune donnée</li>
+    {% endfor %}
+</ul>
+{% endblock %}

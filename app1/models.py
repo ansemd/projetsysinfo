@@ -382,6 +382,9 @@ class Incident(models.Model):
     photo2 = models.ImageField(upload_to='incidents/photos/', blank=True, null=True)
     alerte_direction = models.BooleanField(default=False, help_text="Alerter la direction")
     alerte_client = models.BooleanField(default=False, help_text="Alerter le client")
+    remboursement_effectue = models.BooleanField(default=False, help_text="Remboursement effectué au client")
+    montant_rembourse = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Montant remboursé en DA")
+    taux_remboursement = models.DecimalField(max_digits=5, decimal_places=2, default=100.00,help_text="Pourcentage de remboursement (0-100%)")
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     remarques = models.TextField(blank=True, null=True)
@@ -418,7 +421,7 @@ class Incident(models.Model):
             IncidentService.traiter_nouvel_incident(self)
 
     def clean(self):
-        if self.Expedition and self.tournee:
+        if self.expedition and self.tournee:
          raise ValidationError(
             "Un incident ne peut pas être lié à une expédition ET une tournée."
         )
@@ -427,6 +430,28 @@ class Incident(models.Model):
          raise ValidationError(
             "Un incident doit être lié soit à une expédition soit à une tournée."
         )
+
+class HistoriqueIncident(models.Model):
+    
+    incident = models.ForeignKey(
+        'Incident', 
+        on_delete=models.CASCADE, 
+        related_name='historique'
+    )
+    date_action = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=100, help_text="Type d'action effectuée")
+    auteur = models.CharField(max_length=100, help_text="Qui a effectué l'action")
+    details = models.TextField(blank=True, null=True)
+    ancien_statut = models.CharField(max_length=20, blank=True, null=True)
+    nouveau_statut = models.CharField(max_length=20, blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-date_action']
+        verbose_name = "Historique d'incident"
+        verbose_name_plural = "Historiques d'incidents"
+    
+    def __str__(self):
+        return f"{self.incident.numero_incident} - {self.action} - {self.date_action.strftime('%d/%m/%Y %H:%M')}"
 
 
 class Reclamation(models.Model):

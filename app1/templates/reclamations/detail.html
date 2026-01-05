@@ -1,0 +1,31 @@
+<div class="card mt-4">
+    <div class="card-header">
+        <h3>📜 Historique</h3>
+    </div>
+    <div class="card-body">
+        <div class="timeline">
+            {% for entry in historique %}
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <p class="timeline-date">{{ entry.date_action|date:"d/m/Y H:i" }}</p>
+                    <h5>{{ entry.action }}</h5>
+                    <p><strong>Par:</strong> {{ entry.auteur }}</p>
+                    {% if entry.details %}
+                    <p class="text-muted">{{ entry.details }}</p>
+                    {% endif %}
+                    {% if entry.ancien_statut %}
+                    <p>
+                        <span class="badge bg-secondary">{{ entry.ancien_statut }}</span>
+                        →
+                        <span class="badge bg-primary">{{ entry.nouveau_statut }}</span>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">Aucun historique disponible</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>

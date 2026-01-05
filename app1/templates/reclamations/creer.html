@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Créer réclamation{% endblock %}
+
+{% block content %}
+<h2>Créer une réclamation</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <select name="client_id" class="form-control mb-2" required>
+        <option value="">-- Client --</option>
+        {% for c in clients %}
+            <option value="{{ c.id }}">{{ c }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="type_reclamation" class="form-control mb-2">
+        {% for key, label in types %}
+            <option value="{{ key }}">{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="nature" class="form-control mb-2">
+        {% for key, label in natures %}
+            <option value="{{ key }}">{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <input name="objet" class="form-control mb-2" placeholder="Objet" required>
+
+    <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
+
+    <button class="btn btn-primary">Créer</button>
+</form>
+{% endblock %}

@@ -1,0 +1,10 @@
+# ==================== STATS & KPI ====================
+
+path('stats/', views.statistiques_kpi, name='stats_kpi'),
+
+# ===== API STATS =====
+path('api/stats-generales/', views.api_stats_generales, name='api_stats_generales'),
+path('api/kpi-expeditions/', views.api_kpi_expeditions, name='api_kpi_expeditions'),
+path('api/kpi-financiers/', views.api_kpi_financiers, name='api_kpi_financiers'),
+path('api/kpi-operationnels/', views.api_kpi_operationnels, name='api_kpi_operationnels'),
+path('api/kpi-qualite/', views.api_kpi_qualite, name='api_kpi_qualite'),

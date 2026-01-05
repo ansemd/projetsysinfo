@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Créer un incident</h2>
+
+<form method="post" enctype="multipart/form-data"></form>
+    {% csrf_token %}
+
+    <input class="form-control mb-2" name="titre" placeholder="Titre" required>
+    <textarea class="form-control mb-2" name="description" placeholder="Description"></textarea>
+
+    <select class="form-control mb-2" name="type_incident">
+        {% for key, val in types %}
+            <option value="{{ key }}">{{ val }}</option>
+        {% endfor %}
+    </select>
+
+    <input class="form-control mb-2" name="signale_par" placeholder="Signalé par">
+
+    <button class="btn btn-primary">Créer</button>
+</form>
+
+{% endblock %}

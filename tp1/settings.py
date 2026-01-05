@@ -125,6 +125,10 @@ PHONENUMBER_DEFAULT_REGION = 'DZ'
 PHONENUMBER_DB_FORMAT = 'INTERNATIONAL'
 DEFAULT_FROM_EMAIL = 'Transport & Livraison <noreply@transport.dz>'
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DEFAULT_FROM_EMAIL = 'Transport & Livraison <noreply@transport.dz>'
+
 EMAIL_DIRECTION = [
     'direction@transport.dz',
     'chef.operations@transport.dz',
@@ -137,7 +141,6 @@ EMAIL_SUPPORT = [
 ]
 
 SITE_URL = 'http://localhost:8000' 
-
 
 LOGGING = {
     'version': 1,

@@ -1,0 +1,31 @@
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2>Tableau de bord – {{ annee_selectionnee }}</h2>
+
+<form method="get" class="mb-3">
+    <select name="annee" class="form-select w-25 d-inline">
+        {% for a in annees_disponibles %}
+            <option value="{{ a }}" {% if a == annee_selectionnee %}selected{% endif %}>
+                {{ a }}
+            </option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-primary">Filtrer</button>
+</form>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-3 mb-3">
+            <h5>Évolution Expéditions</h5>
+            <p>{{ stats.evolution_expeditions.taux_evolution }} %</p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3 mb-3">
+            <h5>Chiffre d’Affaires</h5>
+            <p>{{ stats.evolution_ca.taux_evolution }} %</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

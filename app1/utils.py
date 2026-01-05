@@ -174,7 +174,7 @@ class ExpeditionService:
         
         if not chauffeur or not vehicule:
             raise ValidationError(
-                "⚠️ Aucune tournée compatible et aucun chauffeur/véhicule disponible. "
+                "Aucune tournée compatible et aucun chauffeur/véhicule disponible. "
                 "L'expédition sera créée sans tournée. Veuillez l'affecter manuellement plus tard."
             )
         
@@ -691,26 +691,47 @@ class FacturationService:
 # ========== SECTION 4 : SERVICES INCIDENTS ==========
 
 class IncidentService:
-    """
-    Service gérant toutes les opérations liées aux incidents :
-    - Création et traitement des incidents
-    - Mise à jour automatique des statuts d'expéditions
-    - Génération d'alertes
-    - Statistiques et analyses
-    """
+   
+    TAUX_REMBOURSEMENT = {
+        'PERTE': 100.00,              # 100% - Colis perdu
+        'ENDOMMAGEMENT': 80.00,       # 80% - Colis endommagé
+        'ACCIDENT': 100.00,           # 100% - Accident grave
+        'PROBLEME_TECHNIQUE': 50.00,  # 50% - Problème technique
+        'RETARD': 20.00,              # 20% - Retard (compensation)
+        'REFUS_DESTINATAIRE': 0.00,   # 0% - Refus (pas la faute de l'entreprise)
+        'ADRESSE_INCORRECTE': 0.00,   # 0% - Erreur client
+        'DESTINATAIRE_ABSENT': 0.00,  # 0% - Absence client
+        'AUTRE': 0.00,                # 0% - À évaluer au cas par cas
+    }
+    
+    # Types d'incidents nécessitant une annulation automatique
+    INCIDENTS_GRAVES_ANNULATION = ['PERTE', 'ENDOMMAGEMENT', 'PROBLEME_TECHNIQUE', 'ACCIDENT']
+    
+    # Types d'incidents nécessitant un remboursement (avec ou sans annulation)
+    INCIDENTS_AVEC_REMBOURSEMENT = ['PERTE', 'ENDOMMAGEMENT', 'ACCIDENT', 'PROBLEME_TECHNIQUE', 'RETARD']
     
     @staticmethod
     def traiter_nouvel_incident(incident):
         """
-        Traite un nouvel incident : mise à jour des statuts, alertes, etc.
+        Traite un nouvel incident : mise à jour statuts + emails + historique + remboursement
         """
-        from .models import TrackingExpedition
+        from .models import TrackingExpedition, HistoriqueIncident
         from django.utils import timezone
         
-        # Mise à jour du statut de l'expédition concernée
+        # 1. Créer l'entrée initiale dans l'historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident créé",
+            auteur=incident.signale_par,
+            details=f"Incident de type {incident.get_type_incident_display()} créé",
+            nouveau_statut='SIGNALE'
+        )
+        
+        # 2. Mise à jour du statut de l'expédition concernée
         if incident.expedition:
-            if incident.type_incident in ['PERTE', 'ENDOMMAGEMENT']:
+            if incident.type_incident in ['PERTE', 'ENDOMMAGEMENT', 'ACCIDENT']:
                 # Incidents graves → marquer comme ÉCHEC
+                ancien_statut = incident.expedition.statut
                 incident.expedition.statut = 'ECHEC'
                 incident.expedition.save(update_fields=['statut'])
                 
@@ -720,16 +741,32 @@ class IncidentService:
                     'ECHEC',
                     f"Incident: {incident.get_type_incident_display()} - {incident.titre}"
                 )
+                
+                # Historique
+                HistoriqueIncident.objects.create(
+                    incident=incident,
+                    action="Expédition marquée en échec",
+                    auteur="Système",
+                    details=f"Statut changé de {ancien_statut} à ECHEC"
+                )
             
             elif incident.type_incident == 'RETARD':
                 # Pour les retards, ajouter simplement un suivi
                 TrackingService.creer_suivi(
                     incident.expedition,
-                    incident.expedition.statut,  # Garder le statut actuel
+                    incident.expedition.statut,
                     f"Retard signalé: {incident.description[:100]}"
                 )
+                
+                # Historique
+                HistoriqueIncident.objects.create(
+                    incident=incident,
+                    action="Retard signalé",
+                    auteur="Système",
+                    details="Suivi de tracking créé"
+                )
         
-        # Définir la sévérité automatiquement selon le type
+        # 3. Définir la sévérité et les alertes automatiquement
         if incident.type_incident in ['PERTE', 'ACCIDENT']:
             incident.severite = 'CRITIQUE'
             incident.alerte_direction = True
@@ -737,17 +774,141 @@ class IncidentService:
         elif incident.type_incident in ['ENDOMMAGEMENT', 'PROBLEME_TECHNIQUE']:
             incident.severite = 'ELEVEE'
             incident.alerte_direction = True
+            incident.alerte_client = True
         elif incident.type_incident == 'RETARD':
             incident.severite = 'MOYENNE'
+            incident.alerte_client = True
+        else:
+            incident.severite = 'FAIBLE'
         
-        incident.save(update_fields=['severite', 'alerte_direction', 'alerte_client'])
+        # 4. Définir le taux de remboursement selon le type
+        incident.taux_remboursement = IncidentService.TAUX_REMBOURSEMENT.get(
+            incident.type_incident, 
+            0.00
+        )
         
-        # Générer les alertes si nécessaire
-        if incident.alerte_direction:
-            IncidentService.envoyer_alerte_direction(incident)
+        incident.save(update_fields=['severite', 'alerte_direction', 'alerte_client', 'taux_remboursement'])
         
-        if incident.alerte_client and incident.expedition:
-            IncidentService.envoyer_alerte_client(incident)
+        # Historique des alertes
+        if incident.alerte_direction or incident.alerte_client:
+            destinataires = []
+            if incident.alerte_direction:
+                destinataires.append("Direction")
+            if incident.alerte_client:
+                destinataires.append("Client")
+            
+            HistoriqueIncident.objects.create(
+                incident=incident,
+                action="Alertes configurées",
+                auteur="Système",
+                details=f"Alertes envoyées à : {', '.join(destinataires)}"
+            )
+
+        from .notification import AlerteEmailService
+        
+        # Historique email
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Emails envoyés",
+            auteur="Système",
+            details="Emails d'alerte envoyés automatiquement"
+        )
+    
+    @staticmethod
+    def traiter_remboursement_incident(incident, auteur="Agent"):
+        """
+        Traite le remboursement lié à un incident
+        Applique le taux de remboursement selon le type d'incident
+        """
+        from .models import HistoriqueIncident
+        from decimal import Decimal
+        
+        if not incident.expedition:
+            return False, "Pas d'expédition associée à cet incident"
+        
+        if incident.remboursement_effectue:
+            return False, "Remboursement déjà effectué pour cet incident"
+        
+        # Récupérer le taux de remboursement
+        taux = incident.taux_remboursement
+        
+        if taux <= 0:
+            return False, f"Aucun remboursement prévu pour ce type d'incident ({incident.get_type_incident_display()})"
+        
+        expedition = incident.expedition
+        
+        # Calculer le montant à rembourser
+        montant_ht = expedition.montant_total
+        montant_tva = montant_ht * Decimal('0.19')  # 19% TVA
+        montant_ttc = montant_ht + montant_tva
+        
+        # Appliquer le taux de remboursement
+        montant_a_rembourser = montant_ttc * (taux / Decimal('100.00'))
+        
+        # Créditer le client
+        expedition.client.solde -= montant_a_rembourser
+        expedition.client.save()
+        
+        # Marquer le remboursement comme effectué
+        incident.remboursement_effectue = True
+        incident.montant_rembourse = montant_a_rembourser
+        incident.save(update_fields=['remboursement_effectue', 'montant_rembourse'])
+        
+        # Historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Remboursement effectué",
+            auteur=auteur,
+            details=f"Montant remboursé : {montant_a_rembourser:.2f} DA ({taux}% de {montant_ttc:.2f} DA)"
+        )
+        
+        return True, f"Remboursement de {montant_a_rembourser:.2f} DA effectué ({taux}%)"
+    
+    @staticmethod
+    def annuler_expedition_incident(incident, auteur="Agent"):
+        """
+         Annule l'expédition liée à un incident grave avec remboursement complet
+        """
+        from .models import HistoriqueIncident
+        
+        if not incident.expedition:
+            return False, "Pas d'expédition associée"
+        
+        expedition = incident.expedition
+        
+        # Vérifier si l'expédition peut être annulée
+        if expedition.statut not in ['EN_ATTENTE', 'COLIS_CREE']:
+            return False, f"Impossible d'annuler : l'expédition est en {expedition.get_statut_display()}"
+        
+        try:
+            # Annuler l'expédition (remboursement inclus)
+            ExpeditionService.annuler_expedition(expedition)
+            
+            # Marquer le remboursement comme effectué
+            incident.remboursement_effectue = True
+            incident.montant_rembourse = expedition.montant_total * Decimal('1.19')  # TTC
+            incident.save(update_fields=['remboursement_effectue', 'montant_rembourse'])
+            
+            # Historique
+            HistoriqueIncident.objects.create(
+                incident=incident,
+                action="Expédition annulée",
+                auteur=auteur,
+                details=f"Expédition {expedition.get_numero_expedition()} annulée et client remboursé intégralement"
+            )
+            
+            return True, f"Expédition {expedition.get_numero_expedition()} annulée avec succès"
+            
+        except Exception as e:
+            # Historique d'erreur
+            HistoriqueIncident.objects.create(
+                incident=incident,
+                action="Erreur d'annulation",
+                auteur=auteur,
+                details=f"Erreur : {str(e)}"
+            )
+            
+            return False, f"Erreur lors de l'annulation : {str(e)}"
     
     @staticmethod
     def resoudre_incident(incident, solution, agent):
@@ -755,50 +916,98 @@ class IncidentService:
         Marque un incident comme résolu
         """
         from django.utils import timezone
+        from .models import HistoriqueIncident
+        
+        ancien_statut = incident.statut
         
         incident.statut = 'RESOLU'
         incident.actions_entreprises = solution
         incident.agent_responsable = agent
         incident.date_resolution = timezone.now()
         incident.save()
+        
+        # Historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident résolu",
+            auteur=agent,
+            details=f"Solution appliquée : {solution[:100]}",
+            ancien_statut=ancien_statut,
+            nouveau_statut='RESOLU'
+        )
     
     @staticmethod
-    def cloturer_incident(incident):
+    def cloturer_incident(incident, auteur="Agent"):
         """
         Clôture définitivement un incident
         """
+        from django.core.exceptions import ValidationError
+        from .models import HistoriqueIncident
+        
         if incident.statut != 'RESOLU':
             raise ValidationError("Un incident doit être résolu avant d'être clôturé")
         
+        ancien_statut = incident.statut
         incident.statut = 'CLOS'
         incident.save()
-
-    @staticmethod
-    def envoyer_alerte_direction(incident):
-        """
-        Placeholder pour l'envoi d'alertes à la direction
-        Dans une vraie application : envoi d'email, notification système, SMS, etc.
-        """
-        # TODO: Implémenter l'envoi réel d'alertes
-        print(f" ALERTE DIRECTION: Incident {incident.numero_incident} - {incident.titre}")
-        print(f" Sévérité: {incident.severite}")
-        print(f" Type: {incident.get_type_incident_display()}")
-        if incident.expedition:
-            print(f" Expédition concernée: {incident.expedition.get_numero_expedition()}")
-        if incident.tournee:
-            print(f" Tournée concernée: Tournée #{incident.tournee.id}")
+        
+        # Historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident clôturé",
+            auteur=auteur,
+            ancien_statut=ancien_statut,
+            nouveau_statut='CLOS'
+        )
     
     @staticmethod
-    def envoyer_alerte_client(incident):
+    def assigner_agent_incident(incident, agent_nom, auteur="Système"):
         """
-        Placeholder pour l'envoi d'alertes au client
+        Assigne un agent responsable à un incident
         """
-        # TODO: Implémenter l'envoi réel d'alertes (email, SMS)
-        client = incident.expedition.client
-        print(f" ALERTE CLIENT: {client.prenom} {client.nom}")
-        print(f" Incident sur votre expédition {incident.expedition.get_numero_expedition()}")
-        print(f" Type: {incident.get_type_incident_display()}")
-        print(f" Description: {incident.description[:100]}")
+        from .models import HistoriqueIncident
+        
+        ancien_agent = incident.agent_responsable
+        ancien_statut = incident.statut
+        
+        incident.agent_responsable = agent_nom
+        incident.statut = 'EN_COURS'
+        incident.save()
+        
+        # Historique
+        details = f"Assigné à {agent_nom}"
+        if ancien_agent:
+            details += f" (précédemment : {ancien_agent})"
+        
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident assigné",
+            auteur=auteur,
+            details=details,
+            ancien_statut=ancien_statut,
+            nouveau_statut='EN_COURS'
+        )
+    
+    @staticmethod
+    def obtenir_taux_remboursement(type_incident):
+        """
+        Retourne le taux de remboursement pour un type d'incident donné
+        """
+        return IncidentService.TAUX_REMBOURSEMENT.get(type_incident, 0.00)
+    
+    @staticmethod
+    def peut_etre_annule(incident):
+        """
+        Vérifie si un incident peut déclencher une annulation automatique
+        """
+        return incident.type_incident in IncidentService.INCIDENTS_GRAVES_ANNULATION
+    
+    @staticmethod
+    def necessite_remboursement(incident):
+        """
+        Vérifie si un incident nécessite un remboursement
+        """
+        return incident.type_incident in IncidentService.INCIDENTS_AVEC_REMBOURSEMENT
     
     @staticmethod
     def statistiques_incidents(date_debut=None, date_fin=None):
@@ -809,7 +1018,6 @@ class IncidentService:
         from datetime import datetime, timedelta
         from .models import Incident
         
-        # Définir la période par défaut (30 derniers jours)
         if not date_fin:
             date_fin = datetime.now()
         if not date_debut:
@@ -831,29 +1039,29 @@ class IncidentService:
                 count=Count('id')
             ),
             'cout_total': incidents.aggregate(Sum('cout_estime'))['cout_estime__sum'] or 0,
+            'montant_total_rembourse': incidents.aggregate(Sum('montant_rembourse'))['montant_rembourse__sum'] or 0,
             'taux_resolution': incidents.filter(
                 statut__in=['RESOLU', 'CLOS']
             ).count() / incidents.count() * 100 if incidents.count() > 0 else 0,
+            'incidents_avec_remboursement': incidents.filter(remboursement_effectue=True).count(),
         }
         
         return stats
     
-    @staticmethod
-    def incidents_par_chauffeur():
+   # ======= SIGNAL POUR REMBOURSEMENT AUTOMATIQUE =======
+    from django.db.models.signals import post_save
+    from django.dispatch import receiver
+    from .models import Incident  # importer le modèle Incident
+
+   # ATTENTION : on utilise directement IncidentService défini ci-dessus, pas d'import
+    @receiver(post_save, sender=Incident)
+    def appliquer_remboursement(sender, instance, created, **kwargs):
         """
-        Analyse des incidents par chauffeur
+        Déclenche le remboursement automatiquement lors de la création d'un incident
+        nécessitant un remboursement.
         """
-        from django.db.models import Count
-        from .models import Incident
-        
-        return Incident.objects.filter(
-            tournee__isnull=False
-        ).values(
-            'tournee__chauffeur__prenom',
-            'tournee__chauffeur__nom'
-        ).annotate(
-            nb_incidents=Count('id')
-        ).order_by('-nb_incidents')
+        if created and IncidentService.necessite_remboursement(instance):
+            IncidentService.traiter_remboursement_incident(instance, auteur="Système")
 
 
 # ========== SECTION 5 : SERVICES RÉCLAMATIONS ==========
@@ -1133,23 +1341,3 @@ class ReclamationService:
             pourcentage=Count('id') * 100.0 / Reclamation.objects.count()
         ).order_by('-count')
     
-    @staticmethod
-    def notifier_nouvelle_reclamation(reclamation):
-        """
-        Placeholder pour notification de nouvelle réclamation
-        """
-        # TODO: Implémenter notifications réelles
-        print(f" NOUVELLE RÉCLAMATION: {reclamation.numero_reclamation}")
-        print(f" Client: {reclamation.client}")
-        print(f" Nature: {reclamation.get_nature_display()}")
-        print(f" Priorité: {reclamation.priorite}")
-    
-    @staticmethod
-    def notifier_client_reponse(reclamation):
-        """
-        Placeholder pour notification au client
-        """
-        # TODO: Implémenter envoi email/SMS au client
-        print(f" Notification envoyée au client {reclamation.client}")
-        print(f" Réclamation: {reclamation.numero_reclamation}")
-        print(f" Réponse disponible")

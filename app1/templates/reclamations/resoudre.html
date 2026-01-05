@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Résoudre réclamation{% endblock %}
+
+{% block content %}
+<h2>Résoudre la réclamation</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <input name="auteur" class="form-control mb-2" placeholder="Auteur">
+
+    <div class="form-check mb-2">
+        <input type="checkbox" name="compensation" class="form-check-input">
+        <label class="form-check-label">Accorder une compensation</label>
+    </div>
+
+    <input
+        type="number"
+        step="0.01"
+        name="montant_compensation"
+        class="form-control mb-2"
+        placeholder="Montant"
+    >
+
+    <button class="btn btn-success">Résoudre</button>
+</form>
+{% endblock %}

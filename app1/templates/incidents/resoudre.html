@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Résoudre l'incident</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <textarea class="form-control mb-2" name="solution" placeholder="Solution"></textarea>
+    <input class="form-control mb-2" name="agent" placeholder="Agent">
+    <button class="btn btn-success">Valider</button>
+</form>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Assigner réclamation{% endblock %}
+
+{% block content %}
+<h2>Assigner la réclamation</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <input name="agent_nom" class="form-control mb-2" placeholder="Nom de l’agent" required>
+    <button class="btn btn-secondary">Assigner</button>
+</form>
+{% endblock %}

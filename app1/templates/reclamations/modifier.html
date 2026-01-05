@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Modifier réclamation{% endblock %}
+
+{% block content %}
+<h2>Modifier la réclamation</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <input
+        class="form-control mb-2"
+        name="objet"
+        value="{{ reclamation.objet }}"
+    >
+
+    <textarea class="form-control mb-2" name="description">
+        {{ reclamation.description }}
+    </textarea>
+
+    <select name="priorite" class="form-control mb-2">
+        {% for key, label in priorites %}
+            <option value="{{ key }}"
+                {% if reclamation.priorite == key %}selected{% endif %}>
+                {{ label }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="statut" class="form-control mb-2">
+        {% for key, label in statuts %}
+            <option value="{{ key }}"
+                {% if reclamation.statut == key %}selected{% endif %}>
+                {{ label }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button class="btn btn-warning">Modifier</button>
+</form>
+{% endblock %}

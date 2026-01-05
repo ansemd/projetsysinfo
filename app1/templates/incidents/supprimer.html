@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Supprimer l'incident</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <p>Supprimer {{ incident.numero_incident }} ?</p>
+    <button class="btn btn-danger">Supprimer</button>
+</form>
+{% endblock %}

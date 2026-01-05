@@ -1,0 +1,26 @@
+<h3>Historique de l’incident</h3>
+
+{% if historique %}
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Action</th>
+        <th>Auteur</th>
+        <th>Statut</th>
+        <th>Détails</th>
+    </tr>
+    {% for h in historique %}
+    <tr>
+        <td>{{ h.date_action|date:"d/m/Y H:i" }}</td>
+        <td>{{ h.action }}</td>
+        <td>{{ h.auteur }}</td>
+        <td>
+            {{ h.ancien_statut }} → {{ h.nouveau_statut }}
+        </td>
+        <td>{{ h.details }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>Aucun historique disponible.</p>
+{% endif %}

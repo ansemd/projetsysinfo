@@ -1,0 +1,30 @@
+{% extends 'analytics/base.html' %}
+
+{% block title %}Statistiques Générales{% endblock %}
+
+{% block content %}
+<h2>📈 Statistiques Générales</h2>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Indicateur</th>
+            <th>Valeur</th>
+        </tr>
+    </thead>
+    <tbody id="stats-body">
+    </tbody>
+</table>
+
+<script>
+fetch("/api/stats-generales/")
+.then(res => res.json())
+.then(data => {
+    const body = document.getElementById("stats-body");
+
+    body.innerHTML += `<tr><td>Total Expéditions</td><td>${data.total_expeditions}</td></tr>`;
+    body.innerHTML += `<tr><td>Total Clients</td><td>${data.total_clients}</td></tr>`;
+    body.innerHTML += `<tr><td>CA Total</td><td>${data.ca_total} DA</td></tr>`;
+});
+</script>
+{% endblock %}

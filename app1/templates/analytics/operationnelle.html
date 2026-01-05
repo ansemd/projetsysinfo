@@ -1,0 +1,14 @@
+{% block title %}Analyse Opérationnelle{% endblock %}
+
+{% block content %}
+<h2>Analyse Opérationnelle – {{ annee }}</h2>
+
+<p><strong>Taux de réussite :</strong> {{ taux_reussite.taux_reussite }} %</p>
+
+<h4>Top Chauffeurs</h4>
+<ul>
+    {% for c in top_chauffeurs %}
+        <li>{{ c.nom }} – {{ c.total }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

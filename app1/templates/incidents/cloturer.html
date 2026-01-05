@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Clôturer l'incident</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <p>Confirmer la clôture définitive ?</p>
+    <button class="btn btn-dark">Clôturer</button>
+</form>
+{% endblock %}

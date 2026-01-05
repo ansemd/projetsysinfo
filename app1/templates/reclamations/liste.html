@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Liste des réclamations{% endblock %}
+
+{% block content %}
+<h2>Liste des réclamations</h2>
+
+<a href="{% url 'creer_reclamation' %}" class="btn btn-primary mb-3">
+    + Nouvelle réclamation
+</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Numéro</th>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Statut</th>
+            <th>Priorité</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in reclamations %}
+        <tr>
+            <td>{{ r.numero_reclamation }}</td>
+            <td>{{ r.client }}</td>
+            <td>{{ r.get_type_reclamation_display }}</td>
+            <td>{{ r.get_statut_display }}</td>
+            <td>{{ r.get_priorite_display }}</td>
+            <td>
+                <a href="{% url 'detail_reclamation' r.id %}" class="btn btn-info btn-sm">
+                    Voir
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Aucune réclamation trouvée</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
