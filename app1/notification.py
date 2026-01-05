@@ -516,3 +516,4 @@ L'équipe Transport & Livraison
             message=message,
             recipient_list=[client.email]
         )
+    

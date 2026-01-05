@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Vos apps
     'phonenumber_field',
     'app1',
+    'notifications',
     
     # django_crontab si vous l'utilisez (optionnel)
     # 'django_crontab',

@@ -32,6 +32,7 @@ urlpatterns = [
     path('reclamations/<int:reclamation_id>/cloturer/', views.cloturer_reclamation, name='cloturer_reclamation'),
     path('reclamations/<int:reclamation_id>/supprimer/', views.supprimer_reclamation, name='supprimer_reclamation'),
 
+    path('emails', views.emails_view, name='emails'),
 
     # ==================== PAGES PRINCIPALES ====================
     

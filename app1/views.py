@@ -1529,3 +1529,8 @@ def convert_decimals_to_float(obj):
     elif isinstance(obj, tuple):
         return tuple(convert_decimals_to_float(item) for item in obj)
     return obj
+
+from django.http import HttpResponse
+
+def emails_view(request):
+    return HttpResponse("Page de gestion des emails et notifications")
