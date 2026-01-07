@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {% if depuis_facture %}
+            Ajouter un paiement - {{ facture.numero_facture }}
+        {% else %}
+            Créer un paiement
+        {% endif %}
+    </title>
+</head>
+<body>
+    <h1>
+        {% if depuis_facture %}
+            Ajouter un paiement pour la facture {{ facture.numero_facture }}
+        {% else %}
+            Créer un nouveau paiement
+        {% endif %}
+    </h1>
+    
+    {% if depuis_facture %}
+        <a href="{% url 'detail_facture' facture.id %}"><button>← Retour à la facture</button></a>
+    {% else %}
+        <a href="{% url 'liste_paiements' %}"><button>← Retour à la liste</button></a>
+    {% endif %}
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- ✅ AFFICHAGE INFOS FACTURE SI DEPUIS FACTURE -->
+    {% if depuis_facture %}
+    <div style="background: #e7f3ff; padding: 15px; margin: 20px 0; border: 2px solid #007bff;">
+        <h3>📄 Facture concernée</h3>
+        <p><strong>Client :</strong> {{ facture.client.prenom }} {{ facture.client.nom }}</p>
+        <p><strong>Montant TTC :</strong> {{ facture.montant_ttc|floatformat:2 }} DA</p>
+        <p><strong>Statut :</strong> {{ facture.get_statut_display }}</p>
+        <p style="color: green;"><strong>Montant restant à payer :</strong> {{ facture.montant_ttc|floatformat:2 }} DA</p>
+    </div>
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <!-- ✅ SI MODE NORMAL : Afficher le champ facture -->
+        {% if not depuis_facture %}
+        <h2>Sélection de la Facture</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.facture.label }}</label></td>
+                <td>
+                    {{ form.facture }}
+                    {% if form.facture.errors %}
+                        <br><span style="color: red;">{{ form.facture.errors.0 }}</span>
+                    {% endif %}
+                    <br><small style="color: blue;">Seules les factures IMPAYEE ou PARTIELLEMENT_PAYEE sont affichées</small>
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.client.label }}</label></td>
+                <td>
+                    {{ form.client }}
+                    {% if form.client.errors %}
+                        <br><span style="color: red;">{{ form.client.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        {% else %}
+        <!-- ✅ SI DEPUIS FACTURE : Champs cachés -->
+        {{ form.facture }}
+        {{ form.client }}
+        {% endif %}
+        
+        <h2>Informations du Paiement</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.montant_paye.label }}</label></td>
+                <td>
+                    {{ form.montant_paye }}
+                    {% if form.montant_paye.errors %}
+                        <br><span style="color: red;">{{ form.montant_paye.errors.0 }}</span>
+                    {% endif %}
+                    {% if form.montant_paye.help_text %}
+                        <br><small style="color: green;">{{ form.montant_paye.help_text }}</small>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.mode_paiement.label }}</label></td>
+                <td>
+                    {{ form.mode_paiement }}
+                    {% if form.mode_paiement.errors %}
+                        <br><span style="color: red;">{{ form.mode_paiement.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.reference_transaction.label }}</label></td>
+                <td>
+                    {{ form.reference_transaction }}
+                    {% if form.reference_transaction.errors %}
+                        <br><span style="color: red;">{{ form.reference_transaction.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Remarques</label></td>
+                <td>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                        <br><span style="color: red;">{{ form.remarques.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <!-- Erreurs globales du formulaire -->
+        {% if form.non_field_errors %}
+            <p style="color: red;"><strong>{{ form.non_field_errors.0 }}</strong></p>
+        {% endif %}
+        
+        <br>
+        <button type="submit">Enregistrer le paiement</button>
+        {% if depuis_facture %}
+            <a href="{% url 'detail_facture' facture.id %}"><button type="button">Annuler</button></a>
+        {% else %}
+            <a href="{% url 'liste_paiements' %}"><button type="button">Annuler</button></a>
+        {% endif %}
+    </form>
+    
+</body>
+</html>

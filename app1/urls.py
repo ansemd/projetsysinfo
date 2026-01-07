@@ -71,4 +71,44 @@ urlpatterns = [
     
     path('trackings/', views.liste_trackings, name='liste_trackings'),
     path('trackings/<int:expedition_id>/', views.detail_tracking, name='detail_tracking'),
+
+    path('factures/', views.liste_factures, name='liste_factures'),
+    path('factures/<int:facture_id>/', views.detail_facture, name='detail_facture'),
+    path('factures/<int:facture_id>/modifier/', views.modifier_facture, name='modifier_facture'),
+    path('factures/<int:facture_id>/supprimer/', views.supprimer_facture, name='supprimer_facture'),
+    path('factures/export-pdf/', views.exporter_factures_pdf, name='exporter_factures_pdf'),
+    path('factures/<int:facture_id>/export-pdf/', views.exporter_facture_detail_pdf, name='exporter_facture_detail_pdf'),
+    
+
+    path('paiements/', views.liste_paiements, name='liste_paiements'),
+    path('paiements/<int:paiement_id>/', views.detail_paiement, name='detail_paiement'),
+    path('paiements/creer/', views.creer_paiement, name='creer_paiement'),  # Mode normal
+    path('factures/<int:facture_id>/ajouter-paiement/', views.creer_paiement, name='ajouter_paiement_facture'),  
+    path('paiements/<int:paiement_id>/supprimer/', views.supprimer_paiement, name='supprimer_paiement'),
+    path('paiements/export-pdf/', views.exporter_paiements_pdf, name='exporter_paiements_pdf'),
+    path('paiements/<int:paiement_id>/export-pdf/', views.exporter_paiement_detail_pdf, name='exporter_paiement_detail_pdf'),
+
+    path('incidents/', views.liste_incidents, name='liste_incidents'),
+    path('incidents/exporter-pdf/', views.exporter_incidents_pdf, name='exporter_incidents_pdf'),
+    path('incidents/<int:incident_id>/', views.detail_incident, name='detail_incident'),
+    path('incidents/<int:incident_id>/exporter-pdf/', views.exporter_incident_detail_pdf, name='exporter_incident_detail_pdf'),
+    path('incidents/creer/', views.creer_incident, name='creer_incident'),
+    path('incidents/<int:incident_id>/modifier/', views.modifier_incident, name='modifier_incident'),
+    path('incidents/<int:incident_id>/supprimer/', views.supprimer_incident, name='supprimer_incident'),
+    path('incidents/<int:incident_id>/assigner/', views.assigner_incident, name='assigner_incident'),
+    path('incidents/<int:incident_id>/resoudre/', views.resoudre_incident, name='resoudre_incident'),
+    path('incidents/<int:incident_id>/cloturer/', views.cloturer_incident, name='cloturer_incident'),
+    
+    path('reclamations/', views.liste_reclamations, name='liste_reclamations'),
+    path('reclamations/exporter-pdf/', views.exporter_reclamations_pdf, name='exporter_reclamations_pdf'),
+    path('reclamations/<int:reclamation_id>/', views.detail_reclamation, name='detail_reclamation'),
+    path('reclamations/<int:reclamation_id>/exporter-pdf/', views.exporter_reclamation_detail_pdf, name='exporter_reclamation_detail_pdf'),
+    path('reclamations/creer/', views.creer_reclamation, name='creer_reclamation'),
+    path('reclamations/<int:reclamation_id>/modifier/', views.modifier_reclamation, name='modifier_reclamation'),
+    path('reclamations/<int:reclamation_id>/supprimer/', views.supprimer_reclamation, name='supprimer_reclamation'),
+    path('reclamations/<int:reclamation_id>/assigner/', views.assigner_reclamation, name='assigner_reclamation'),
+    path('reclamations/<int:reclamation_id>/repondre/', views.repondre_reclamation, name='repondre_reclamation'),
+    path('reclamations/<int:reclamation_id>/resoudre/', views.resoudre_reclamation, name='resoudre_reclamation'),
+    path('reclamations/<int:reclamation_id>/cloturer/', views.cloturer_reclamation, name='cloturer_reclamation'),
+    path('reclamations/<int:reclamation_id>/annuler/', views.annuler_reclamation, name='annuler_reclamation'),
 ]

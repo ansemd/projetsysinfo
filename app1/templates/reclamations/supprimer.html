@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>🗑️ Supprimer la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <h2>⚠️ Confirmation de Suppression</h2>
+    
+    <!-- Informations de la réclamation à supprimer -->
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr>
+            <th style="width: 30%; background: #f0f0f0;">N° Réclamation</th>
+            <td><strong style="font-size: 1.3em; color: #dc3545;">{{ reclamation.numero_reclamation }}</strong></td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Client</th>
+            <td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Téléphone</th>
+            <td>{{ reclamation.client.telephone }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Email</th>
+            <td>{{ reclamation.client.email|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Type</th>
+            <td>{{ reclamation.get_type_reclamation_display }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Nature</th>
+            <td>{{ reclamation.get_nature_display }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Priorité</th>
+            <td>
+                {% if reclamation.priorite == 'URGENTE' %}
+                    <span style="color: red; font-weight: bold;">🔴 {{ reclamation.get_priorite_display }}</span>
+                {% elif reclamation.priorite == 'ELEVEE' %}
+                    <span style="color: orange; font-weight: bold;">🟠 {{ reclamation.get_priorite_display }}</span>
+                {% elif reclamation.priorite == 'NORMALE' %}
+                    <span style="color: blue;">🔵 {{ reclamation.get_priorite_display }}</span>
+                {% else %}
+                    <span style="color: green;">🟢 {{ reclamation.get_priorite_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Statut</th>
+            <td><strong>{{ reclamation.get_statut_display }}</strong></td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Date création</th>
+            <td>{{ reclamation.date_creation|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Objet</th>
+            <td><strong>{{ reclamation.objet }}</strong></td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Description</th>
+            <td style="white-space: pre-wrap; background: #f9f9f9;">{{ reclamation.description|truncatewords:50 }}</td>
+        </tr>
+        {% if reclamation.agent_responsable %}
+        <tr>
+            <th style="background: #f0f0f0;">Agent responsable</th>
+            <td>{{ reclamation.agent_responsable }}</td>
+        </tr>
+        {% endif %}
+        {% if reclamation.compensation_accordee %}
+        <tr style="background: #fff3cd;">
+            <th>💰 Compensation accordée</th>
+            <td><strong style="font-size: 1.1em;">{{ reclamation.montant_compensation|floatformat:2 }} DA</strong></td>
+        </tr>
+        {% endif %}
+        {% if reclamation.expeditions.exists %}
+        <tr>
+            <th style="background: #f0f0f0;">Expéditions liées</th>
+            <td><strong>{{ reclamation.expeditions.count }} expédition(s)</strong></td>
+        </tr>
+        {% endif %}
+        {% if reclamation.facture %}
+        <tr>
+            <th style="background: #f0f0f0;">Facture liée</th>
+            <td><strong>{{ reclamation.facture.numero_facture }}</strong></td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!-- DANGER ZONE - Avertissement majeur -->
+    <div style="background: #f8d7da; padding: 20px; border: 3px solid #721c24; margin: 20px 0;">
+        <h2 style="color: #721c24; margin-top: 0;">⛔ ZONE DANGEREUSE - ACTION IRRÉVERSIBLE</h2>
+        
+        <p style="font-size: 1.1em; color: #721c24; font-weight: bold;">
+            ⚠️ ATTENTION : Vous êtes sur le point de <strong>SUPPRIMER DÉFINITIVEMENT</strong> cette réclamation !
+        </p>
+        
+        <h3 style="color: #721c24;">🔥 Conséquences de la suppression :</h3>
+        <ul style="color: #721c24; font-size: 1.05em; line-height: 1.8;">
+            <li><strong>TOUTES les données</strong> de cette réclamation seront <strong>DÉFINITIVEMENT SUPPRIMÉES</strong></li>
+            <li>L'<strong>historique complet</strong> de toutes les actions sera <strong>PERDU</strong></li>
+            <li>Les <strong>pièces jointes</strong> (documents, photos) seront <strong>SUPPRIMÉES</strong></li>
+            <li>Les <strong>réponses</strong> et <strong>solutions</strong> proposées seront <strong>PERDUES</strong></li>
+            <li>Les liens avec les <strong>expéditions</strong> et la <strong>facture</strong> seront <strong>ROMPUS</strong></li>
+            <li><strong>AUCUNE RÉCUPÉRATION POSSIBLE</strong> - Cette action <strong>NE PEUT PAS ÊTRE ANNULÉE</strong></li>
+        </ul>
+        
+        <hr style="border-color: #721c24;">
+        
+        <h3 style="color: #856404; background: #fff3cd; padding: 10px; border-left: 4px solid #856404;">
+            💡 RECOMMANDATION IMPORTANTE
+        </h3>
+        <p style="font-size: 1.05em;">
+            <strong>⚠️ Privilégiez plutôt l'une de ces alternatives :</strong>
+        </p>
+        <ul style="font-size: 1.05em; line-height: 1.8;">
+            <li>
+                <strong>❌ ANNULER</strong> la réclamation (pour réclamations infondées, doublons, erreurs)
+                <br>→ <em>Conserve l'historique et permet une traçabilité</em>
+            </li>
+            <li>
+                <strong>🔒 CLÔTURER</strong> la réclamation (après résolution)
+                <br>→ <em>Ferme définitivement la réclamation tout en gardant les données</em>
+            </li>
+        </ul>
+        
+        <p style="background: white; padding: 15px; border-left: 4px solid #dc3545; margin-top: 15px;">
+            <strong style="color: #dc3545;">⚠️ La suppression doit être utilisée UNIQUEMENT dans des cas exceptionnels</strong>
+            <br>
+            (erreur technique majeure, test, doublon système, etc.)
+        </p>
+    </div>
+    
+    <hr>
+    
+    <!-- Formulaire de confirmation -->
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h3 style="color: #dc3545;">🚨 Confirmation finale :</h3>
+        
+        <p style="font-size: 1.15em; color: #dc3545; font-weight: bold; background: #fff3cd; padding: 15px; border: 2px solid #dc3545;">
+            ⚠️ Êtes-vous <strong>ABSOLUMENT CERTAIN</strong> de vouloir supprimer définitivement cette réclamation ?
+        </p>
+        
+        <p style="font-size: 1.05em;">
+            Cette action va <strong>DÉTRUIRE TOUTES LES DONNÉES</strong> et <strong>NE PEUT PAS ÊTRE ANNULÉE</strong>.
+        </p>
+        
+        <br>
+        
+        <button 
+            type="submit" 
+            style="background: #dc3545; color: white; padding: 15px 35px; font-size: 1.2em; font-weight: bold; cursor: pointer; border: 3px solid #721c24;"
+            onclick="return confirm('⚠️ DERNIÈRE CONFIRMATION ⚠️\n\nVoulez-vous VRAIMENT supprimer définitivement cette réclamation ?\n\nToutes les données seront PERDUES et cette action est IRRÉVERSIBLE !');"
+        >
+            🗑️ OUI, SUPPRIMER DÉFINITIVEMENT
+        </button>
+        
+        <a href="{% url 'detail_reclamation' reclamation.id %}">
+            <button 
+                type="button" 
+                style="background: #28a745; color: white; padding: 15px 35px; font-size: 1.2em; font-weight: bold; border: 2px solid #1e7e34;"
+            >
+                ✅ NON, RETOUR AUX DÉTAILS (Recommandé)
+            </button>
+        </a>
+    </form>
+    
+    <hr>
+    
+    <!-- Conseil final -->
+    <div style="background: #d1ecf1; padding: 15px; border-left: 5px solid #0c5460; margin-top: 20px;">
+        <p style="margin: 0; font-size: 1.05em;">
+            <strong>💡 Rappel :</strong> Si vous souhaitez simplement fermer cette réclamation sans perdre les données,
+            <br>
+            utilisez plutôt les boutons <strong>"❌ Annuler"</strong> ou <strong>"🔒 Clôturer"</strong> depuis la page de détails.
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Clôturer Incident {{ incident.numero_incident }}</title>
+</head>
+<body>
+    <h1>🔒 Clôturer l'Incident {{ incident.numero_incident }}</h1>
+    
+    <a href="{% url 'detail_incident' incident.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <h2>⚠️ Confirmation de Clôture</h2>
+    
+    <p><strong>N° Incident :</strong> {{ incident.numero_incident }}</p>
+    <p><strong>Titre :</strong> {{ incident.titre }}</p>
+    <p><strong>Statut actuel :</strong> {{ incident.get_statut_display }}</p>
+    
+    <hr>
+    
+    <p style="color: orange;">
+        ⚠️ La clôture est <strong>définitive</strong>. L'incident ne pourra plus être modifié.
+    </p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <button type="submit" style="background: #6c757d; color: white; padding: 10px 20px;">🔒 Confirmer la Clôture</button>
+        <a href="{% url 'detail_incident' incident.id %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>

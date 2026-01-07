@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Répondre à Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>💬 Répondre à la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red; font-weight: bold;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>📋 Informations de la réclamation</h2>
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr><th style="width: 25%;">Client</th><td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }}</td></tr>
+        <tr><th>Email client</th><td><strong>{{ reclamation.client.email }}</strong></td></tr>
+        <tr><th>Téléphone</th><td>{{ reclamation.client.telephone }}</td></tr>
+        <tr><th>Objet</th><td><strong>{{ reclamation.objet }}</strong></td></tr>
+        <tr><th>Description</th><td style="white-space: pre-wrap; background: #f9f9f9;">{{ reclamation.description }}</td></tr>
+    </table>
+    
+    <hr>
+    
+    <p style="background: #d1ecf1; padding: 10px; border-left: 4px solid #0c5460;">
+        📧 <strong>IMPORTANT :</strong> La réponse sera automatiquement envoyée par email au client à l'adresse : <strong>{{ reclamation.client.email }}</strong>
+    </p>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        <button type="submit" style="background: #17a2b8; color: white; padding: 10px 20px; font-size: 1.1em;">📧 Envoyer la Réponse au Client</button>
+        <a href="{% url 'detail_reclamation' reclamation.id %}"><button type="button">❌ Annuler</button></a>
+    </form>
+</body>
+</html>

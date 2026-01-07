@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>📋 Détails de la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'liste_reclamations' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_reclamation' reclamation.id %}"><button>✏️ Modifier</button></a>
+    <a href="{% url 'exporter_reclamation_detail_pdf' reclamation.id %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <!-- Boutons d'action conditionnels -->
+    {% if reclamation.statut == 'OUVERTE' or reclamation.statut == 'EN_COURS' %}
+        <a href="{% url 'assigner_reclamation' reclamation.id %}"><button style="background: #007bff; color: white;">👤 Assigner Agent</button></a>
+    {% endif %}
+    
+    {% if reclamation.statut == 'EN_COURS' %}
+        <a href="{% url 'repondre_reclamation' reclamation.id %}"><button style="background: #17a2b8; color: white;">💬 Répondre au Client</button></a>
+        <a href="{% url 'resoudre_reclamation' reclamation.id %}"><button style="background: #28a745; color: white;">✅ Résoudre</button></a>
+    {% endif %}
+    
+    {% if reclamation.statut == 'RESOLUE' %}
+        <a href="{% url 'cloturer_reclamation' reclamation.id %}"><button style="background: #6c757d; color: white;">🔒 Clôturer</button></a>
+    {% endif %}
+    
+    {% if reclamation.statut == 'OUVERTE' or reclamation.statut == 'EN_COURS' %}
+        <a href="{% url 'annuler_reclamation' reclamation.id %}"><button style="background: #ffc107; color: black;">❌ Annuler</button></a>
+    {% endif %}
+    
+    <a href="{% url 'supprimer_reclamation' reclamation.id %}"><button style="background: #dc3545; color: white;">🗑️ Supprimer</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green; font-weight: bold;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations Principales -->
+    <h2>🔍 Informations de la Réclamation</h2>
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr><th style="width: 30%;">N° Réclamation</th><td><strong style="font-size: 1.2em;">{{ reclamation.numero_reclamation }}</strong></td></tr>
+        <tr><th>Client</th><td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }} ({{ reclamation.client.get_id_client }})</td></tr>
+        <tr><th>Téléphone</th><td>{{ reclamation.client.telephone }}</td></tr>
+        <tr><th>Email</th><td>{{ reclamation.client.email|default:"Non renseigné" }}</td></tr>
+        <tr><th>Type</th><td>{{ reclamation.get_type_reclamation_display }}</td></tr>
+        <tr><th>Nature</th><td><strong>{{ reclamation.get_nature_display }}</strong></td></tr>
+        <tr>
+            <th>Priorité</th>
+            <td>
+                {% if reclamation.priorite == 'URGENTE' %}
+                    <span style="color: red; font-weight: bold; font-size: 1.1em;">🔴 {{ reclamation.get_priorite_display }}</span>
+                {% elif reclamation.priorite == 'ELEVEE' %}
+                    <span style="color: orange; font-weight: bold;">🟠 {{ reclamation.get_priorite_display }}</span>
+                {% elif reclamation.priorite == 'NORMALE' %}
+                    <span style="color: blue;">🔵 {{ reclamation.get_priorite_display }}</span>
+                {% else %}
+                    <span style="color: green;">🟢 {{ reclamation.get_priorite_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>
+                {% if reclamation.statut == 'OUVERTE' %}
+                    <span style="color: red; font-weight: bold;">📂 {{ reclamation.get_statut_display }}</span>
+                {% elif reclamation.statut == 'EN_COURS' %}
+                    <span style="color: orange; font-weight: bold;">⏳ {{ reclamation.get_statut_display }}</span>
+                {% elif reclamation.statut == 'RESOLUE' %}
+                    <span style="color: green; font-weight: bold;">✅ {{ reclamation.get_statut_display }}</span>
+                {% elif reclamation.statut == 'CLOSE' %}
+                    <span style="color: gray;">🔒 {{ reclamation.get_statut_display }}</span>
+                {% elif reclamation.statut == 'ANNULEE' %}
+                    <span style="color: gray;">❌ {{ reclamation.get_statut_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr><th>Date création</th><td>{{ reclamation.date_creation|date:"d/m/Y à H:i" }}</td></tr>
+        <tr><th>Objet</th><td><strong>{{ reclamation.objet }}</strong></td></tr>
+        <tr><th>Description</th><td style="white-space: pre-wrap;">{{ reclamation.description }}</td></tr>
+        {% if reclamation.service_concerne %}
+        <tr><th>Service concerné</th><td>{{ reclamation.get_service_concerne_display }}</td></tr>
+        {% endif %}
+        {% if reclamation.agent_responsable %}
+        <tr><th>Agent responsable</th><td><strong>{{ reclamation.agent_responsable }}</strong></td></tr>
+        <tr><th>Date assignation</th><td>{{ reclamation.date_assignation|date:"d/m/Y à H:i" }}</td></tr>
+        {% endif %}
+        {% if reclamation.reponse_agent %}
+        <tr><th>Réponse agent</th><td style="background: #e7f3ff; white-space: pre-wrap;">{{ reclamation.reponse_agent }}</td></tr>
+        {% endif %}
+        {% if reclamation.solution_proposee %}
+        <tr><th>Solution proposée</th><td style="background: #e7ffe7; white-space: pre-wrap;">{{ reclamation.solution_proposee }}</td></tr>
+        {% endif %}
+        {% if reclamation.date_resolution %}
+        <tr><th>Date résolution</th><td>{{ reclamation.date_resolution|date:"d/m/Y à H:i" }}</td></tr>
+        <tr><th>Délai traitement</th><td><strong>{{ reclamation.delai_traitement_jours }} jour(s)</strong></td></tr>
+        {% endif %}
+        {% if reclamation.compensation_accordee %}
+        <tr style="background: #fff3cd;">
+            <th>💰 Compensation accordée</th>
+            <td><strong style="color: green; font-size: 1.1em;">OUI - {{ reclamation.montant_compensation|floatformat:2 }} DA</strong></td>
+        </tr>
+        {% endif %}
+        {% if reclamation.remarques %}
+        <tr><th>Remarques</th><td style="white-space: pre-wrap;">{{ reclamation.remarques }}</td></tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!-- Expéditions concernées -->
+    {% if reclamation.expeditions.exists %}
+    <h2>📦 Expéditions concernées ({{ reclamation.expeditions.count }})</h2>
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <thead>
+            <tr>
+                <th>N° Expédition</th>
+                <th>Destination</th>
+                <th>Type Service</th>
+                <th>Poids</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in reclamation.expeditions.all %}
+            <tr>
+                <td><strong>{{ exp.get_numero_expedition }}</strong></td>
+                <td>{{ exp.destination.ville }}, {{ exp.destination.wilaya }}</td>
+                <td>{{ exp.type_service.get_type_service_display }}</td>
+                <td>{{ exp.poids }} kg</td>
+                <td>{{ exp.get_statut_display }}</td>
+                <td><a href="{% url 'detail_expedition' exp.id %}"><button>👁️ Voir</button></a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Facture concernée -->
+    {% if reclamation.facture %}
+    <h2>🧾 Facture concernée</h2>
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr><th style="width: 30%;">N° Facture</th><td><a href="{% url 'detail_facture' reclamation.facture.id %}"><strong>{{ reclamation.facture.numero_facture }}</strong></a></td></tr>
+        <tr><th>Montant TTC</th><td><strong>{{ reclamation.facture.montant_ttc|floatformat:2 }} DA</strong></td></tr>
+        <tr><th>Statut</th><td>{{ reclamation.facture.get_statut_display }}</td></tr>
+        <tr><th>Date échéance</th><td>{{ reclamation.facture.date_echeance|date:"d/m/Y" }}</td></tr>
+    </table>
+    {% endif %}
+    
+    <hr>
+    
+    <!-- Historique -->
+    <h2>📋 Historique des Actions ({{ historique.count }})</h2>
+    
+    {% if historique %}
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <thead>
+            <tr>
+                <th>Date/Heure</th>
+                <th>Action</th>
+                <th>Agent</th>
+                <th>Commentaire</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in historique %}
+            <tr>
+                <td>{{ h.date_action|date:"d/m/Y H:i" }}</td>
+                <td><strong>{{ h.action }}</strong></td>
+                <td>{{ h.agent_nom|default:"-" }}</td>
+                <td>{{ h.commentaire|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun historique disponible.</p>
+    {% endif %}
+</body>
+</html>

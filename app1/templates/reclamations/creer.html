@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer une Réclamation</title>
+</head>
+<body>
+    <h1>📝 Créer une Nouvelle Réclamation</h1>
+    
+    <a href="{% url 'liste_reclamations' %}"><button>← Retour à la liste</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red; font-weight: bold;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    
+    <p style="color: blue;">
+        ℹ️ Remplissez tous les champs obligatoires (*). Un email sera automatiquement envoyé au support.
+    </p>
+    
+    <hr>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; font-size: 1.1em;">✅ Créer la Réclamation</button>
+        <a href="{% url 'liste_reclamations' %}"><button type="button">❌ Annuler</button></a>
+    </form>
+</body>
+</html>

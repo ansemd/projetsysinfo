@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Assigner Incident {{ incident.numero_incident }}</title>
+</head>
+<body>
+    <h1>👤 Assigner un Agent à l'Incident {{ incident.numero_incident }}</h1>
+    
+    <a href="{% url 'detail_incident' incident.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>Informations de l'incident</h2>
+    <p><strong>Titre :</strong> {{ incident.titre }}</p>
+    <p><strong>Type :</strong> {{ incident.get_type_incident_display }}</p>
+    <p><strong>Sévérité :</strong> {{ incident.get_severite_display }}</p>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        <button type="submit" style="background: #007bff; color: white; padding: 10px 20px;">✅ Assigner</button>
+        <a href="{% url 'detail_incident' incident.id %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>

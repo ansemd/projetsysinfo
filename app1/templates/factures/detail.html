@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Facture - {{ facture.numero_facture }}</title>
+</head>
+<body>
+    <h1>Détails de la Facture {{ facture.numero_facture }}</h1>
+    
+    <a href="{% url 'liste_factures' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_facture' facture.id %}"><button>Modifier</button></a>
+    <a href="{% url 'supprimer_facture' facture.id %}"><button>Supprimer</button></a>
+    <a href="{% url 'exporter_facture_detail_pdf' facture.id %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <!-- ✅ BOUTON AJOUTER PAIEMENT -->
+    {% if peut_ajouter_paiement %}
+        <a href="{% url 'ajouter_paiement_facture' facture.id %}">
+            <button style="background: #28a745; color: white;">💰 Ajouter un paiement</button>
+        </a>
+    {% endif %}
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations de la facture -->
+    <h2>Informations de la Facture</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>N° Facture</th>
+            <td><strong>{{ facture.numero_facture }}</strong></td>
+        </tr>
+        <tr>
+            <th>Client</th>
+            <td>{{ facture.client.prenom }} {{ facture.client.nom }} ({{ facture.client.get_id_client }})</td>
+        </tr>
+        <tr>
+            <th>Téléphone client</th>
+            <td>{{ facture.client.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Email client</th>
+            <td>{{ facture.client.email|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th>Montant HT</th>
+            <td>{{ facture.montant_ht|floatformat:2 }} DA</td>
+        </tr>
+        <tr>
+            <th>TVA ({{ facture.taux_tva }}%)</th>
+            <td>{{ facture.montant_tva|floatformat:2 }} DA</td>
+        </tr>
+        <tr>
+            <th>Montant TTC</th>
+            <td><strong style="font-size: 1.2em;">{{ facture.montant_ttc|floatformat:2 }} DA</strong></td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>
+                {% if facture.statut == 'IMPAYEE' %}
+                    <span style="color: red;">❌ {{ facture.get_statut_display }}</span>
+                {% elif facture.statut == 'PARTIELLEMENT_PAYEE' %}
+                    <span style="color: orange;">⏳ {{ facture.get_statut_display }}</span>
+                {% elif facture.statut == 'PAYEE' %}
+                    <span style="color: green;">✅ {{ facture.get_statut_display }}</span>
+                {% elif facture.statut == 'EN_RETARD' %}
+                    <span style="color: darkred;">⚠️ {{ facture.get_statut_display }}</span>
+                {% else %}
+                    <span style="color: gray;">{{ facture.get_statut_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date de création</th>
+            <td>{{ facture.date_creation|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Date d'échéance</th>
+            <td>{{ facture.date_echeance|date:"d/m/Y" }}</td>
+        </tr>
+        {% if facture.remarques %}
+        <tr>
+            <th>Remarques</th>
+            <td>{{ facture.remarques }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!-- ✅ EXPÉDITIONS FACTURÉES -->
+    <h2>📦 Expéditions Facturées ({{ expeditions.count }})</h2>
+    
+    {% if expeditions %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Expédition</th>
+                <th>Destination</th>
+                <th>Type</th>
+                <th>Poids</th>
+                <th>Montant</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in expeditions %}
+            <tr>
+                <td>
+                    <a href="{% url 'detail_expedition' exp.id %}">{{ exp.get_numero_expedition }}</a>
+                </td>
+                <td>{{ exp.destination.ville }} - {{ exp.destination.wilaya }}</td>
+                <td>{{ exp.type_service.get_type_service_display }}</td>
+                <td>{{ exp.poids }} kg</td>
+                <td>{{ exp.montant_total|floatformat:2 }} DA</td>
+                <td>{{ exp.get_statut_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune expédition associée à cette facture.</p>
+    {% endif %}
+    
+    <hr>
+    
+    <!-- ✅ PAIEMENTS EFFECTUÉS -->
+    <h2>💰 Paiements Effectués ({{ stats_paiements.nb_paiements }})</h2>
+    
+    <p><strong>Total payé :</strong> {{ stats_paiements.total_paye|floatformat:2 }} DA</p>
+    <p><strong>Restant à payer :</strong> {{ facture.montant_ttc|floatformat:2 }} DA</p>
+    
+    {% if paiements %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Montant</th>
+                <th>Mode</th>
+                <th>Référence</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for paiement in paiements %}
+            <tr>
+                <td>{{ paiement.date_paiement|date:"d/m/Y" }}</td>
+                <td>{{ paiement.montant_paye|floatformat:2 }} DA</td>
+                <td>{{ paiement.get_mode_paiement_display }}</td>
+                <td>{{ paiement.reference_transaction|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'detail_paiement' paiement.id %}"><button>Détails</button></a>
+                    <a href="{% url 'supprimer_paiement' paiement.id %}"><button>Supprimer</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: orange;">⚠️ Aucun paiement enregistré pour cette facture</p>
+    {% endif %}
+    
+</body>
+</html>

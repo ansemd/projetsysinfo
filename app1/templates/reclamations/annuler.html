@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Annuler Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>❌ Annuler la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <h2>⚠️ Confirmation d'Annulation</h2>
+    
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr><th style="width: 30%;">N° Réclamation</th><td><strong>{{ reclamation.numero_reclamation }}</strong></td></tr>
+        <tr><th>Client</th><td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }}</td></tr>
+        <tr><th>Objet</th><td>{{ reclamation.objet }}</td></tr>
+        <tr><th>Nature</th><td>{{ reclamation.get_nature_display }}</td></tr>
+        <tr><th>Priorité</th><td>{{ reclamation.get_priorite_display }}</td></tr>
+        <tr><th>Date création</th><td>{{ reclamation.date_creation|date:"d/m/Y H:i" }}</td></tr>
+    </table>
+    
+    <hr>
+    
+    <div style="background: #d1ecf1; padding: 15px; border-left: 5px solid #0c5460; margin: 20px 0;">
+        <p style="margin: 0; font-size: 1.1em;"><strong>ℹ️ Utilisez cette action pour :</strong></p>
+        <ul style="margin: 10px 0;">
+            <li>Réclamations <strong>infondées</strong> (sans justification valable)</li>
+            <li>Réclamations en <strong>doublon</strong> (déjà traitée ailleurs)</li>
+            <li>Réclamations créées par <strong>erreur</strong></li>
+            <li>Réclamations <strong>non pertinentes</strong></li>
+        </ul>
+        <p style="margin: 10px 0 0 0; color: #856404; font-weight: bold;">
+            ⚠️ L'annulation sera enregistrée dans l'historique avec le motif.
+        </p>
+    </div>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <label for="motif" style="font-weight: bold;">Motif d'annulation * :</label><br>
+        <textarea id="motif" name="motif" rows="5" cols="80" required placeholder="Expliquez pourquoi cette réclamation est annulée (infondée, doublon, erreur, etc.)"></textarea><br><br>
+        
+        <label for="agent" style="font-weight: bold;">Agent responsable * :</label><br>
+        <input type="text" id="agent" name="agent" required size="50" placeholder="Entrez votre nom"><br><br>
+        
+        <button type="submit" style="background: #ffc107; color: black; padding: 12px 25px; font-size: 1.1em; font-weight: bold;">❌ Confirmer l'Annulation</button>
+        <a href="{% url 'detail_reclamation' reclamation.id %}"><button type="button">Retour</button></a>
+    </form>
+</body>
+</html>

@@ -1,5 +1,6 @@
 from django import forms
-from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition
+from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, Reclamation
+from datetime import date
 
 class ClientForm(forms.ModelForm):
     class Meta:
@@ -299,6 +300,463 @@ class ExpeditionForm(forms.ModelForm):
             raise forms.ValidationError("Le volume ne peut pas être négatif")
         return volume
 
+class FactureForm(forms.ModelForm):
+    """
+    Formulaire de modification de facture
+    Permet de modifier : client, date échéance, statut, remarques
+    """
+    
+    class Meta:
+        model = Facture
+        fields = ['client', 'date_echeance', 'statut', 'remarques']
+        widgets = {
+            'date_echeance': forms.DateInput(attrs={'type': 'date'}),
+            'remarques': forms.Textarea(attrs={'rows': 3}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Personnalisation des labels
+        self.fields['client'].label = "Client *"
+        self.fields['date_echeance'].label = "Date d'échéance *"
+        self.fields['statut'].label = "Statut *"
+        self.fields['date_echeance'].help_text = "Date limite de paiement"
+    
+    def clean_date_echeance(self):
+        """
+        Validation : Date échéance >= aujourd'hui
+        Exception : Si facture déjà EN_RETARD, on garde la date passée
+        """
+        date_echeance = self.cleaned_data.get('date_echeance')
+        
+        # Si modification d'une facture existante EN_RETARD
+        if self.instance and self.instance.pk:
+            if self.instance.statut == 'EN_RETARD':
+                return date_echeance  # On autorise la date passée
+        
+        # Sinon, date doit être >= aujourd'hui
+        if date_echeance and date_echeance < date.today():
+            raise forms.ValidationError(
+                "La date d'échéance doit être supérieure ou égale à aujourd'hui"
+            )
+        
+        return date_echeance
+
+class PaiementForm(forms.ModelForm):
+    """
+    Formulaire d'enregistrement d'un paiement
+    
+    2 MODES D'UTILISATION :
+    1. Depuis une facture (depuis_facture=True) :
+       - Champs facture et client cachés (pré-remplis automatiquement)
+       - Utilisé quand l'agent clique "Ajouter paiement" depuis une facture
+    
+    2. Mode normal (depuis_facture=False) :
+       - Formulaire complet avec sélection de la facture
+       - Affiche seulement les factures IMPAYEE ou PARTIELLEMENT_PAYEE
+    """
+    
+    class Meta:
+        model = Paiement
+        fields = ['facture', 'client', 'montant_paye', 'mode_paiement', 
+                  'reference_transaction', 'remarques']
+        widgets = {
+            'remarques': forms.Textarea(attrs={'rows': 2}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        # Récupérer les options spéciales
+        depuis_facture = kwargs.pop('depuis_facture', False)  # Vient-on d'une facture ?
+        facture_id = kwargs.pop('facture_id', None)           # ID de la facture si oui
+        
+        super().__init__(*args, **kwargs)
+        
+        # ========== MODE 1 : DEPUIS UNE FACTURE ==========
+        if depuis_facture and facture_id:
+            from .models import Facture
+            facture = Facture.objects.get(id=facture_id)
+            
+            # Pré-remplir et CACHER le champ facture
+            self.fields['facture'].initial = facture
+            self.fields['facture'].widget = forms.HiddenInput()
+            
+            # Pré-remplir et CACHER le champ client
+            self.fields['client'].initial = facture.client
+            self.fields['client'].widget = forms.HiddenInput()
+            
+            # Montant par défaut = montant restant à payer
+            self.fields['montant_paye'].initial = facture.montant_ttc
+            self.fields['montant_paye'].help_text = f"Montant restant : {facture.montant_ttc:,.2f} DA"
+        
+        # ========== MODE 2 : FORMULAIRE NORMAL ==========
+        else:
+            # Filtrer : Afficher SEULEMENT les factures impayées ou partiellement payées
+            factures = Facture.objects.filter(
+                statut__in=['IMPAYEE', 'PARTIELLEMENT_PAYEE']
+            ).select_related('client').order_by('-date_creation')
+            
+            self.fields['facture'].queryset = factures
+            
+            # Personnaliser l'affichage dans le select
+            # Format : "F-20260104-CL-003-001 - Jean Dupont - 5,000.00 DA - Impayée"
+            self.fields['facture'].label_from_instance = lambda obj: (
+                f"{obj.numero_facture} - {obj.client.prenom} {obj.client.nom} - "
+                f"{obj.montant_ttc:,.2f} DA - {obj.get_statut_display()}"
+            )
+        
+        # Labels communs aux 2 modes
+        self.fields['facture'].label = "Facture *"
+        self.fields['client'].label = "Client *"
+        self.fields['montant_paye'].label = "Montant du paiement (DA) *"
+        self.fields['mode_paiement'].label = "Mode de paiement *"
+        self.fields['reference_transaction'].label = "Référence de transaction"
+    
+    def clean_montant_paye(self):
+        """Validation : Montant doit être > 0"""
+        montant = self.cleaned_data.get('montant_paye')
+        
+        if montant and montant <= 0:
+            raise forms.ValidationError("Le montant doit être supérieur à 0")
+        
+        return montant
+    
+    def clean(self):
+        """
+        Validation globale : Montant ne doit pas dépasser le montant TTC de la facture
+        """
+        cleaned_data = super().clean()
+        montant = cleaned_data.get('montant_paye')
+        facture = cleaned_data.get('facture')
+        
+        if montant and facture:
+            if montant > facture.montant_ttc:
+                raise forms.ValidationError({
+                    'montant_paye': f"Le montant ne peut pas dépasser le montant TTC ({facture.montant_ttc:,.2f} DA)"
+                })
+        
+        return cleaned_data
+
+class IncidentForm(forms.ModelForm):
+    """
+    Formulaire de création/modification d'incident
+    """
+    
+    class Meta:
+        model = Incident
+        fields = [
+            'type_incident',
+            'titre',
+            'description',
+            'date_heure_incident',
+            'lieu_incident',
+            'signale_par',
+            'cout_estime',
+            'expedition',
+            'tournee',
+            'document1',
+            'document2',
+            'photo1',
+            'photo2',
+        ]
+        widgets = {
+            'date_heure_incident': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'titre': forms.TextInput(attrs={'size': 60}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Labels
+        self.fields['type_incident'].label = "Type d'incident *"
+        self.fields['titre'].label = "Titre (résumé court) *"
+        self.fields['description'].label = "Description détaillée *"
+        self.fields['date_heure_incident'].label = "Date et heure de l'incident *"
+        self.fields['lieu_incident'].label = "Lieu de l'incident"
+        self.fields['signale_par'].label = "Signalé par (nom) *"
+        self.fields['cout_estime'].label = "Coût estimé (DA)"
+        self.fields['expedition'].label = "Expédition concernée"
+        self.fields['tournee'].label = "Tournée concernée"
+        
+        # Filtrer les expéditions (seulement celles en cours ou en attente)
+        self.fields['expedition'].queryset = Expedition.objects.filter(
+            statut__in=['EN_ATTENTE', 'EN_TRANSIT', 'COLIS_CREE', 'EN_LIVRAISON']
+        ).order_by('-date_creation')
+        
+        # Filtrer les tournées (seulement PREVUE ou EN_COURS)
+        self.fields['tournee'].queryset = Tournee.objects.filter(
+            statut__in=['PREVUE', 'EN_COURS']
+        ).order_by('-date_depart')
+        
+        # Help texts
+        self.fields['cout_estime'].help_text = "Coût estimé des dommages en DA"
+        self.fields['expedition'].help_text = "Laisser vide si incident lié à une tournée"
+        self.fields['tournee'].help_text = "Laisser vide si incident lié à une expédition"
+    
+    def clean(self):
+        """
+        Validation : Un incident doit être lié à UNE expédition OU UNE tournée
+        (pas les deux, pas aucun)
+        """
+        cleaned_data = super().clean()
+        expedition = cleaned_data.get('expedition')
+        tournee = cleaned_data.get('tournee')
+        
+        # Les deux sont remplis
+        if expedition and tournee:
+            raise forms.ValidationError(
+                "Un incident ne peut être lié qu'à une expédition OU une tournée, pas les deux !"
+            )
+        
+        # Aucun n'est rempli
+        if not expedition and not tournee:
+            raise forms.ValidationError(
+                "Un incident doit être lié soit à une expédition soit à une tournée !"
+            )
+        
+        return cleaned_data
+    
+    def clean_cout_estime(self):
+        """Validation : Coût >= 0"""
+        cout = self.cleaned_data.get('cout_estime')
+        
+        if cout and cout < 0:
+            raise forms.ValidationError("Le coût ne peut pas être négatif")
+        
+        return cout
+
+class IncidentModificationForm(forms.ModelForm):
+    """
+    Formulaire pour modifier un incident existant
+    (champs limités)
+    """
+    
+    class Meta:
+        model = Incident
+        fields = [
+            'titre',
+            'description',
+            'lieu_incident',
+            'cout_estime',
+            'severite',
+            'statut',
+            'agent_responsable',
+            'actions_entreprises',
+            'remarques',
+            'document1',
+            'document2',
+            'photo1',
+            'photo2',
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'actions_entreprises': forms.Textarea(attrs={'rows': 3}),
+            'remarques': forms.Textarea(attrs={'rows': 2}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.fields['titre'].label = "Titre *"
+        self.fields['description'].label = "Description *"
+        self.fields['severite'].label = "Sévérité *"
+        self.fields['statut'].label = "Statut *"
+        self.fields['agent_responsable'].label = "Agent responsable"
+        self.fields['actions_entreprises'].label = "Actions entreprises"
+
+class IncidentResolutionForm(forms.Form):
+    """
+    Formulaire pour résoudre un incident
+    """
+    solution = forms.CharField(
+        label="Solution appliquée *",
+        widget=forms.Textarea(attrs={'rows': 4}),
+        help_text="Décrivez la solution mise en place pour résoudre cet incident"
+    )
+    
+    agent = forms.CharField(
+        label="Agent responsable *",
+        max_length=100,
+        help_text="Nom de l'agent qui a résolu l'incident"
+    )
+
+class ReclamationForm(forms.ModelForm):
+    """
+    Formulaire de création/modification de réclamation
+    """
+    
+    class Meta:
+        model = Reclamation
+        fields = [
+            'client',
+            'type_reclamation',
+            'nature',
+            'objet',
+            'description',
+            'expeditions',
+            'facture',
+            'service_concerne',
+            'piece_jointe1',
+            'piece_jointe2',
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'objet': forms.TextInput(attrs={'size': 60}),
+            'expeditions': forms.CheckboxSelectMultiple(),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Labels
+        self.fields['client'].label = "Client *"
+        self.fields['type_reclamation'].label = "Type de réclamation *"
+        self.fields['nature'].label = "Nature *"
+        self.fields['objet'].label = "Objet de la réclamation *"
+        self.fields['description'].label = "Description détaillée *"
+        self.fields['expeditions'].label = "Expéditions concernées"
+        self.fields['facture'].label = "Facture concernée"
+        self.fields['service_concerne'].label = "Service concerné"
+        
+        # Filtrer les expéditions
+        self.fields['expeditions'].queryset = Expedition.objects.all().order_by('-date_creation')
+        
+        # Filtrer les factures (sauf annulées)
+        self.fields['facture'].queryset = Facture.objects.exclude(
+            statut='ANNULEE'
+        ).order_by('-date_creation')
+        
+        # Help texts
+        self.fields['expeditions'].help_text = "Sélectionner les expéditions concernées (si applicable)"
+        self.fields['service_concerne'].help_text = "Obligatoire si type = SERVICE"
+    
+    def clean(self):
+        """
+        Validation : Si type = SERVICE, service_concerne est OBLIGATOIRE
+        """
+        cleaned_data = super().clean()
+        type_reclamation = cleaned_data.get('type_reclamation')
+        service_concerne = cleaned_data.get('service_concerne')
+        
+        # Si type SERVICE mais pas de service spécifié
+        if type_reclamation == 'SERVICE' and not service_concerne:
+            raise forms.ValidationError({
+                'service_concerne': "Le service concerné est obligatoire pour une réclamation de type SERVICE"
+            })
+        
+        # Si type != SERVICE mais service spécifié
+        if type_reclamation != 'SERVICE' and service_concerne:
+            raise forms.ValidationError({
+                'service_concerne': "Le service concerné doit être vide si la réclamation n'est pas de type SERVICE"
+            })
+        
+        return cleaned_data
+
+class ReclamationModificationForm(forms.ModelForm):
+    """
+    Formulaire pour modifier une réclamation existante
+    """
+    
+    class Meta:
+        model = Reclamation
+        fields = [
+            'objet',
+            'description',
+            'priorite',
+            'statut',
+            'agent_responsable',
+            'remarques',
+            'expeditions',
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'remarques': forms.Textarea(attrs={'rows': 2}),
+            'expeditions': forms.CheckboxSelectMultiple(),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.fields['objet'].label = "Objet *"
+        self.fields['description'].label = "Description *"
+        self.fields['priorite'].label = "Priorité *"
+        self.fields['statut'].label = "Statut *"
+        self.fields['agent_responsable'].label = "Agent responsable"
+        
+        # Filtrer les expéditions
+        self.fields['expeditions'].queryset = Expedition.objects.all().order_by('-date_creation')
+
+class ReclamationReponseForm(forms.Form):
+    """
+    Formulaire pour répondre à une réclamation
+    """
+    reponse = forms.CharField(
+        label="Réponse à la réclamation *",
+        widget=forms.Textarea(attrs={'rows': 4}),
+        help_text="Votre réponse au client"
+    )
+    
+    solution = forms.CharField(
+        label="Solution proposée *",
+        widget=forms.Textarea(attrs={'rows': 3}),
+        help_text="Solution mise en place ou proposée"
+    )
+    
+    agent = forms.CharField(
+        label="Agent responsable *",
+        max_length=100
+    )
+
+class ReclamationResolutionForm(forms.Form):
+    """
+    Formulaire pour résoudre une réclamation avec compensation
+    """
+    agent = forms.CharField(
+        label="Agent responsable *",
+        max_length=100
+    )
+    
+    accorder_compensation = forms.BooleanField(
+        label="Accorder une compensation",
+        required=False,
+        help_text="Cocher si vous souhaitez accorder une compensation au client"
+    )
+    
+    montant_compensation = forms.DecimalField(
+        label="Montant de la compensation (DA)",
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        initial=0,
+        help_text="Montant en dinars algériens"
+    )
+    
+    def clean(self):
+        """
+        Validation : Si compensation cochée, montant obligatoire
+        """
+        cleaned_data = super().clean()
+        accorder = cleaned_data.get('accorder_compensation')
+        montant = cleaned_data.get('montant_compensation')
+        
+        if accorder and (not montant or montant <= 0):
+            raise forms.ValidationError({
+                'montant_compensation': "Le montant doit être supérieur à 0 si vous accordez une compensation"
+            })
+        
+        return cleaned_data
+
+class AssignationForm(forms.Form):
+    """
+    Formulaire simple pour assigner un agent
+    (utilisable pour incidents ET réclamations)
+    """
+    agent_nom = forms.CharField(
+        label="Nom de l'agent *",
+        max_length=100,
+        help_text="Agent qui sera responsable du traitement"
+    )
 
 
 

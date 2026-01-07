@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Facture - {{ facture.numero_facture }}</title>
+</head>
+<body>
+    <h1>Supprimer la Facture {{ facture.numero_facture }}</h1>
+    
+    <a href="{% url 'detail_facture' facture.id %}"><button>← Annuler</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="background: #ffcccc; padding: 20px; border: 2px solid #cc0000; margin: 20px 0;">
+        <h2 style="color: #cc0000;">⚠️ Attention : Suppression Définitive</h2>
+        
+        <p><strong>Êtes-vous sûr de vouloir supprimer cette facture ?</strong></p>
+        
+        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
+            <tr>
+                <th>N° Facture</th>
+                <td>{{ facture.numero_facture }}</td>
+            </tr>
+            <tr>
+                <th>Client</th>
+                <td>{{ facture.client.prenom }} {{ facture.client.nom }}</td>
+            </tr>
+            <tr>
+                <th>Montant TTC</th>
+                <td>{{ facture.montant_ttc|floatformat:2 }} DA</td>
+            </tr>
+            <tr>
+                <th>Statut</th>
+                <td>{{ facture.get_statut_display }}</td>
+            </tr>
+            <tr>
+                <th>Date création</th>
+                <td>{{ facture.date_creation|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+                <th>Nombre de paiements</th>
+                <td>{{ nb_paiements }}</td>
+            </tr>
+        </table>
+        
+        <p style="color: #cc0000; background: #fff3cd; padding: 15px; border: 2px solid #ffc107;">
+            <strong>⚠️ CONSÉQUENCES DE LA SUPPRESSION :</strong><br>
+            • La facture sera supprimée de la base de données<br>
+            {% if nb_paiements > 0 %}
+            • Les {{ nb_paiements }} paiement(s) associé(s) seront supprimés<br>
+            • Le solde du client sera restauré<br>
+            {% endif %}
+            • Les expéditions seront dissociées de cette facture<br>
+        </p>
+        
+        <p style="color: #cc0000;"><strong>⚠️ Cette action est IRRÉVERSIBLE !</strong></p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" style="background: #cc0000; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                OUI, SUPPRIMER DÉFINITIVEMENT
+            </button>
+            <a href="{% url 'detail_facture' facture.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Non, annuler
+                </button>
+            </a>
+        </form>
+    </div>
+    
+</body>
+</html>

@@ -105,6 +105,8 @@ class TourneeService:
                             'EN_TRANSIT',
                             f"Colis en transit vers {exp.destination.ville}"
                         )
+
+                        ExpeditionService.envoyer_notification_destinataire(exp)
         
         elif tournee.statut == 'TERMINEE':
             # Libérer les ressources
@@ -144,7 +146,7 @@ class TourneeService:
         Returns:
             (bool, str) - (peut_démarrer, raison_si_non)
         """
-        if not tournee.expedition_set.exists():
+        if not tournee.expeditions.exists():
             return False, "Aucune expédition affectée"
         
         return True, ""
@@ -326,10 +328,12 @@ class ExpeditionService:
     @staticmethod
     def envoyer_notification_destinataire(expedition):
         """
-        Placeholder pour envoyer email/SMS au destinataire
-        TODO : Implémenter avec Gmail ou service SMS
+        Envoie un email/SMS au destinataire quand sa tournée démarre
         """
-        pass
+        from .notification import ExpeditionEmailService
+        
+        # Email au destinataire
+        ExpeditionEmailService.envoyer_notification_colis_en_route(expedition)
 
 class VehiculeService:
     """
@@ -858,7 +862,9 @@ class NotificationService:
     """
     Service pour gérer les notifications et leurs traitements
     """
-    
+    from .models import Notification, Client
+    from django.utils import timezone
+
     @staticmethod
     @transaction.atomic
     def traiter_action_notification(notification_id, action):
@@ -989,6 +995,53 @@ class NotificationService:
                     'message': 'Notification marquée comme lue'
                 }
         
+        # ========== REMBOURSEMENT REQUIS ==========
+        elif notification.type_notification == 'REMBOURSEMENT_REQUIS':
+            
+            if action == 'REMBOURSER':
+                # Trouver l'incident lié
+                # (on peut le retrouver via le message de la notification ou ajouter un champ incident dans Notification)
+                
+                # Pour l'instant, on va chercher le dernier incident du client non remboursé
+                from .models import Incident
+                
+                incident = Incident.objects.filter(
+                    expedition__client=notification.client,
+                    remboursement_effectue=False,
+                    type_incident__in=IncidentService.INCIDENTS_AVEC_REMBOURSEMENT
+                ).order_by('-date_creation').first()
+                
+                if not incident:
+                    return {'success': False, 'message': 'Aucun incident trouvé'}
+                
+                # Effectuer le remboursement
+                success, message = IncidentService.traiter_remboursement_incident(
+                    incident, 
+                    auteur="Agent"
+                )
+                
+                if success:
+                    # Marquer la notification comme traitée
+                    notification.statut = 'TRAITEE'
+                    notification.action_effectuee = 'REMBOURSE'
+                    notification.commentaire_traitement = message
+                    notification.date_traitement = timezone.now()
+                    notification.save()
+                    
+                    resultat = {'success': True, 'message': message}
+                else:
+                    resultat = {'success': False, 'message': message}
+            
+            elif action == 'IGNORER':
+                # L'agent décide de ne pas rembourser
+                notification.statut = 'TRAITEE'
+                notification.action_effectuee = 'IGNORE'
+                notification.commentaire_traitement = "Remboursement refusé par l'agent"
+                notification.date_traitement = timezone.now()
+                notification.save()
+                
+                resultat = {'success': True, 'message': 'Notification ignorée'}
+
         return resultat
     
     @staticmethod
@@ -1033,6 +1086,541 @@ class NotificationService:
             notification.save()
         
         return {'success': True}
+    
+class IncidentService:
+   
+    TAUX_REMBOURSEMENT = {
+        'PERTE': 100.00,              # 100% - Colis perdu
+        'ENDOMMAGEMENT': 80.00,       # 80% - Colis endommagé
+        'ACCIDENT': 100.00,           # 100% - Accident grave
+        'PROBLEME_TECHNIQUE': 50.00,  # 50% - Problème technique
+        'RETARD': 20.00,              # 20% - Retard (compensation)
+        'REFUS_DESTINATAIRE': 0.00,   # 0% - Refus (pas la faute de l'entreprise)
+        'ADRESSE_INCORRECTE': 0.00,   # 0% - Erreur client
+        'DESTINATAIRE_ABSENT': 0.00,  # 0% - Absence client
+        'AUTRE': 0.00,                # 0% - À évaluer au cas par cas
+    }
+    
+    # Types d'incidents nécessitant une annulation automatique
+    INCIDENTS_GRAVES_ANNULATION = ['PERTE', 'ENDOMMAGEMENT', 'PROBLEME_TECHNIQUE', 'ACCIDENT']
+    
+    # Types d'incidents nécessitant un remboursement (avec ou sans annulation)
+    INCIDENTS_AVEC_REMBOURSEMENT = ['PERTE', 'ENDOMMAGEMENT', 'ACCIDENT', 'PROBLEME_TECHNIQUE', 'RETARD']
+    
+    @staticmethod
+    def traiter_remboursement_incident(incident, auteur="Agent"):
+        """
+        Traite le remboursement lié à un incident
+        Applique le taux de remboursement selon le type d'incident
+        
+        Cette méthode est maintenant appelée MANUELLEMENT par l'agent
+        via la notification, pas automatiquement
+        """
+        from .models import HistoriqueIncident
+        from decimal import Decimal
+        
+        if not incident.expedition:
+            return False, "Pas d'expédition associée à cet incident"
+        
+        if incident.remboursement_effectue:
+            return False, "Remboursement déjà effectué pour cet incident"
+        
+        # Récupérer le taux de remboursement
+        taux = incident.taux_remboursement
+        
+        if taux <= 0:
+            return False, f"Aucun remboursement prévu pour ce type d'incident ({incident.get_type_incident_display()})"
+        
+        expedition = incident.expedition
+        client = expedition.client
+        
+        # Calculer le montant à rembourser
+        montant_ht = expedition.montant_total
+        montant_tva = montant_ht * Decimal('0.19')  # 19% TVA
+        montant_ttc = montant_ht + montant_tva
+        
+        # Appliquer le taux de remboursement
+        montant_a_rembourser = montant_ttc * (taux / Decimal('100.00'))
+        
+        # 🆕 CRÉDITER le client (ici c'est OK car c'est suite à validation de l'agent)
+        client.solde -= montant_a_rembourser
+        client.save()
+        
+        # Marquer le remboursement comme effectué
+        incident.remboursement_effectue = True
+        incident.montant_rembourse = montant_a_rembourser
+        incident.statut = 'RESOLU'  #  Passer directement en RESOLU
+        incident.save(update_fields=['remboursement_effectue', 'montant_rembourse', 'statut'])
+        
+        # Historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Remboursement effectué",
+            auteur=auteur,
+            details=f"Montant remboursé : {montant_a_rembourser:.2f} DA ({taux}% de {montant_ttc:.2f} DA). "
+                    f"Client crédité."
+        )
+        
+        return True, f"Remboursement de {montant_a_rembourser:.2f} DA effectué ({taux}%)"
+        
+    @staticmethod
+    def annuler_expedition_incident(incident, auteur="Agent"):
+        """
+         Annule l'expédition liée à un incident grave avec remboursement complet
+        """
+        from .models import HistoriqueIncident
+        
+        if not incident.expedition:
+            return False, "Pas d'expédition associée"
+        
+        expedition = incident.expedition
+        
+        # Vérifier si l'expédition peut être annulée
+        if expedition.statut not in ['EN_ATTENTE', 'COLIS_CREE']:
+            return False, f"Impossible d'annuler : l'expédition est en {expedition.get_statut_display()}"
+        
+        try:
+            # Annuler l'expédition (remboursement inclus)
+            ExpeditionService.annuler_expedition(expedition)
+            
+            # Marquer le remboursement comme effectué
+            incident.remboursement_effectue = True
+            incident.montant_rembourse = expedition.montant_total * Decimal('1.19')  # TTC
+            incident.save(update_fields=['remboursement_effectue', 'montant_rembourse'])
+            
+            # Historique
+            HistoriqueIncident.objects.create(
+                incident=incident,
+                action="Expédition annulée",
+                auteur=auteur,
+                details=f"Expédition {expedition.get_numero_expedition()} annulée et client remboursé intégralement"
+            )
+            
+            return True, f"Expédition {expedition.get_numero_expedition()} annulée avec succès"
+            
+        except Exception as e:
+            # Historique d'erreur
+            HistoriqueIncident.objects.create(
+                incident=incident,
+                action="Erreur d'annulation",
+                auteur=auteur,
+                details=f"Erreur : {str(e)}"
+            )
+            
+            return False, f"Erreur lors de l'annulation : {str(e)}"
+    
+    @staticmethod
+    def resoudre_incident(incident, solution, agent):
+        """
+        Marque un incident comme résolu
+        """
+        from django.utils import timezone
+        from .models import HistoriqueIncident
+        
+        ancien_statut = incident.statut
+        
+        incident.statut = 'RESOLU'
+        incident.actions_entreprises = solution
+        incident.agent_responsable = agent
+        incident.date_resolution = timezone.now()
+        incident.save()
+        
+        # Historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident résolu",
+            auteur=agent,
+            details=f"Solution appliquée : {solution[:100]}",
+            ancien_statut=ancien_statut,
+            nouveau_statut='RESOLU'
+        )
+    
+    @staticmethod
+    def cloturer_incident(incident, auteur="Agent"):
+        """
+        Clôture définitivement un incident
+        """
+        from django.core.exceptions import ValidationError
+        from .models import HistoriqueIncident
+        
+        if incident.statut != 'RESOLU':
+            raise ValidationError("Un incident doit être résolu avant d'être clôturé")
+        
+        ancien_statut = incident.statut
+        incident.statut = 'CLOS'
+        incident.save()
+        
+        # Historique
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident clôturé",
+            auteur=auteur,
+            ancien_statut=ancien_statut,
+            nouveau_statut='CLOS'
+        )
+    
+    @staticmethod
+    def assigner_agent_incident(incident, agent_nom, auteur="Système"):
+        """
+        Assigne un agent responsable à un incident
+        """
+        from .models import HistoriqueIncident
+        
+        ancien_agent = incident.agent_responsable
+        ancien_statut = incident.statut
+        
+        incident.agent_responsable = agent_nom
+        incident.statut = 'EN_COURS'
+        incident.save()
+        
+        # Historique
+        details = f"Assigné à {agent_nom}"
+        if ancien_agent:
+            details += f" (précédemment : {ancien_agent})"
+        
+        HistoriqueIncident.objects.create(
+            incident=incident,
+            action="Incident assigné",
+            auteur=auteur,
+            details=details,
+            ancien_statut=ancien_statut,
+            nouveau_statut='EN_COURS'
+        )
+    
+    @staticmethod
+    def obtenir_taux_remboursement(type_incident):
+        """
+        Retourne le taux de remboursement pour un type d'incident donné
+        """
+        return IncidentService.TAUX_REMBOURSEMENT.get(type_incident, 0.00)
+    
+    @staticmethod
+    def peut_etre_annule(incident):
+        """
+        Vérifie si un incident peut déclencher une annulation automatique
+        """
+        return incident.type_incident in IncidentService.INCIDENTS_GRAVES_ANNULATION
+    
+    @staticmethod
+    def necessite_remboursement(incident):
+        """
+        Vérifie si un incident nécessite un remboursement
+        """
+        return incident.type_incident in IncidentService.INCIDENTS_AVEC_REMBOURSEMENT
+    
+    @staticmethod
+    def statistiques_incidents(date_debut=None, date_fin=None):
+        """
+        Génère des statistiques sur les incidents
+        """
+        from django.db.models import Count, Avg, Sum, Q
+        from datetime import datetime, timedelta
+        from .models import Incident
+        
+        if not date_fin:
+            date_fin = datetime.now()
+        if not date_debut:
+            date_debut = date_fin - timedelta(days=30)
+        
+        incidents = Incident.objects.filter(
+            date_heure_incident__range=[date_debut, date_fin]
+        )
+        
+        stats = {
+            'total_incidents': incidents.count(),
+            'par_type': incidents.values('type_incident').annotate(
+                count=Count('id')
+            ).order_by('-count'),
+            'par_severite': incidents.values('severite').annotate(
+                count=Count('id')
+            ),
+            'par_statut': incidents.values('statut').annotate(
+                count=Count('id')
+            ),
+            'cout_total': incidents.aggregate(Sum('cout_estime'))['cout_estime__sum'] or 0,
+            'montant_total_rembourse': incidents.aggregate(Sum('montant_rembourse'))['montant_rembourse__sum'] or 0,
+            'taux_resolution': incidents.filter(
+                statut__in=['RESOLU', 'CLOS']
+            ).count() / incidents.count() * 100 if incidents.count() > 0 else 0,
+            'incidents_avec_remboursement': incidents.filter(remboursement_effectue=True).count(),
+        }
+        
+        return stats
+    
+class ReclamationService:
+    """
+    Service gérant toutes les opérations liées aux réclamations :
+    - Création et traitement des réclamations
+    - Assignation aux agents
+    - Calcul des délais
+    - Compensation clients
+    - Statistiques et rapports
+    """
+    
+    @staticmethod
+    def traiter_nouvelle_reclamation(reclamation):
+        """
+        Traite une nouvelle réclamation : priorité automatique, assignation, etc.
+        """
+        from .models import HistoriqueReclamation
+        
+        # Définir la priorité automatiquement selon la nature
+        if reclamation.nature in ['COLIS_PERDU', 'COLIS_ENDOMMAGE', 'REMBOURSEMENT']:
+            reclamation.priorite = 'HAUTE'
+        elif reclamation.nature == 'RETARD_LIVRAISON':
+            reclamation.priorite = 'NORMALE'
+        
+        reclamation.save(update_fields=['priorite'])
+        
+        # Créer une entrée dans l'historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation créée",
+            auteur="Système",
+            details=f"Réclamation créée par le client {reclamation.client}",
+            nouveau_statut='OUVERTE'
+        )
+        
+        from .notification import AlerteEmailService
+        AlerteEmailService.envoyer_notification_nouvelle_reclamation(reclamation)
+    
+    @staticmethod
+    def assigner_agent(reclamation, agent_nom):
+        """
+        Assigne un agent à une réclamation
+        """
+        from django.utils import timezone
+        from .models import HistoriqueReclamation
+        
+        ancien_agent = reclamation.agent_responsable
+        
+        reclamation.agent_responsable = agent_nom
+        reclamation.date_assignation = timezone.now()
+        reclamation.statut = 'EN_COURS'
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Assignation agent",
+            auteur="Système",
+            details=f"Assigné à {agent_nom}" + (f" (précédemment: {ancien_agent})" if ancien_agent else ""),
+            ancien_statut='OUVERTE',
+            nouveau_statut='EN_COURS'
+        )
+    
+    @staticmethod
+    def repondre_reclamation(reclamation, reponse, solution, auteur):
+        """
+        Enregistre une réponse à la réclamation
+        """
+        from .models import HistoriqueReclamation
+        
+        ancien_statut = reclamation.statut
+        
+        reclamation.reponse_agent = reponse
+        reclamation.solution_proposee = solution
+        reclamation.statut = 'EN_ATTENTE_CLIENT'
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réponse envoyée",
+            auteur=auteur,
+            details=f"Réponse: {reponse[:100]}...",
+            ancien_statut=ancien_statut,
+            nouveau_statut='EN_ATTENTE_CLIENT'
+        )
+        
+        from .notification import AlerteEmailService
+        AlerteEmailService.envoyer_reponse_reclamation_client(reclamation)
+    
+    @staticmethod
+    def resoudre_reclamation(reclamation, auteur, accorder_compensation=False, montant_compensation=0):
+        """
+        Marque une réclamation comme résolue
+        """
+        from django.utils import timezone
+        from .models import HistoriqueReclamation
+        
+        ancien_statut = reclamation.statut
+        
+        reclamation.statut = 'RESOLUE'
+        reclamation.date_resolution = timezone.now()
+        reclamation.compensation_accordee = accorder_compensation
+        reclamation.montant_compensation = Decimal(str(montant_compensation))
+        reclamation.save()
+        
+        # Calculer le délai de traitement
+        ReclamationService.calculer_delai_traitement(reclamation)
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation résolue",
+            auteur=auteur,
+            details=f"Compensation: {montant_compensation} DA" if accorder_compensation else "Aucune compensation",
+            ancien_statut=ancien_statut,
+            nouveau_statut='RESOLUE'
+        )
+        
+        # Si compensation accordée, créditer le client
+        if accorder_compensation and montant_compensation > 0:
+            reclamation.client.solde -= Decimal(str(montant_compensation))
+            reclamation.client.save()
+    
+    @staticmethod
+    def cloturer_reclamation(reclamation, auteur):
+        """
+        Clôture définitivement une réclamation
+        """
+        from .models import HistoriqueReclamation
+        
+        if reclamation.statut != 'RESOLUE':
+            raise ValidationError("Une réclamation doit être résolue avant d'être clôturée")
+        
+        ancien_statut = reclamation.statut
+        reclamation.statut = 'CLOSE'
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation clôturée",
+            auteur=auteur,
+            ancien_statut=ancien_statut,
+            nouveau_statut='CLOSE'
+        )
+    
+    @staticmethod
+    def annuler_reclamation(reclamation, motif, auteur):
+        """
+        Annule une réclamation (demande infondée, doublon, etc.)
+        """
+        from .models import HistoriqueReclamation
+        
+        ancien_statut = reclamation.statut
+        reclamation.statut = 'ANNULEE'
+        reclamation.remarques = (reclamation.remarques or "") + f"\n[ANNULATION] {motif}"
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Réclamation annulée",
+            auteur=auteur,
+            details=f"Motif: {motif}",
+            ancien_statut=ancien_statut,
+            nouveau_statut='ANNULEE'
+        )
+    
+    @staticmethod
+    def calculer_delai_traitement(reclamation):
+        """
+        Calcule le délai de traitement en jours
+        """
+        if reclamation.date_resolution:
+            delta = reclamation.date_resolution - reclamation.date_creation
+            reclamation.delai_traitement_jours = delta.days
+            reclamation.save(update_fields=['delai_traitement_jours'])
+    
+    @staticmethod
+    def enregistrer_evaluation_client(reclamation, note, commentaire):
+        """
+        Enregistre l'évaluation du client sur le traitement de sa réclamation
+        """
+        from .models import HistoriqueReclamation
+        
+        if not (1 <= note <= 5):
+            raise ValidationError("La note doit être entre 1 et 5")
+        
+        reclamation.evaluation_client = note
+        reclamation.commentaire_client = commentaire
+        reclamation.save()
+        
+        # Historique
+        HistoriqueReclamation.objects.create(
+            reclamation=reclamation,
+            action="Évaluation client",
+            auteur=str(reclamation.client),
+            details=f"Note: {note}/5 - {commentaire}"
+        )
+    
+    @staticmethod
+    def statistiques_reclamations(date_debut=None, date_fin=None):
+        """
+        Génère des statistiques sur les réclamations
+        """
+        from django.db.models import Count, Avg, Sum, Q, F
+        from datetime import datetime, timedelta
+        from .models import Reclamation
+        
+        # Définir la période par défaut (30 derniers jours)
+        if not date_fin:
+            date_fin = datetime.now()
+        if not date_debut:
+            date_debut = date_fin - timedelta(days=30)
+        
+        reclamations = Reclamation.objects.filter(
+            date_creation__range=[date_debut, date_fin]
+        )
+        
+        stats = {
+            'total_reclamations': reclamations.count(),
+            'par_nature': reclamations.values('nature').annotate(
+                count=Count('id')
+            ).order_by('-count'),
+            'par_statut': reclamations.values('statut').annotate(
+                count=Count('id')
+            ),
+            'par_priorite': reclamations.values('priorite').annotate(
+                count=Count('id')
+            ),
+            'delai_moyen_traitement': reclamations.filter(
+                delai_traitement_jours__isnull=False
+            ).aggregate(Avg('delai_traitement_jours'))['delai_traitement_jours__avg'] or 0,
+            'taux_resolution': reclamations.filter(
+                statut__in=['RESOLUE', 'CLOSE']
+            ).count() / reclamations.count() * 100 if reclamations.count() > 0 else 0,
+            'compensation_totale': reclamations.filter(
+                compensation_accordee=True
+            ).aggregate(Sum('montant_compensation'))['montant_compensation__sum'] or 0,
+            'note_moyenne': reclamations.filter(
+                evaluation_client__isnull=False
+            ).aggregate(Avg('evaluation_client'))['evaluation_client__avg'] or 0,
+        }
+        
+        return stats
+    
+    @staticmethod
+    def top_clients_reclamants(limite=10):
+        """
+        Retourne les clients ayant le plus de réclamations
+        """
+        from django.db.models import Count
+        from .models import Reclamation
+        
+        return Reclamation.objects.values(
+            'client__prenom',
+            'client__nom',
+            'client__id'
+        ).annotate(
+            nb_reclamations=Count('id')
+        ).order_by('-nb_reclamations')[:limite]
+    
+    @staticmethod
+    def motifs_recurrents():
+        """
+        Analyse des motifs de réclamations les plus fréquents
+        """
+        from django.db.models import Count
+        from .models import Reclamation
+        
+        return Reclamation.objects.values('nature').annotate(
+            count=Count('id'),
+            pourcentage=Count('id') * 100.0 / Reclamation.objects.count()
+        ).order_by('-count')
     
 """
 Utilitaire d'export PDF générique pour toutes les tables

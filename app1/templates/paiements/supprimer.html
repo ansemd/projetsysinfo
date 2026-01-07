@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Supprimer Paiement</title>
+</head>
+<body>
+    <h1>Supprimer le Paiement</h1>
+    
+    <a href="{% url 'detail_paiement' paiement.id %}"><button>← Annuler</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="background: #ffcccc; padding: 20px; border: 2px solid #cc0000; margin: 20px 0;">
+        <h2 style="color: #cc0000;">⚠️ Attention : Suppression Définitive</h2>
+        
+        <p><strong>Êtes-vous sûr de vouloir supprimer ce paiement ?</strong></p>
+        
+        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
+            <tr>
+                <th>Facture</th>
+                <td>{{ paiement.facture.numero_facture }}</td>
+            </tr>
+            <tr>
+                <th>Client</th>
+                <td>{{ paiement.facture.client.prenom }} {{ paiement.facture.client.nom }}</td>
+            </tr>
+            <tr>
+                <th>Montant payé</th>
+                <td><strong>{{ paiement.montant_paye|floatformat:2 }} DA</strong></td>
+            </tr>
+            <tr>
+                <th>Mode de paiement</th>
+                <td>{{ paiement.get_mode_paiement_display }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ paiement.date_paiement|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+                <th>Référence</th>
+                <td>{{ paiement.reference_transaction|default:"Non renseignée" }}</td>
+            </tr>
+        </table>
+        
+        <p style="color: #cc0000; background: #fff3cd; padding: 15px; border: 2px solid #ffc107;">
+            <strong>⚠️ CONSÉQUENCES DE LA SUPPRESSION :</strong><br>
+            • Le paiement sera supprimé de la base de données<br>
+            • Le solde du client sera restauré (+ {{ paiement.montant_paye|floatformat:2 }} DA)<br>
+            • Le statut de la facture sera recalculé automatiquement<br>
+        </p>
+        
+        <p style="color: #cc0000;"><strong>⚠️ Cette action est IRRÉVERSIBLE !</strong></p>
+        
+        <form method="POST" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" style="background: #cc0000; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                OUI, SUPPRIMER DÉFINITIVEMENT
+            </button>
+            <a href="{% url 'detail_paiement' paiement.id %}">
+                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
+                    Non, annuler
+                </button>
+            </a>
+        </form>
+    </div>
+    
+</body>
+</html>

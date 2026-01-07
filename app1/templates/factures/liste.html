@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Factures</title>
+</head>
+<body>
+    <h1>Gestion des Factures</h1>
+    
+    <a href="{% url 'exporter_factures_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total factures :</strong> {{ stats.total }}</p>
+    <p><strong>Impayées :</strong> {{ stats.impayees }}</p>
+    <p><strong>Partiellement payées :</strong> {{ stats.partiellement_payees }}</p>
+    <p><strong>Payées :</strong> {{ stats.payees }}</p>
+    <p><strong>En retard :</strong> {{ stats.en_retard }}</p>
+    <p><strong>Montant total :</strong> {{ stats.montant_total|floatformat:2 }} DA</p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche</h2>
+    <form method="GET">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Rechercher par nom du client..." 
+            value="{{ search }}"
+            size="50"
+        >
+        
+        <select name="statut">
+            <option value="">-- Tous les statuts --</option>
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if statut_filter == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_factures' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste des factures -->
+    <h2>Liste des Factures ({{ factures.count }})</h2>
+    
+    {% if factures %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Facture</th>
+                <th>Client</th>
+                <th>Montant TTC</th>
+                <th>Statut</th>
+                <th>Date échéance</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for facture in factures %}
+            <tr>
+                <td><strong>{{ facture.numero_facture }}</strong></td>
+                <td>{{ facture.client.prenom }} {{ facture.client.nom }}</td>
+                <td>{{ facture.montant_ttc|floatformat:2 }} DA</td>
+                <td>
+                    {% if facture.statut == 'IMPAYEE' %}
+                        <span style="color: red;">❌ {{ facture.get_statut_display }}</span>
+                    {% elif facture.statut == 'PARTIELLEMENT_PAYEE' %}
+                        <span style="color: orange;">⏳ {{ facture.get_statut_display }}</span>
+                    {% elif facture.statut == 'PAYEE' %}
+                        <span style="color: green;">✅ {{ facture.get_statut_display }}</span>
+                    {% elif facture.statut == 'EN_RETARD' %}
+                        <span style="color: darkred;">⚠️ {{ facture.get_statut_display }}</span>
+                    {% else %}
+                        <span style="color: gray;">{{ facture.get_statut_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ facture.date_echeance|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'detail_facture' facture.id %}"><button>Détails</button></a>
+                    <a href="{% url 'modifier_facture' facture.id %}"><button>Modifier</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune facture trouvée.</p>
+    {% endif %}
+    
+</body>
+</html>

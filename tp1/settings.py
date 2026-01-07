@@ -42,6 +42,28 @@ INSTALLED_APPS = [
     'app1',
 ]
 
+# Backend SMTP de Django
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+
+EMAIL_HOST_USER = 'transportproalg@gmail.com'  
+EMAIL_HOST_PASSWORD = 'jzco skik arwy emiy'  
+DEFAULT_FROM_EMAIL = 'TransportPro <transportproalg@gmail.com>' 
+
+
+EMAILS_DIRECTION = [
+    'ansemdahar83@gmail.com',  
+]
+
+EMAILS_SUPPORT = [
+    'transportproalg@gmail.com',  
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

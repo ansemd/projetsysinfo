@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Clôturer Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>🔒 Clôturer la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <h2>⚠️ Confirmation de Clôture</h2>
+    
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr><th style="width: 30%;">N° Réclamation</th><td><strong>{{ reclamation.numero_reclamation }}</strong></td></tr>
+        <tr><th>Client</th><td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }}</td></tr>
+        <tr><th>Objet</th><td>{{ reclamation.objet }}</td></tr>
+        <tr><th>Nature</th><td>{{ reclamation.get_nature_display }}</td></tr>
+        <tr><th>Statut actuel</th><td><span style="color: green; font-weight: bold;">✅ {{ reclamation.get_statut_display }}</span></td></tr>
+        <tr><th>Date résolution</th><td>{{ reclamation.date_resolution|date:"d/m/Y H:i" }}</td></tr>
+        {% if reclamation.compensation_accordee %}
+        <tr style="background: #fff3cd;">
+            <th>Compensation</th>
+            <td><strong>{{ reclamation.montant_compensation|floatformat:2 }} DA accordés</strong></td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <div style="background: #fff3cd; padding: 15px; border-left: 5px solid #856404; margin: 20px 0;">
+        <p style="margin: 0; font-size: 1.1em;"><strong>⚠️ ATTENTION :</strong></p>
+        <ul style="margin: 10px 0;">
+            <li>La clôture est <strong>définitive</strong> et <strong>irréversible</strong></li>
+            <li>La réclamation ne pourra plus être modifiée après clôture</li>
+            <li>Le statut passera à "CLOSE"</li>
+            <li>Cette action sera enregistrée dans l'historique</li>
+        </ul>
+    </div>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <label for="agent" style="font-weight: bold;">Agent responsable de la clôture * :</label><br>
+        <input type="text" id="agent" name="agent" required size="50" placeholder="Entrez votre nom"><br><br>
+        
+        <button type="submit" style="background: #6c757d; color: white; padding: 12px 25px; font-size: 1.1em;">🔒 Confirmer la Clôture Définitive</button>
+        <a href="{% url 'detail_reclamation' reclamation.id %}"><button type="button">❌ Annuler</button></a>
+    </form>
+</body>
+</html>

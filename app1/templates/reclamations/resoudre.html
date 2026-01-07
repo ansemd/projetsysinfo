@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Résoudre Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>✅ Résoudre la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <!-- Messages d'erreur -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red; font-weight: bold;">❌ {{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations de la réclamation -->
+    <h2>📋 Informations de la Réclamation</h2>
+    <table border="1" cellpadding="10" style="width: 100%;">
+        <tr>
+            <th style="width: 25%; background: #f0f0f0;">N° Réclamation</th>
+            <td><strong style="font-size: 1.1em;">{{ reclamation.numero_reclamation }}</strong></td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Client</th>
+            <td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }} ({{ reclamation.client.get_id_client }})</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Téléphone</th>
+            <td>{{ reclamation.client.telephone }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Email</th>
+            <td>{{ reclamation.client.email|default:"Non renseigné" }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Objet</th>
+            <td><strong>{{ reclamation.objet }}</strong></td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Nature</th>
+            <td>{{ reclamation.get_nature_display }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Priorité</th>
+            <td>
+                {% if reclamation.priorite == 'URGENTE' %}
+                    <span style="color: red; font-weight: bold;">🔴 {{ reclamation.get_priorite_display }}</span>
+                {% elif reclamation.priorite == 'ELEVEE' %}
+                    <span style="color: orange; font-weight: bold;">🟠 {{ reclamation.get_priorite_display }}</span>
+                {% elif reclamation.priorite == 'NORMALE' %}
+                    <span style="color: blue;">🔵 {{ reclamation.get_priorite_display }}</span>
+                {% else %}
+                    <span style="color: green;">🟢 {{ reclamation.get_priorite_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Description</th>
+            <td style="white-space: pre-wrap; background: #f9f9f9;">{{ reclamation.description }}</td>
+        </tr>
+        <tr>
+            <th style="background: #f0f0f0;">Date création</th>
+            <td>{{ reclamation.date_creation|date:"d/m/Y à H:i" }}</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <!-- Alerte compensation -->
+    <div style="background: #fff3cd; padding: 15px; border-left: 5px solid #856404; margin: 20px 0;">
+        <h3 style="margin-top: 0;">💰 Compensation Financière</h3>
+        <p>
+            <strong>Vous pouvez accorder une compensation au client</strong> si la réclamation le justifie :
+        </p>
+        <ul style="margin: 10px 0;">
+            <li>Retard important de livraison</li>
+            <li>Dommage au colis</li>
+            <li>Service non conforme</li>
+            <li>Désagrément majeur causé au client</li>
+        </ul>
+        <p style="margin-bottom: 0; color: #856404; font-weight: bold;">
+            ⚠️ Le montant de la compensation sera crédité au solde du client.
+        </p>
+    </div>
+    
+    <hr>
+    
+    <!-- Formulaire de résolution -->
+    <h2>📝 Formulaire de Résolution</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table style="width: 100%;">
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        
+        <button type="submit" style="background: #28a745; color: white; padding: 12px 30px; font-size: 1.1em; font-weight: bold; cursor: pointer;">
+            ✅ Marquer comme Résolue
+        </button>
+        
+        <a href="{% url 'detail_reclamation' reclamation.id %}">
+            <button type="button" style="padding: 12px 30px; font-size: 1.1em;">
+                ❌ Annuler
+            </button>
+        </a>
+    </form>
+    
+    <hr>
+    
+    <!-- Informations complémentaires -->
+    <div style="background: #d1ecf1; padding: 15px; border-left: 5px solid #0c5460;">
+        <h4 style="margin-top: 0;">ℹ️ Que se passe-t-il après la résolution ?</h4>
+        <ul style="margin: 10px 0;">
+            <li>Le statut de la réclamation passera à <strong>"RESOLUE"</strong></li>
+            <li>L'action sera enregistrée dans l'historique avec votre nom</li>
+            <li>Le délai de traitement sera calculé automatiquement</li>
+            <li>Si compensation accordée : le solde du client sera mis à jour</li>
+            <li>La réclamation pourra ensuite être <strong>clôturée définitivement</strong></li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Incidents</title>
+</head>
+<body>
+    <h1>Gestion des Incidents</h1>
+    
+    <a href="{% url 'creer_incident' %}"><button style="background: #28a745; color: white;">➕ Nouvel Incident</button></a>
+    <a href="{% url 'exporter_incidents_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total incidents :</strong> {{ stats.total }}</p>
+    <p><strong>Signalés :</strong> {{ stats.signales }}</p>
+    <p><strong>En cours :</strong> {{ stats.en_cours }}</p>
+    <p><strong>Résolus :</strong> {{ stats.resolus }}</p>
+    <p><strong>Clos :</strong> {{ stats.clos }}</p>
+    <p><strong>Critiques :</strong> <span style="color: red;">{{ stats.critiques }}</span></p>
+    <p><strong>Élevés :</strong> <span style="color: orange;">{{ stats.eleves }}</span></p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche et Filtres</h2>
+    <form method="GET">
+        <input type="text" name="search" placeholder="Rechercher..." value="{{ search }}" size="50">
+        
+        <select name="type_incident">
+            <option value="">-- Tous les types --</option>
+            {% for value, label in types %}
+                <option value="{{ value }}" {% if type_incident == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="severite">
+            <option value="">-- Toutes sévérités --</option>
+            {% for value, label in severites %}
+                <option value="{{ value }}" {% if severite == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="statut">
+            <option value="">-- Tous les statuts --</option>
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if statut == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_incidents' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste -->
+    <h2>Liste des Incidents ({{ incidents.count }})</h2>
+    
+    {% if incidents %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Incident</th>
+                <th>Type</th>
+                <th>Titre</th>
+                <th>Sévérité</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Signalé par</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for incident in incidents %}
+            <tr>
+                <td><strong>{{ incident.numero_incident }}</strong></td>
+                <td>{{ incident.get_type_incident_display }}</td>
+                <td>{{ incident.titre }}</td>
+                <td>
+                    {% if incident.severite == 'CRITIQUE' %}
+                        <span style="color: red;">🔴 {{ incident.get_severite_display }}</span>
+                    {% elif incident.severite == 'ELEVEE' %}
+                        <span style="color: orange;">🟠 {{ incident.get_severite_display }}</span>
+                    {% elif incident.severite == 'MOYENNE' %}
+                        <span style="color: blue;">🔵 {{ incident.get_severite_display }}</span>
+                    {% else %}
+                        <span style="color: green;">🟢 {{ incident.get_severite_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if incident.statut == 'SIGNALE' %}
+                        <span style="color: red;">{{ incident.get_statut_display }}</span>
+                    {% elif incident.statut == 'EN_COURS' %}
+                        <span style="color: orange;">{{ incident.get_statut_display }}</span>
+                    {% elif incident.statut == 'RESOLU' %}
+                        <span style="color: green;">{{ incident.get_statut_display }}</span>
+                    {% else %}
+                        <span style="color: gray;">{{ incident.get_statut_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ incident.date_heure_incident|date:"d/m/Y H:i" }}</td>
+                <td>{{ incident.signale_par }}</td>
+                <td>
+                    <a href="{% url 'detail_incident' incident.id %}"><button>Détails</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun incident trouvé.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Réclamations</title>
+</head>
+<body>
+    <h1>Gestion des Réclamations</h1>
+    
+    <a href="{% url 'creer_reclamation' %}"><button style="background: #28a745; color: white;">➕ Nouvelle Réclamation</button></a>
+    <a href="{% url 'exporter_reclamations_pdf' %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Statistiques -->
+    <h2>Statistiques</h2>
+    <p><strong>Total réclamations :</strong> {{ stats.total }}</p>
+    <p><strong>Ouvertes :</strong> {{ stats.ouvertes }}</p>
+    <p><strong>En cours :</strong> {{ stats.en_cours }}</p>
+    <p><strong>Résolues :</strong> {{ stats.resolues }}</p>
+    <p><strong>Closes :</strong> {{ stats.closes }}</p>
+    <p><strong>Urgentes :</strong> <span style="color: red;">{{ stats.urgentes }}</span></p>
+    <p><strong>Avec compensation :</strong> {{ stats.avec_compensation }}</p>
+    
+    <hr>
+    
+    <!-- Recherche et Filtres -->
+    <h2>Recherche et Filtres</h2>
+    <form method="GET">
+        <input type="text" name="search" placeholder="Rechercher..." value="{{ search }}" size="50">
+        
+        <select name="type_reclamation">
+            <option value="">-- Tous les types --</option>
+            {% for value, label in types %}
+                <option value="{{ value }}" {% if type_reclamation == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="nature">
+            <option value="">-- Toutes natures --</option>
+            {% for value, label in natures %}
+                <option value="{{ value }}" {% if nature == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="priorite">
+            <option value="">-- Toutes priorités --</option>
+            {% for value, label in priorites %}
+                <option value="{{ value }}" {% if priorite == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="statut">
+            <option value="">-- Tous les statuts --</option>
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if statut == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="client_id">
+            <option value="">-- Tous les clients --</option>
+            {% for client in clients %}
+                <option value="{{ client.id }}" {% if client_id == client.id|stringformat:"s" %}selected{% endif %}>
+                    {{ client.prenom }} {{ client.nom }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit">Rechercher</button>
+        <a href="{% url 'liste_reclamations' %}"><button type="button">Réinitialiser</button></a>
+    </form>
+    
+    <hr>
+    
+    <!-- Liste -->
+    <h2>Liste des Réclamations ({{ reclamations.count }})</h2>
+    
+    {% if reclamations %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>N° Réclamation</th>
+                <th>Client</th>
+                <th>Nature</th>
+                <th>Priorité</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reclamation in reclamations %}
+            <tr>
+                <td><strong>{{ reclamation.numero_reclamation }}</strong></td>
+                <td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }}</td>
+                <td>{{ reclamation.get_nature_display }}</td>
+                <td>
+                    {% if reclamation.priorite == 'URGENTE' %}
+                        <span style="color: red;">🔴 {{ reclamation.get_priorite_display }}</span>
+                    {% elif reclamation.priorite == 'ELEVEE' %}
+                        <span style="color: orange;">🟠 {{ reclamation.get_priorite_display }}</span>
+                    {% elif reclamation.priorite == 'NORMALE' %}
+                        <span style="color: blue;">🔵 {{ reclamation.get_priorite_display }}</span>
+                    {% else %}
+                        <span style="color: green;">🟢 {{ reclamation.get_priorite_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if reclamation.statut == 'OUVERTE' %}
+                        <span style="color: red;">{{ reclamation.get_statut_display }}</span>
+                    {% elif reclamation.statut == 'EN_COURS' %}
+                        <span style="color: orange;">{{ reclamation.get_statut_display }}</span>
+                    {% elif reclamation.statut == 'RESOLUE' %}
+                        <span style="color: green;">{{ reclamation.get_statut_display }}</span>
+                    {% else %}
+                        <span style="color: gray;">{{ reclamation.get_statut_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ reclamation.date_creation|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>Détails</button></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucune réclamation trouvée.</p>
+    {% endif %}
+</body>
+</html>

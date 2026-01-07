@@ -3,9 +3,9 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Sum, Prefetch
-from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition
-from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm
-from .utils import generer_pdf_fiche, generer_pdf_liste
+from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation
+from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, IncidentResolutionForm, AssignationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm
+from .utils import generer_pdf_fiche, generer_pdf_liste, IncidentService, ReclamationService
 from django.utils import timezone
 
 
@@ -1840,3 +1840,1243 @@ def detail_tracking(request, expedition_id):
     (qui contient la table tracking détaillée en dessous)
     """
     return redirect('detail_expedition', expedition_id=expedition_id)
+
+def liste_factures(request):
+    """
+    Affiche la liste de toutes les factures
+    
+    FONCTIONNALITÉS :
+    - Recherche par nom du client (nom ou prénom)
+    - Filtre par statut (IMPAYEE, PAYEE, etc.)
+    - Statistiques globales
+    """
+    factures = Facture.objects.all().select_related('client')
+    
+    # ========== RECHERCHE PAR NOM CLIENT ==========
+    search = request.GET.get('search', '')
+    if search:
+        factures = factures.filter(
+            Q(client__nom__icontains=search) |       # Recherche dans le nom
+            Q(client__prenom__icontains=search) |    # Recherche dans le prénom
+            Q(numero_facture__icontains=search)      # Recherche dans le numéro
+        )
+    
+    # ========== FILTRE PAR STATUT ==========
+    statut_filter = request.GET.get('statut', '')
+    if statut_filter:
+        factures = factures.filter(statut=statut_filter)
+    
+    # Trier par date de création (plus récentes en premier)
+    factures = factures.order_by('-date_creation')
+    
+    # ========== STATISTIQUES GLOBALES ==========
+    stats = {
+        'total': Facture.objects.count(),
+        'impayees': Facture.objects.filter(statut='IMPAYEE').count(),
+        'partiellement_payees': Facture.objects.filter(statut='PARTIELLEMENT_PAYEE').count(),
+        'payees': Facture.objects.filter(statut='PAYEE').count(),
+        'en_retard': Facture.objects.filter(statut='EN_RETARD').count(),
+        'montant_total': Facture.objects.aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0,
+    }
+    
+    # Choix pour le filtre statut
+    statuts = [
+        ('IMPAYEE', 'Impayée'),
+        ('PARTIELLEMENT_PAYEE', 'Partiellement payée'),
+        ('PAYEE', 'Payée'),
+        ('EN_RETARD', 'En retard'),
+    ]
+    
+    return render(request, 'factures/liste.html', {
+        'factures': factures,
+        'search': search,
+        'statut_filter': statut_filter,
+        'stats': stats,
+        'statuts': statuts,
+    })
+
+def exporter_factures_pdf(request):
+    """
+    Génère un PDF avec la liste de toutes les factures
+    Format : Tableau avec colonnes [N° Facture, Client, Montant, Statut, Échéance]
+    """
+    factures = Facture.objects.all().select_related('client').order_by('-date_creation')
+    
+    # En-têtes du tableau
+    headers = ['N° Facture', 'Client', 'Montant TTC', 'Statut', 'Échéance']
+    
+    # Données (chaque ligne = une facture)
+    data = [
+        [
+            f.numero_facture,
+            f"{f.client.prenom} {f.client.nom}",
+            f"{f.montant_ttc:,.2f} DA",
+            f.get_statut_display(),
+            f.date_echeance.strftime('%d/%m/%Y')
+        ]
+        for f in factures
+    ]
+    
+    return generer_pdf_liste("Liste des Factures", headers, data, "factures")
+
+def detail_facture(request, facture_id):
+    """
+    Affiche les détails d'une facture
+    
+    AFFICHE :
+    - Informations de la facture
+    - Liste des paiements effectués pour cette facture
+    - Liste des expéditions facturées
+    - Bouton "Ajouter paiement" (si facture pas PAYEE/ANNULEE)
+    """
+    facture = get_object_or_404(
+        Facture.objects.select_related('client'),
+        id=facture_id
+    )
+    
+    # ========== RÉCUPÉRER LES PAIEMENTS ==========
+    paiements = facture.paiements.all().order_by('-date_paiement')
+    
+    # ========== RÉCUPÉRER LES EXPÉDITIONS ==========
+    # Les expéditions de cette facture (relation ManyToMany)
+    expeditions = facture.expeditions.all().select_related(
+        'destination', 'type_service', 'tournee'
+    )
+    
+    # ========== STATISTIQUES PAIEMENTS ==========
+    stats_paiements = {
+        'total_paye': paiements.aggregate(Sum('montant_paye'))['montant_paye__sum'] or 0,
+        'nb_paiements': paiements.count(),
+    }
+    
+    # ========== PEUT-ON AJOUTER UN PAIEMENT ? ==========
+    # On ne peut pas payer une facture PAYEE ou ANNULEE
+    peut_ajouter_paiement = facture.statut not in ['PAYEE', 'ANNULEE']
+    
+    return render(request, 'factures/detail.html', {
+        'facture': facture,
+        'paiements': paiements,
+        'expeditions': expeditions,
+        'stats_paiements': stats_paiements,
+        'peut_ajouter_paiement': peut_ajouter_paiement,  # Pour afficher ou cacher le bouton
+    })
+
+def exporter_facture_detail_pdf(request, facture_id):
+    """
+    Génère un PDF détaillé d'une facture
+    
+    CONTENU :
+    - Section 1 : Informations facture
+    - Section 2 : Expéditions facturées (si existent)
+    - Section 3 : Paiements effectués (si existent)
+    """
+    facture = get_object_or_404(Facture.objects.select_related('client'), id=facture_id)
+    paiements = facture.paiements.all().order_by('-date_paiement')
+    expeditions = facture.expeditions.all().select_related('destination', 'type_service')
+    
+    # ========== SECTION 1 : INFORMATIONS FACTURE ==========
+    sections = [
+        {
+            'titre': 'Informations de la Facture',
+            'data': [
+                ['N° Facture', facture.numero_facture],
+                ['Client', f"{facture.client.prenom} {facture.client.nom}"],
+                ['Téléphone', str(facture.client.telephone)],
+                ['Montant HT', f"{facture.montant_ht:,.2f} DA"],
+                ['TVA', f"{facture.montant_tva:,.2f} DA"],
+                ['Montant TTC', f"{facture.montant_ttc:,.2f} DA"],
+                ['Statut', facture.get_statut_display()],
+                ['Date création', facture.date_creation.strftime('%d/%m/%Y')],
+                ['Date échéance', facture.date_echeance.strftime('%d/%m/%Y')],
+                ['Remarques', facture.remarques or 'Aucune'],
+            ]
+        }
+    ]
+    
+    # ========== SECTION 2 : EXPÉDITIONS FACTURÉES ==========
+    if expeditions.exists():
+        exp_data = [['N° Exp', 'Destination', 'Type', 'Poids', 'Montant']]
+        for e in expeditions:
+            exp_data.append([
+                e.get_numero_expedition(),
+                f"{e.destination.ville} - {e.destination.wilaya}",
+                e.type_service.get_type_service_display(),
+                f"{e.poids} kg",
+                f"{e.montant_total:,.2f} DA"
+            ])
+        
+        sections.append({
+            'titre': f'Expéditions facturées ({expeditions.count()})',
+            'data': exp_data
+        })
+    
+    # ========== SECTION 3 : PAIEMENTS ==========
+    if paiements.exists():
+        paie_data = [['Date', 'Montant', 'Mode', 'Référence']]
+        for p in paiements:
+            paie_data.append([
+                p.date_paiement.strftime('%d/%m/%Y'),
+                f"{p.montant_paye:,.2f} DA",
+                p.get_mode_paiement_display(),
+                p.reference_transaction or '-'
+            ])
+        
+        sections.append({
+            'titre': f'Paiements ({paiements.count()})',
+            'data': paie_data
+        })
+    
+    # Générer le PDF
+    return generer_pdf_fiche(
+        f"Facture - {facture.numero_facture}",
+        sections,
+        f"facture_{facture.id}",
+        remarques=None
+    )
+
+def modifier_facture(request, facture_id):
+    """
+    Permet de modifier une facture
+    Modifiable : client, date échéance, statut, remarques
+    """
+    facture = get_object_or_404(Facture, id=facture_id)
+    
+    if request.method == 'POST':
+        form = FactureForm(request.POST, instance=facture)
+        
+        if form.is_valid():
+            try:
+                facture = form.save()
+                messages.success(request, f"Facture {facture.numero_facture} modifiée !")
+                return redirect('detail_facture', facture_id=facture.id)
+            except Exception as e:
+                messages.error(request, f"Erreur : {str(e)}")
+    else:
+        form = FactureForm(instance=facture)
+    
+    return render(request, 'factures/modifier.html', {
+        'form': form,
+        'facture': facture,
+    })
+
+def supprimer_facture(request, facture_id):
+    """
+    Supprime une facture
+    ATTENTION : Les paiements associés seront aussi supprimés (cascade)
+    """
+    facture = get_object_or_404(Facture, id=facture_id)
+    
+    # Compter combien de paiements vont être supprimés
+    nb_paiements = facture.paiements.count()
+    
+    if request.method == 'POST':
+        try:
+            facture.delete()
+            messages.success(request, f"Facture {facture.numero_facture} supprimée")
+            return redirect('liste_factures')
+        except Exception as e:
+            messages.error(request, f"Erreur : {str(e)}")
+            return redirect('detail_facture', facture_id=facture_id)
+    
+    return render(request, 'factures/supprimer.html', {
+        'facture': facture,
+        'nb_paiements': nb_paiements,
+    })
+
+def liste_paiements(request):
+    """
+    Affiche la liste de tous les paiements
+    
+    FONCTIONNALITÉS :
+    - Recherche par nom client ou référence transaction
+    - Filtre par mode de paiement
+    - Statistiques globales
+    """
+    paiements = Paiement.objects.all().select_related('facture', 'facture__client')
+    
+    # ========== RECHERCHE ==========
+    search = request.GET.get('search', '')
+    if search:
+        paiements = paiements.filter(
+            Q(facture__client__nom__icontains=search) |
+            Q(facture__client__prenom__icontains=search) |
+            Q(reference_transaction__icontains=search)
+        )
+    
+    # ========== FILTRE PAR MODE ==========
+    mode_filter = request.GET.get('mode', '')
+    if mode_filter:
+        paiements = paiements.filter(mode_paiement=mode_filter)
+    
+    paiements = paiements.order_by('-date_paiement')
+    
+    # ========== STATISTIQUES ==========
+    stats = {
+        'total': paiements.count(),
+        'montant_total': paiements.aggregate(Sum('montant_paye'))['montant_paye__sum'] or 0,
+        'especes': paiements.filter(mode_paiement='ESPECES').count(),
+        'cheque': paiements.filter(mode_paiement='CHEQUE').count(),
+        'virement': paiements.filter(mode_paiement='VIREMENT').count(),
+        'carte': paiements.filter(mode_paiement='CARTE').count(),
+    }
+    
+    modes = [
+        ('ESPECES', 'Espèces'),
+        ('CHEQUE', 'Chèque'),
+        ('VIREMENT', 'Virement'),
+        ('CARTE', 'Carte bancaire'),
+    ]
+    
+    return render(request, 'paiements/liste.html', {
+        'paiements': paiements,
+        'search': search,
+        'mode_filter': mode_filter,
+        'stats': stats,
+        'modes': modes,
+    })
+
+def exporter_paiements_pdf(request):
+    """
+    Génère un PDF avec la liste de tous les paiements
+    Format : Tableau avec colonnes [Date, Facture, Client, Montant, Mode]
+    """
+    paiements = Paiement.objects.all().select_related(
+        'facture', 'facture__client'
+    ).order_by('-date_paiement')
+    
+    headers = ['Date', 'Facture', 'Client', 'Montant', 'Mode']
+    data = [
+        [
+            p.date_paiement.strftime('%d/%m/%Y'),
+            p.facture.numero_facture,
+            f"{p.facture.client.prenom} {p.facture.client.nom}",
+            f"{p.montant_paye:,.2f} DA",
+            p.get_mode_paiement_display()
+        ]
+        for p in paiements
+    ]
+    
+    return generer_pdf_liste("Liste des Paiements", headers, data, "paiements")
+
+def detail_paiement(request, paiement_id):
+    """
+    Affiche les détails d'un paiement
+    Inclut les informations de la facture associée
+    """
+    paiement = get_object_or_404(
+        Paiement.objects.select_related('facture', 'facture__client'),
+        id=paiement_id
+    )
+    
+    return render(request, 'paiements/detail.html', {
+        'paiement': paiement,
+    })
+
+def exporter_paiement_detail_pdf(request, paiement_id):
+    """
+    Génère un PDF détaillé d'un paiement
+    
+    CONTENU :
+    - Section 1 : Informations du paiement
+    - Section 2 : Informations de la facture associée
+    """
+    paiement = get_object_or_404(
+        Paiement.objects.select_related('facture', 'facture__client'),
+        id=paiement_id
+    )
+    
+    sections = [
+        {
+            'titre': 'Informations du Paiement',
+            'data': [
+                ['Facture', paiement.facture.numero_facture],
+                ['Client', f"{paiement.facture.client.prenom} {paiement.facture.client.nom}"],
+                ['Montant payé', f"{paiement.montant_paye:,.2f} DA"],
+                ['Mode', paiement.get_mode_paiement_display()],
+                ['Date', paiement.date_paiement.strftime('%d/%m/%Y')],
+                ['Référence', paiement.reference_transaction or 'Non renseignée'],
+                ['Remarques', paiement.remarques or 'Aucune'],
+            ]
+        },
+        {
+            'titre': 'Facture Associée',
+            'data': [
+                ['N° Facture', paiement.facture.numero_facture],
+                ['Montant TTC', f"{paiement.facture.montant_ttc:,.2f} DA"],
+                ['Statut', paiement.facture.get_statut_display()],
+                ['Échéance', paiement.facture.date_echeance.strftime('%d/%m/%Y')],
+            ]
+        }
+    ]
+    
+    return generer_pdf_fiche(
+        f"Paiement - {paiement.facture.numero_facture}",
+        sections,
+        f"paiement_{paiement.id}",
+        remarques=None
+    )
+
+def creer_paiement(request, facture_id=None):
+    """
+    Enregistre un nouveau paiement
+    
+    2 MODES D'UTILISATION :
+    
+    1. DEPUIS UNE FACTURE (facture_id fourni) :
+       - L'agent clique "Ajouter paiement" depuis le détail d'une facture
+       - Le formulaire est SIMPLIFIÉ : facture et client cachés (pré-remplis)
+       - Après validation, retour vers le détail de la facture
+    
+    2. MODE NORMAL (facture_id = None) :
+       - L'agent accède directement à "Créer un paiement"
+       - Le formulaire est COMPLET : il choisit la facture dans une liste
+       - Seules les factures IMPAYEE/PARTIELLEMENT_PAYEE sont proposées
+       - Après validation, retour vers le détail du paiement
+    """
+    # Déterminer si on vient d'une facture
+    depuis_facture = facture_id is not None
+    facture = None
+    
+    # ========== SI DEPUIS UNE FACTURE ==========
+    if depuis_facture:
+        facture = get_object_or_404(Facture, id=facture_id)
+        
+        # Vérifier qu'on peut encore payer cette facture
+        if facture.statut in ['PAYEE', 'ANNULEE']:
+            messages.error(request, f"Impossible : facture {facture.get_statut_display()}")
+            return redirect('detail_facture', facture_id=facture_id)
+    
+    # ========== TRAITEMENT DU FORMULAIRE ==========
+    if request.method == 'POST':
+        # Passer les options spéciales au formulaire
+        form = PaiementForm(
+            request.POST,
+            depuis_facture=depuis_facture,  # Pour cacher les champs
+            facture_id=facture_id           # Pour pré-remplir
+        )
+        
+        if form.is_valid():
+            try:
+                paiement = form.save()
+                messages.success(request, f"Paiement de {paiement.montant_paye:,.2f} DA enregistré !")
+                
+                # ========== REDIRECTION SELON ORIGINE ==========
+                if depuis_facture:
+                    # Retour vers la facture
+                    return redirect('detail_facture', facture_id=facture_id)
+                else:
+                    # Retour vers le détail du paiement
+                    return redirect('detail_paiement', paiement_id=paiement.id)
+            except Exception as e:
+                messages.error(request, f"Erreur : {str(e)}")
+    else:
+        # Affichage du formulaire vide
+        form = PaiementForm(
+            depuis_facture=depuis_facture,
+            facture_id=facture_id
+        )
+    
+    return render(request, 'paiements/creer.html', {
+        'form': form,
+        'depuis_facture': depuis_facture,  # Pour adapter l'affichage du template
+        'facture': facture,                # Pour afficher les infos de la facture si depuis facture
+    })
+
+def supprimer_paiement(request, paiement_id):
+    """
+    Supprime un paiement
+    
+    ACTIONS AUTOMATIQUES (via signal pre_delete) :
+    - Restauration du solde client
+    - Mise à jour du statut de la facture
+    """
+    paiement = get_object_or_404(Paiement, id=paiement_id)
+    
+    if request.method == 'POST':
+        try:
+            facture = paiement.facture  # Garder référence avant suppression
+            paiement.delete()           # Le signal va gérer la logique métier
+            
+            messages.success(request, f"Paiement de {paiement.montant_paye:,.2f} DA supprimé")
+            return redirect('detail_facture', facture_id=facture.id)
+        except Exception as e:
+            messages.error(request, f"Erreur : {str(e)}")
+            return redirect('detail_paiement', paiement_id=paiement_id)
+    
+    return render(request, 'paiements/supprimer.html', {
+        'paiement': paiement,
+    })
+
+def liste_incidents(request):
+    """
+    Liste avec recherche et filtres
+    """
+    incidents = Incident.objects.all().select_related('expedition', 'tournee')
+    
+    # ========== RECHERCHE ==========
+    search = request.GET.get('search', '')
+    if search:
+        incidents = incidents.filter(
+            Q(numero_incident__icontains=search) |
+            Q(titre__icontains=search) |
+            Q(description__icontains=search) |
+            Q(signale_par__icontains=search) |
+            Q(lieu_incident__icontains=search)
+        )
+    
+    # ========== FILTRES ==========
+    type_incident = request.GET.get('type_incident', '')
+    if type_incident:
+        incidents = incidents.filter(type_incident=type_incident)
+    
+    severite = request.GET.get('severite', '')
+    if severite:
+        incidents = incidents.filter(severite=severite)
+    
+    statut = request.GET.get('statut', '')
+    if statut:
+        incidents = incidents.filter(statut=statut)
+    
+    incidents = incidents.order_by('-date_heure_incident')
+    
+    # ========== STATISTIQUES ==========
+    stats = {
+        'total': incidents.count(),
+        'signales': Incident.objects.filter(statut='SIGNALE').count(),
+        'en_cours': Incident.objects.filter(statut='EN_COURS').count(),
+        'resolus': Incident.objects.filter(statut='RESOLU').count(),
+        'clos': Incident.objects.filter(statut='CLOS').count(),
+        'critiques': Incident.objects.filter(severite='CRITIQUE').count(),
+        'eleves': Incident.objects.filter(severite='ELEVEE').count(),
+    }
+    
+    # ========== CHOIX POUR FILTRES ==========
+    types = Incident._meta.get_field('type_incident').choices
+    severites = Incident._meta.get_field('severite').choices
+    statuts = Incident._meta.get_field('statut').choices
+    
+    return render(request, 'incidents/liste.html', {
+        'incidents': incidents,
+        'search': search,
+        'type_incident': type_incident,
+        'severite': severite,
+        'statut': statut,
+        'types': types,
+        'severites': severites,
+        'statuts': statuts,
+        'stats': stats,
+    })
+
+def detail_incident(request, incident_id):
+    """
+    Affiche tous les détails + historique
+    """
+    incident = get_object_or_404(
+        Incident.objects.select_related('expedition', 'tournee'),
+        id=incident_id
+    )
+    
+    # Historique
+    historique = incident.historique.all().order_by('-date_action')
+    
+    return render(request, 'incidents/detail.html', {
+        'incident': incident,
+        'historique': historique,
+    })
+
+def creer_incident(request):
+    """
+    Formulaire de création avec gestion emails automatiques
+    """
+    if request.method == 'POST':
+        form = IncidentForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            try:
+                # Sauvegarder l'incident
+                incident = form.save()
+                
+                # ✅ Le traitement automatique se fait dans le save() du modèle
+                # qui appelle IncidentService.traiter_nouvel_incident()
+                # → Emails envoyés automatiquement !
+                
+                messages.success(
+                    request,
+                    f"✅ Incident {incident.numero_incident} créé avec succès ! "
+                    f"Alertes envoyées par email."
+                )
+                return redirect('detail_incident', incident_id=incident.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = IncidentForm()
+    
+    return render(request, 'incidents/creer.html', {
+        'form': form,
+    })
+
+def modifier_incident(request, incident_id):
+    """
+    Modification d'un incident existant
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    if request.method == 'POST':
+        form = IncidentModificationForm(request.POST, request.FILES, instance=incident)
+        
+        if form.is_valid():
+            try:
+                incident = form.save()
+                messages.success(request, f"✅ Incident {incident.numero_incident} modifié !")
+                return redirect('detail_incident', incident_id=incident.id)
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = IncidentModificationForm(instance=incident)
+    
+    return render(request, 'incidents/modifier.html', {
+        'form': form,
+        'incident': incident,
+    })
+
+def assigner_incident(request, incident_id):
+    """
+    Assigner un agent à un incident
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    if request.method == 'POST':
+        form = AssignationForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                agent_nom = form.cleaned_data['agent_nom']
+                
+                # Utiliser le service
+                IncidentService.assigner_agent_incident(incident, agent_nom)
+                
+                messages.success(request, f"✅ Incident assigné à {agent_nom}")
+                return redirect('detail_incident', incident_id=incident.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = AssignationForm()
+    
+    return render(request, 'incidents/assigner.html', {
+        'form': form,
+        'incident': incident,
+    })
+
+def resoudre_incident(request, incident_id):
+    """
+    Marquer un incident comme résolu
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    if request.method == 'POST':
+        form = IncidentResolutionForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                solution = form.cleaned_data['solution']
+                agent = form.cleaned_data['agent']
+                
+                # Utiliser le service
+                IncidentService.resoudre_incident(incident, solution, agent)
+                
+                messages.success(request, f"✅ Incident {incident.numero_incident} résolu !")
+                return redirect('detail_incident', incident_id=incident.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = IncidentResolutionForm()
+    
+    return render(request, 'incidents/resoudre.html', {
+        'form': form,
+        'incident': incident,
+    })
+
+def cloturer_incident(request, incident_id):
+    """
+    Clôture définitive d'un incident (doit être RESOLU avant)
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    if request.method == 'POST':
+        try:
+            IncidentService.cloturer_incident(incident)
+            messages.success(request, f"✅ Incident {incident.numero_incident} clôturé !")
+            return redirect('liste_incidents')
+            
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('detail_incident', incident_id=incident.id)
+    
+    return render(request, 'incidents/cloturer.html', {
+        'incident': incident,
+    })
+
+def supprimer_incident(request, incident_id):
+    """
+    Suppression d'un incident (avec confirmation)
+    """
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    if request.method == 'POST':
+        try:
+            numero = incident.numero_incident
+            incident.delete()
+            messages.success(request, f"✅ Incident {numero} supprimé !")
+            return redirect('liste_incidents')
+            
+        except Exception as e:
+            messages.error(request, f"❌ Erreur : {str(e)}")
+            return redirect('detail_incident', incident_id=incident_id)
+    
+    return render(request, 'incidents/supprimer.html', {
+        'incident': incident,
+    })
+
+def exporter_incidents_pdf(request):
+    """
+    Génère un PDF avec la liste de tous les incidents
+    """
+    incidents = Incident.objects.all().select_related(
+        'expedition', 'tournee'
+    ).order_by('-date_heure_incident')
+    
+    headers = ['N° Incident', 'Type', 'Sévérité', 'Statut', 'Date', 'Signalé par']
+    
+    data = [
+        [
+            i.numero_incident,
+            i.get_type_incident_display(),
+            i.get_severite_display(),
+            i.get_statut_display(),
+            i.date_heure_incident.strftime('%d/%m/%Y'),
+            i.signale_par
+        ]
+        for i in incidents
+    ]
+    
+    return generer_pdf_liste("Liste des Incidents", headers, data, "incidents")
+
+def exporter_incident_detail_pdf(request, incident_id):
+    """
+    Génère un PDF détaillé d'un incident
+    """
+    incident = Incident.objects.select_related(
+        'expedition', 'tournee'
+    ).get(id=incident_id)
+    
+    sections = [
+        {
+            'titre': 'Informations de l\'Incident',
+            'data': [
+                ['N° Incident', incident.numero_incident],
+                ['Type', incident.get_type_incident_display()],
+                ['Titre', incident.titre],
+                ['Description', incident.description],
+                ['Sévérité', incident.get_severite_display()],
+                ['Statut', incident.get_statut_display()],
+                ['Date/Heure', incident.date_heure_incident.strftime('%d/%m/%Y %H:%M')],
+                ['Lieu', incident.lieu_incident or 'Non spécifié'],
+                ['Signalé par', incident.signale_par],
+                ['Coût estimé', f"{incident.cout_estime:,.2f} DA" if incident.cout_estime else '0 DA'],
+            ]
+        }
+    ]
+    
+    # ========== EXPÉDITION CONCERNÉE ==========
+    if incident.expedition:
+        exp_data = [
+            ['N° Expédition', incident.expedition.get_numero_expedition()],
+            ['Client', f"{incident.expedition.client.prenom} {incident.expedition.client.nom}"],
+            ['Destination', f"{incident.expedition.destination.ville}, {incident.expedition.destination.wilaya}"],
+            ['Statut', incident.expedition.get_statut_display()],
+        ]
+        sections.append({
+            'titre': 'Expédition concernée',
+            'data': exp_data
+        })
+    
+    # ========== TOURNÉE CONCERNÉE ==========
+    if incident.tournee:
+        tournee_data = [
+            ['N° Tournée', incident.tournee.get_numero_tournee()],
+            ['Chauffeur', f"{incident.tournee.chauffeur.prenom} {incident.tournee.chauffeur.nom}"],
+            ['Véhicule', incident.tournee.vehicule.numero_immatriculation],
+            ['Zone', incident.tournee.get_zone_cible_display()],
+            ['Statut', incident.tournee.get_statut_display()],
+        ]
+        sections.append({
+            'titre': 'Tournée concernée',
+            'data': tournee_data
+        })
+    
+    # ========== REMBOURSEMENT ==========
+    if incident.remboursement_effectue:
+        rbt_data = [
+            ['Remboursement effectué', 'OUI'],
+            ['Montant remboursé', f"{incident.montant_rembourse:,.2f} DA"],
+            ['Taux appliqué', f"{incident.taux_remboursement}%"],
+        ]
+        sections.append({
+            'titre': 'Remboursement',
+            'data': rbt_data
+        })
+    
+    # ========== TRAITEMENT ==========
+    if incident.agent_responsable:
+        traitement_data = [
+            ['Agent responsable', incident.agent_responsable],
+            ['Actions entreprises', incident.actions_entreprises or 'Aucune'],
+            ['Date résolution', incident.date_resolution.strftime('%d/%m/%Y') if incident.date_resolution else 'Non résolu'],
+        ]
+        sections.append({
+            'titre': 'Traitement',
+            'data': traitement_data
+        })
+    
+    return generer_pdf_fiche(
+        f"Incident - {incident.numero_incident}",
+        sections,
+        f"incident_{incident.id}",
+        remarques=incident.remarques
+    )
+
+def liste_reclamations(request):
+    """
+    Liste avec recherche et filtres
+    """
+    reclamations = Reclamation.objects.all().select_related('client', 'facture')
+    
+    # ========== RECHERCHE ==========
+    search = request.GET.get('search', '')
+    if search:
+        reclamations = reclamations.filter(
+            Q(numero_reclamation__icontains=search) |
+            Q(objet__icontains=search) |
+            Q(description__icontains=search) |
+            Q(client__nom__icontains=search) |
+            Q(client__prenom__icontains=search)
+        )
+    
+    # ========== FILTRES ==========
+    type_reclamation = request.GET.get('type_reclamation', '')
+    if type_reclamation:
+        reclamations = reclamations.filter(type_reclamation=type_reclamation)
+    
+    nature = request.GET.get('nature', '')
+    if nature:
+        reclamations = reclamations.filter(nature=nature)
+    
+    priorite = request.GET.get('priorite', '')
+    if priorite:
+        reclamations = reclamations.filter(priorite=priorite)
+    
+    statut = request.GET.get('statut', '')
+    if statut:
+        reclamations = reclamations.filter(statut=statut)
+    
+    client_id = request.GET.get('client_id', '')
+    if client_id:
+        reclamations = reclamations.filter(client_id=client_id)
+    
+    reclamations = reclamations.order_by('-date_creation')
+    
+    # ========== STATISTIQUES ==========
+    stats = {
+        'total': reclamations.count(),
+        'ouvertes': Reclamation.objects.filter(statut='OUVERTE').count(),
+        'en_cours': Reclamation.objects.filter(statut='EN_COURS').count(),
+        'resolues': Reclamation.objects.filter(statut='RESOLUE').count(),
+        'closes': Reclamation.objects.filter(statut='CLOSE').count(),
+        'urgentes': Reclamation.objects.filter(priorite='URGENTE').count(),
+        'avec_compensation': Reclamation.objects.filter(compensation_accordee=True).count(),
+    }
+    
+    # ========== CHOIX POUR FILTRES ==========
+    types = Reclamation._meta.get_field('type_reclamation').choices
+    natures = Reclamation._meta.get_field('nature').choices
+    priorites = Reclamation._meta.get_field('priorite').choices
+    statuts = Reclamation._meta.get_field('statut').choices
+    clients = Client.objects.all().order_by('nom', 'prenom')
+    
+    return render(request, 'reclamations/liste.html', {
+        'reclamations': reclamations,
+        'search': search,
+        'type_reclamation': type_reclamation,
+        'nature': nature,
+        'priorite': priorite,
+        'statut': statut,
+        'client_id': client_id,
+        'types': types,
+        'natures': natures,
+        'priorites': priorites,
+        'statuts': statuts,
+        'clients': clients,
+        'stats': stats,
+    })
+
+def detail_reclamation(request, reclamation_id):
+    """
+    Affiche tous les détails + historique
+    """
+    reclamation = get_object_or_404(
+        Reclamation.objects.select_related('client', 'facture').prefetch_related('expeditions'),
+        id=reclamation_id
+    )
+    
+    # Historique
+    historique = reclamation.historique.all().order_by('-date_action')
+    
+    return render(request, 'reclamations/detail.html', {
+        'reclamation': reclamation,
+        'historique': historique,
+    })
+
+def creer_reclamation(request):
+    """
+    Formulaire de création avec email automatique
+    """
+    if request.method == 'POST':
+        form = ReclamationForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            try:
+                # Sauvegarder la réclamation
+                reclamation = form.save()
+                
+                # ✅ Le traitement automatique se fait dans le save() du modèle
+                # qui appelle ReclamationService.traiter_nouvelle_reclamation()
+                # → Email envoyé au support automatiquement !
+                
+                messages.success(
+                    request,
+                    f"✅ Réclamation {reclamation.numero_reclamation} créée avec succès ! "
+                    f"Email envoyé au support."
+                )
+                return redirect('detail_reclamation', reclamation_id=reclamation.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = ReclamationForm()
+    
+    return render(request, 'reclamations/creer.html', {
+        'form': form,
+    })
+
+def modifier_reclamation(request, reclamation_id):
+    """
+    Modification d'une réclamation existante
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        form = ReclamationModificationForm(request.POST, instance=reclamation)
+        
+        if form.is_valid():
+            try:
+                reclamation = form.save()
+                messages.success(request, f"✅ Réclamation {reclamation.numero_reclamation} modifiée !")
+                return redirect('detail_reclamation', reclamation_id=reclamation.id)
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = ReclamationModificationForm(instance=reclamation)
+    
+    return render(request, 'reclamations/modifier.html', {
+        'form': form,
+        'reclamation': reclamation,
+    })
+
+def assigner_reclamation(request, reclamation_id):
+    """
+    Assigner un agent à une réclamation
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        form = AssignationForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                agent_nom = form.cleaned_data['agent_nom']
+                
+                # Utiliser le service
+                ReclamationService.assigner_agent(reclamation, agent_nom)
+                
+                messages.success(request, f"✅ Réclamation assignée à {agent_nom}")
+                return redirect('detail_reclamation', reclamation_id=reclamation.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = AssignationForm()
+    
+    return render(request, 'reclamations/assigner.html', {
+        'form': form,
+        'reclamation': reclamation,
+    })
+
+def repondre_reclamation(request, reclamation_id):
+    """
+    Enregistrer une réponse à la réclamation
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        form = ReclamationReponseForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                reponse = form.cleaned_data['reponse']
+                solution = form.cleaned_data['solution']
+                agent = form.cleaned_data['agent']
+                
+                # Utiliser le service
+                ReclamationService.repondre_reclamation(reclamation, reponse, solution, agent)
+                
+                # ✅ Email envoyé automatiquement au client !
+                
+                messages.success(
+                    request,
+                    f"✅ Réponse enregistrée ! Email envoyé au client."
+                )
+                return redirect('detail_reclamation', reclamation_id=reclamation.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = ReclamationReponseForm()
+    
+    return render(request, 'reclamations/repondre.html', {
+        'form': form,
+        'reclamation': reclamation,
+    })
+
+def resoudre_reclamation(request, reclamation_id):
+    """
+    Marquer une réclamation comme résolue avec compensation éventuelle
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        form = ReclamationResolutionForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                agent = form.cleaned_data['agent']
+                accorder_compensation = form.cleaned_data['accorder_compensation']
+                montant_compensation = form.cleaned_data['montant_compensation'] or 0
+                
+                # Utiliser le service
+                ReclamationService.resoudre_reclamation(
+                    reclamation,
+                    agent,
+                    accorder_compensation,
+                    montant_compensation
+                )
+                
+                msg = f"✅ Réclamation {reclamation.numero_reclamation} résolue !"
+                if accorder_compensation:
+                    msg += f" Compensation de {montant_compensation:,.2f} DA accordée."
+                
+                messages.success(request, msg)
+                return redirect('detail_reclamation', reclamation_id=reclamation.id)
+                
+            except Exception as e:
+                messages.error(request, f"❌ Erreur : {str(e)}")
+    else:
+        form = ReclamationResolutionForm()
+    
+    return render(request, 'reclamations/resoudre.html', {
+        'form': form,
+        'reclamation': reclamation,
+    })
+
+def cloturer_reclamation(request, reclamation_id):
+    """
+    Clôture définitive d'une réclamation (doit être RESOLUE avant)
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        try:
+            agent = request.POST.get('agent', 'Agent')
+            ReclamationService.cloturer_reclamation(reclamation, agent)
+            
+            messages.success(request, f"✅ Réclamation {reclamation.numero_reclamation} clôturée !")
+            return redirect('liste_reclamations')
+            
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
+    return render(request, 'reclamations/cloturer.html', {
+        'reclamation': reclamation,
+    })
+
+def annuler_reclamation(request, reclamation_id):
+    """
+    Annuler une réclamation (demande infondée, doublon, etc.)
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        try:
+            motif = request.POST.get('motif', '')
+            agent = request.POST.get('agent', 'Agent')
+            
+            if not motif:
+                messages.error(request, "Le motif d'annulation est obligatoire")
+                return redirect('detail_reclamation', reclamation_id=reclamation.id)
+            
+            ReclamationService.annuler_reclamation(reclamation, motif, agent)
+            
+            messages.success(request, f"✅ Réclamation {reclamation.numero_reclamation} annulée !")
+            return redirect('liste_reclamations')
+            
+        except Exception as e:
+            messages.error(request, f"❌ Erreur : {str(e)}")
+            return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
+    return render(request, 'reclamations/annuler.html', {
+        'reclamation': reclamation,
+    })
+
+def supprimer_reclamation(request, reclamation_id):
+    """
+    Suppression d'une réclamation (avec confirmation)
+    """
+    reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    
+    if request.method == 'POST':
+        try:
+            numero = reclamation.numero_reclamation
+            reclamation.delete()
+            messages.success(request, f"✅ Réclamation {numero} supprimée !")
+            return redirect('liste_reclamations')
+            
+        except Exception as e:
+            messages.error(request, f"❌ Erreur : {str(e)}")
+            return redirect('detail_reclamation', reclamation_id=reclamation_id)
+    
+    return render(request, 'reclamations/supprimer.html', {
+        'reclamation': reclamation,
+    })
+
+def exporter_reclamations_pdf(request):
+    """
+    Génère un PDF avec la liste de toutes les réclamations
+    """
+    reclamations = Reclamation.objects.all().select_related(
+        'client'
+    ).order_by('-date_creation')
+    
+    headers = ['N° Réclamation', 'Client', 'Nature', 'Priorité', 'Statut', 'Date']
+    
+    data = [
+        [
+            r.numero_reclamation,
+            f"{r.client.prenom} {r.client.nom}",
+            r.get_nature_display(),
+            r.get_priorite_display(),
+            r.get_statut_display(),
+            r.date_creation.strftime('%d/%m/%Y')
+        ]
+        for r in reclamations
+    ]
+    
+    return generer_pdf_liste("Liste des Réclamations", headers, data, "reclamations")
+
+def exporter_reclamation_detail_pdf(request, reclamation_id):
+    """
+    Génère un PDF détaillé d'une réclamation
+    """
+    reclamation = Reclamation.objects.select_related(
+        'client', 'facture'
+    ).prefetch_related('expeditions').get(id=reclamation_id)
+    
+    sections = [
+        {
+            'titre': 'Informations de la Réclamation',
+            'data': [
+                ['N° Réclamation', reclamation.numero_reclamation],
+                ['Client', f"{reclamation.client.prenom} {reclamation.client.nom}"],
+                ['Téléphone', str(reclamation.client.telephone)],
+                ['Type', reclamation.get_type_reclamation_display()],
+                ['Nature', reclamation.get_nature_display()],
+                ['Priorité', reclamation.get_priorite_display()],
+                ['Statut', reclamation.get_statut_display()],
+                ['Date création', reclamation.date_creation.strftime('%d/%m/%Y')],
+                ['Objet', reclamation.objet],
+                ['Description', reclamation.description],
+            ]
+        }
+    ]
+    
+    # ========== EXPÉDITIONS CONCERNÉES ==========
+    if reclamation.expeditions.exists():
+        exp_data = [['N° Expédition', 'Destination', 'Statut']]
+        for exp in reclamation.expeditions.all():
+            exp_data.append([
+                exp.get_numero_expedition(),
+                f"{exp.destination.ville}, {exp.destination.wilaya}",
+                exp.get_statut_display()
+            ])
+        
+        sections.append({
+            'titre': f'Expéditions concernées ({reclamation.expeditions.count()})',
+            'data': exp_data
+        })
+    
+    # ========== FACTURE CONCERNÉE ==========
+    if reclamation.facture:
+        facture_data = [
+            ['N° Facture', reclamation.facture.numero_facture],
+            ['Montant TTC', f"{reclamation.facture.montant_ttc:,.2f} DA"],
+            ['Statut', reclamation.facture.get_statut_display()],
+        ]
+        sections.append({
+            'titre': 'Facture concernée',
+            'data': facture_data
+        })
+    
+    # ========== TRAITEMENT ==========
+    if reclamation.agent_responsable:
+        traitement_data = [
+            ['Agent responsable', reclamation.agent_responsable],
+            ['Date assignation', reclamation.date_assignation.strftime('%d/%m/%Y') if reclamation.date_assignation else '-'],
+            ['Réponse agent', reclamation.reponse_agent or 'Aucune'],
+            ['Solution proposée', reclamation.solution_proposee or 'Aucune'],
+            ['Date résolution', reclamation.date_resolution.strftime('%d/%m/%Y') if reclamation.date_resolution else 'Non résolue'],
+            ['Délai traitement', f"{reclamation.delai_traitement_jours} jours" if reclamation.delai_traitement_jours else '-'],
+        ]
+        sections.append({
+            'titre': 'Traitement',
+            'data': traitement_data
+        })
+    
+    # ========== COMPENSATION ==========
+    if reclamation.compensation_accordee:
+        comp_data = [
+            ['Compensation accordée', 'OUI'],
+            ['Montant', f"{reclamation.montant_compensation:,.2f} DA"],
+        ]
+        sections.append({
+            'titre': 'Compensation',
+            'data': comp_data
+        })
+    
+    return generer_pdf_fiche(
+        f"Réclamation - {reclamation.numero_reclamation}",
+        sections,
+        f"reclamation_{reclamation.id}",
+        remarques=reclamation.remarques
+    )

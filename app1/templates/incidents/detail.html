@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Incident {{ incident.numero_incident }}</title>
+</head>
+<body>
+    <h1>Détails de l'Incident {{ incident.numero_incident }}</h1>
+    
+    <a href="{% url 'liste_incidents' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'modifier_incident' incident.id %}"><button>Modifier</button></a>
+    <a href="{% url 'exporter_incident_detail_pdf' incident.id %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    {% if incident.statut == 'SIGNALE' or incident.statut == 'EN_COURS' %}
+        <a href="{% url 'assigner_incident' incident.id %}"><button style="background: #007bff; color: white;">👤 Assigner Agent</button></a>
+    {% endif %}
+    
+    {% if incident.statut == 'EN_COURS' %}
+        <a href="{% url 'resoudre_incident' incident.id %}"><button style="background: #28a745; color: white;">✅ Résoudre</button></a>
+    {% endif %}
+    
+    {% if incident.statut == 'RESOLU' %}
+        <a href="{% url 'cloturer_incident' incident.id %}"><button style="background: #6c757d; color: white;">🔒 Clôturer</button></a>
+    {% endif %}
+    
+    <a href="{% url 'supprimer_incident' incident.id %}"><button style="background: #dc3545; color: white;">Supprimer</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations Principales -->
+    <h2>Informations de l'Incident</h2>
+    <table border="1" cellpadding="10">
+        <tr><th>N° Incident</th><td><strong>{{ incident.numero_incident }}</strong></td></tr>
+        <tr><th>Type</th><td>{{ incident.get_type_incident_display }}</td></tr>
+        <tr><th>Titre</th><td><strong>{{ incident.titre }}</strong></td></tr>
+        <tr><th>Description</th><td>{{ incident.description }}</td></tr>
+        <tr>
+            <th>Sévérité</th>
+            <td>
+                {% if incident.severite == 'CRITIQUE' %}
+                    <span style="color: red;">🔴 {{ incident.get_severite_display }}</span>
+                {% elif incident.severite == 'ELEVEE' %}
+                    <span style="color: orange;">🟠 {{ incident.get_severite_display }}</span>
+                {% elif incident.severite == 'MOYENNE' %}
+                    <span style="color: blue;">🔵 {{ incident.get_severite_display }}</span>
+                {% else %}
+                    <span style="color: green;">🟢 {{ incident.get_severite_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>
+                {% if incident.statut == 'SIGNALE' %}
+                    <span style="color: red;">{{ incident.get_statut_display }}</span>
+                {% elif incident.statut == 'EN_COURS' %}
+                    <span style="color: orange;">{{ incident.get_statut_display }}</span>
+                {% elif incident.statut == 'RESOLU' %}
+                    <span style="color: green;">{{ incident.get_statut_display }}</span>
+                {% else %}
+                    <span style="color: gray;">{{ incident.get_statut_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr><th>Date/Heure</th><td>{{ incident.date_heure_incident|date:"d/m/Y H:i" }}</td></tr>
+        <tr><th>Lieu</th><td>{{ incident.lieu_incident|default:"Non spécifié" }}</td></tr>
+        <tr><th>Signalé par</th><td>{{ incident.signale_par }}</td></tr>
+        <tr><th>Coût estimé</th><td>{{ incident.cout_estime|floatformat:2 }} DA</td></tr>
+        {% if incident.agent_responsable %}
+        <tr><th>Agent responsable</th><td>{{ incident.agent_responsable }}</td></tr>
+        <tr><th>Date assignation</th><td>{{ incident.date_assignation|date:"d/m/Y H:i" }}</td></tr>
+        {% endif %}
+        {% if incident.actions_entreprises %}
+        <tr><th>Actions entreprises</th><td>{{ incident.actions_entreprises }}</td></tr>
+        {% endif %}
+        {% if incident.date_resolution %}
+        <tr><th>Date résolution</th><td>{{ incident.date_resolution|date:"d/m/Y H:i" }}</td></tr>
+        {% endif %}
+        {% if incident.remarques %}
+        <tr><th>Remarques</th><td>{{ incident.remarques }}</td></tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!-- Expédition/Tournée concernée -->
+    {% if incident.expedition %}
+    <h2>📦 Expédition concernée</h2>
+    <table border="1" cellpadding="10">
+        <tr><th>N° Expédition</th><td><a href="{% url 'detail_expedition' incident.expedition.id %}">{{ incident.expedition.get_numero_expedition }}</a></td></tr>
+        <tr><th>Client</th><td>{{ incident.expedition.client.prenom }} {{ incident.expedition.client.nom }}</td></tr>
+        <tr><th>Destination</th><td>{{ incident.expedition.destination.ville }}, {{ incident.expedition.destination.wilaya }}</td></tr>
+        <tr><th>Statut</th><td>{{ incident.expedition.get_statut_display }}</td></tr>
+    </table>
+    {% endif %}
+    
+    {% if incident.tournee %}
+    <h2>🚛 Tournée concernée</h2>
+    <table border="1" cellpadding="10">
+        <tr><th>N° Tournée</th><td><a href="{% url 'detail_tournee' incident.tournee.id %}">{{ incident.tournee.get_numero_tournee }}</a></td></tr>
+        <tr><th>Chauffeur</th><td>{{ incident.tournee.chauffeur.prenom }} {{ incident.tournee.chauffeur.nom }}</td></tr>
+        <tr><th>Véhicule</th><td>{{ incident.tournee.vehicule.numero_immatriculation }}</td></tr>
+        <tr><th>Zone</th><td>{{ incident.tournee.get_zone_cible_display }}</td></tr>
+        <tr><th>Statut</th><td>{{ incident.tournee.get_statut_display }}</td></tr>
+    </table>
+    {% endif %}
+    
+    <hr>
+    
+    <!-- Historique -->
+    <h2>📋 Historique ({{ historique.count }})</h2>
+    
+    {% if historique %}
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Date/Heure</th>
+                <th>Action</th>
+                <th>Agent</th>
+                <th>Commentaire</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in historique %}
+            <tr>
+                <td>{{ h.date_action|date:"d/m/Y H:i" }}</td>
+                <td><strong>{{ h.action }}</strong></td>
+                <td>{{ h.agent_nom|default:"-" }}</td>
+                <td>{{ h.commentaire|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun historique disponible.</p>
+    {% endif %}
+</body>
+</html>

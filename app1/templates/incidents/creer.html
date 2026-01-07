@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un Incident</title>
+</head>
+<body>
+    <h1>📝 Créer un Nouvel Incident</h1>
+    
+    <a href="{% url 'liste_incidents' %}"><button>← Retour à la liste</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px;">✅ Créer l'Incident</button>
+        <a href="{% url 'liste_incidents' %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Réclamation {{ reclamation.numero_reclamation }}</title>
+</head>
+<body>
+    <h1>✏️ Modifier la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    
+    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red; font-weight: bold;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>Informations actuelles</h2>
+    <p><strong>Client :</strong> {{ reclamation.client.prenom }} {{ reclamation.client.nom }}</p>
+    <p><strong>Statut :</strong> {{ reclamation.get_statut_display }}</p>
+    <p><strong>Date création :</strong> {{ reclamation.date_creation|date:"d/m/Y H:i" }}</p>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px;">💾 Enregistrer les Modifications</button>
+        <a href="{% url 'detail_reclamation' reclamation.id %}"><button type="button">❌ Annuler</button></a>
+    </form>
+</body>
+</html>

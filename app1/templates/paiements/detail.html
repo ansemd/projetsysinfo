@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Paiement</title>
+</head>
+<body>
+    <h1>Détails du Paiement</h1>
+    
+    <a href="{% url 'liste_paiements' %}"><button>← Retour à la liste</button></a>
+    <a href="{% url 'detail_facture' paiement.facture.id %}"><button>Voir la facture</button></a>
+    <a href="{% url 'supprimer_paiement' paiement.id %}"><button>Supprimer</button></a>
+    <a href="{% url 'exporter_paiement_detail_pdf' paiement.id %}"><button style="background: #dc3545; color: white;">📄 Exporter PDF</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: green;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Informations du paiement -->
+    <h2>Informations du Paiement</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Facture</th>
+            <td>
+                <a href="{% url 'detail_facture' paiement.facture.id %}">{{ paiement.facture.numero_facture }}</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Client</th>
+            <td>{{ paiement.facture.client.prenom }} {{ paiement.facture.client.nom }}</td>
+        </tr>
+        <tr>
+            <th>Téléphone client</th>
+            <td>{{ paiement.facture.client.telephone }}</td>
+        </tr>
+        <tr>
+            <th>Montant payé</th>
+            <td><strong style="font-size: 1.2em; color: green;">{{ paiement.montant_paye|floatformat:2 }} DA</strong></td>
+        </tr>
+        <tr>
+            <th>Mode de paiement</th>
+            <td>{{ paiement.get_mode_paiement_display }}</td>
+        </tr>
+        <tr>
+            <th>Date du paiement</th>
+            <td>{{ paiement.date_paiement|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Référence de transaction</th>
+            <td>{{ paiement.reference_transaction|default:"Non renseignée" }}</td>
+        </tr>
+        {% if paiement.remarques %}
+        <tr>
+            <th>Remarques</th>
+            <td>{{ paiement.remarques }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <!-- Informations de la facture associée -->
+    <h2>Facture Associée</h2>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>N° Facture</th>
+            <td>{{ paiement.facture.numero_facture }}</td>
+        </tr>
+        <tr>
+            <th>Montant TTC</th>
+            <td>{{ paiement.facture.montant_ttc|floatformat:2 }} DA</td>
+        </tr>
+        <tr>
+            <th>Statut</th>
+            <td>
+                {% if paiement.facture.statut == 'IMPAYEE' %}
+                    <span style="color: red;">❌ {{ paiement.facture.get_statut_display }}</span>
+                {% elif paiement.facture.statut == 'PARTIELLEMENT_PAYEE' %}
+                    <span style="color: orange;">⏳ {{ paiement.facture.get_statut_display }}</span>
+                {% elif paiement.facture.statut == 'PAYEE' %}
+                    <span style="color: green;">✅ {{ paiement.facture.get_statut_display }}</span>
+                {% else %}
+                    <span style="color: gray;">{{ paiement.facture.get_statut_display }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date échéance</th>
+            <td>{{ paiement.facture.date_echeance|date:"d/m/Y" }}</td>
+        </tr>
+    </table>
+    
+</body>
+</html>

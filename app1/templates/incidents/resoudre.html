@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Résoudre Incident {{ incident.numero_incident }}</title>
+</head>
+<body>
+    <h1>✅ Résoudre l'Incident {{ incident.numero_incident }}</h1>
+    
+    <a href="{% url 'detail_incident' incident.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>Informations de l'incident</h2>
+    <p><strong>Titre :</strong> {{ incident.titre }}</p>
+    <p><strong>Description :</strong> {{ incident.description }}</p>
+    <p><strong>Type :</strong> {{ incident.get_type_incident_display }}</p>
+    
+    <hr>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <table>
+            {{ form.as_table }}
+        </table>
+        
+        <br>
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px;">✅ Marquer comme Résolu</button>
+        <a href="{% url 'detail_incident' incident.id %}"><button type="button">Annuler</button></a>
+    </form>
+</body>
+</html>

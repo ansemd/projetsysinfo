@@ -15,7 +15,6 @@ def demarrer_scheduler():
     """Démarre le scheduler avec 2 exécutions par jour"""
     scheduler = BackgroundScheduler()
     
-
     scheduler.add_job(
         executer_taches_matin,
         'cron',
@@ -24,7 +23,6 @@ def demarrer_scheduler():
         id='taches_matin'
     )
     
-
     scheduler.add_job(
         executer_taches_soir,
         'cron',
@@ -32,6 +30,10 @@ def demarrer_scheduler():
         minute=30,
         id='taches_soir'
     )
+    
+    # ✅ AJOUTER CES 2 LIGNES ICI :
+    print("🚀 Exécution initiale des tâches du matin...")
+    executer_taches_matin()
     
     scheduler.start()
     print("Scheduler démarré : 8h (matin) et 17h30 (soir)")

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Facture - {{ facture.numero_facture }}</title>
+</head>
+<body>
+    <h1>Modifier la Facture {{ facture.numero_facture }}</h1>
+    
+    <a href="{% url 'detail_facture' facture.id %}"><button>← Retour aux détails</button></a>
+    
+    <hr>
+    
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;"><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <h2>Informations de la Facture</h2>
+        <table>
+            <tr>
+                <td><label>{{ form.client.label }}</label></td>
+                <td>
+                    {{ form.client }}
+                    {% if form.client.errors %}
+                        <br><span style="color: red;">{{ form.client.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.date_echeance.label }}</label></td>
+                <td>
+                    {{ form.date_echeance }}
+                    {% if form.date_echeance.errors %}
+                        <br><span style="color: red;">{{ form.date_echeance.errors.0 }}</span>
+                    {% endif %}
+                    <br><small style="color: gray;">{{ form.date_echeance.help_text }}</small>
+                </td>
+            </tr>
+            <tr>
+                <td><label>{{ form.statut.label }}</label></td>
+                <td>
+                    {{ form.statut }}
+                    {% if form.statut.errors %}
+                        <br><span style="color: red;">{{ form.statut.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><label>Remarques</label></td>
+                <td>
+                    {{ form.remarques }}
+                    {% if form.remarques.errors %}
+                        <br><span style="color: red;">{{ form.remarques.errors.0 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <button type="submit">Enregistrer les modifications</button>
+        <a href="{% url 'detail_facture' facture.id %}"><button type="button">Annuler</button></a>
+    </form>
+    
+</body>
+</html>
