@@ -2,6 +2,14 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    
+    path('', views.home, name='home'),
+
+    path('favoris/selectionner/', views.selectionner_favoris, name='selectionner_favoris'),
+
+    path('notifications/', views.liste_notifications, name='liste_notifications'),
+    path('notifications/<int:notification_id>/traiter/', views.traiter_notification, name='traiter_notification'),
+
     path('clients/', views.liste_clients, name='liste_clients'),
     path('clients/<int:client_id>/', views.detail_client, name='detail_client'),
     path('clients/creer/', views.creer_client, name='creer_client'),
@@ -57,6 +65,7 @@ urlpatterns = [
     path('tournees/creer/', views.creer_tournee, name='creer_tournee'),
     path('tournees/<int:tournee_id>/modifier/', views.modifier_tournee, name='modifier_tournee'),
     path('tournees/<int:tournee_id>/supprimer/', views.supprimer_tournee, name='supprimer_tournee'),
+    path('tournees/<int:tournee_id>/modifier-statut/', views.modifier_statut_tournee, name='modifier_statut_tournee'),
     path('tournees/<int:tournee_id>/terminer/', views.terminer_tournee, name='terminer_tournee'),
     path('tournees/export-pdf/', views.exporter_tournees_pdf, name='exporter_tournees_pdf'),
     path('tournees/<int:tournee_id>/export-pdf/', views.exporter_tournee_detail_pdf, name='exporter_tournee_detail_pdf'),
@@ -79,7 +88,6 @@ urlpatterns = [
     path('factures/export-pdf/', views.exporter_factures_pdf, name='exporter_factures_pdf'),
     path('factures/<int:facture_id>/export-pdf/', views.exporter_facture_detail_pdf, name='exporter_facture_detail_pdf'),
     
-
     path('paiements/', views.liste_paiements, name='liste_paiements'),
     path('paiements/<int:paiement_id>/', views.detail_paiement, name='detail_paiement'),
     path('paiements/creer/', views.creer_paiement, name='creer_paiement'),  # Mode normal

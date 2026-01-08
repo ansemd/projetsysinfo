@@ -89,13 +89,17 @@
                 <td>{{ tournee.date_depart|date:"d/m/Y H:i" }}</td>
                 <td>{{ tournee.get_zone_cible_display }}</td>
                 <td>
-                    {% if tournee.statut == 'PREVUE' %}
-                        <span style="color: blue;">⏱️ {{ tournee.get_statut_display }}</span>
-                    {% elif tournee.statut == 'EN_COURS' %}
-                        <span style="color: orange;">🚚 {{ tournee.get_statut_display }}</span>
-                    {% else %}
-                        <span style="color: green;">✅ {{ tournee.get_statut_display }}</span>
-                    {% endif %}
+                    <form method="post" action="{% url 'modifier_statut_tournee' tournee.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="source" value="liste_tournees">
+                        <select name="statut" onchange="this.form.submit()">
+                            {% for code, nom in statuts %}
+                            <option value="{{ code }}" {% if tournee.statut == code %}selected{% endif %}>
+                                {{ nom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
                 </td>
                 <td><strong>{{ tournee.nb_expeditions }}</strong></td>
                 <td>

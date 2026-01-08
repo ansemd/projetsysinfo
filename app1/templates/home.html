@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransportPro</title>
+</head>
+<body>
+    
+    <h1>TransportPro</h1>
+    
+    <!-- ========== MESSAGES ========== -->
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+    
+    <hr>
+    
+    <!-- ========== SECTION FAVORIS ========== -->
+    <section>
+        <h2>Mes Favoris</h2>
+        <p>
+            <a href="{% url 'selectionner_favoris' %}">+ Sélectionner vos favoris</a>
+        </p>
+        
+        {% if favoris %}
+            <div>
+                {% for fav in favoris %}
+                    <div style="display: inline-block; border: 1px solid #ccc; padding: 10px; margin: 5px;">
+                        <strong>{{ fav.icone }}</strong><br>
+                        <a href="{% url fav.url %}">{{ fav.nom }}</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Aucun favori sélectionné. <a href="{% url 'selectionner_favoris' %}">Cliquez ici pour en choisir</a>.</p>
+        {% endif %}
+    </section>
+    
+    <hr>
+    
+    <!-- ========== SECTION NOTIFICATIONS ========== -->
+    <aside style="border: 2px solid orange; padding: 15px; background-color: #fffbe6; margin-bottom: 20px;">
+        <h2>🔔 Notifications</h2>
+        
+        {% if notifications %}
+            <p><strong>{{ notifications|length }} notification(s) non lue(s)</strong></p>
+            
+            <ul style="list-style: none; padding: 0;">
+                {% for notif in notifications %}
+                <li style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; background-color: white; border-radius: 5px;">
+                    <!-- En-tête -->
+                    <div style="margin-bottom: 10px;">
+                        <strong style="font-size: 14px; color: #333;">{{ notif.get_type_notification_display }}</strong><br>
+                        <span style="font-size: 16px; font-weight: bold;">{{ notif.titre }}</span><br>
+                        <small style="color: #666;">{{ notif.date_creation|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    
+                    <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ddd;">
+                    
+                    <!-- Message -->
+                    <div style="margin: 10px 0; padding: 10px; background-color: #f9f9f9; border-left: 3px solid orange;">
+                        <p style="white-space: pre-line; margin: 0; font-size: 14px;">{{ notif.message }}</p>
+                    </div>
+                    
+                    <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ddd;">
+                    
+                    <!-- Boutons d'action -->
+                    <div style="margin-top: 10px;">
+                        {% if notif.type_notification == 'SOLDE_NEGATIF' %}
+                            <form method="post" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                    ✅ OK - Rembourser le client
+                                </button>
+                            </form>
+                        
+                        {% elif notif.type_notification == 'MAINTENANCE_AVANT' %}
+                            <form method="post" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 10px;">
+                                    ✅ OK - Confirmer maintenance
+                                </button>
+                                <button type="submit" name="action" value="REPORTER" style="padding: 10px 20px; background-color: #ff9800; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                    ⏭️ Reporter la maintenance
+                                </button>
+                            </form>
+                        
+                        {% elif notif.type_notification == 'MAINTENANCE_APRES' %}
+                            <form method="post" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="OUI" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 10px;">
+                                    ✅ OUI - Véhicule revenu
+                                </button>
+                                <button type="submit" name="action" value="NON" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                    ❌ NON - Pas encore
+                                </button>
+                            </form>
+                        
+                        {% elif notif.type_notification == 'REMBOURSEMENT_REQUIS' %}
+                            <form method="post" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                    ✅ OK - Effectuer le remboursement
+                                </button>
+                            </form>
+                        
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <p style="margin-top: 15px;">
+                <a href="{% url 'liste_notifications' %}" style="color: blue; text-decoration: underline;">
+                    Voir toutes les notifications
+                </a>
+            </p>
+        {% else %}
+            <p style="font-size: 16px;">✅ Aucune notification</p>
+        {% endif %}
+    </aside>
+    
+    <hr>
+    
+    <!-- ========== TOURNÉES EN COURS ========== -->
+    <section>
+        <h2>🚚 Tournées en cours</h2>
+        
+        {% if tournees_en_cours %}
+            <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: #f0f0f0;">
+                    <tr>
+                        <th>ID</th>
+                        <th>Chauffeur</th>
+                        <th>Véhicule</th>
+                        <th>Date départ</th>
+                        <th>Zone</th>
+                        <th>Nb expéditions</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tournee in tournees_en_cours %}
+                    <tr>
+                        <td>{{ tournee.id }}</td>
+                        <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }}</td>
+                        <td>{{ tournee.vehicule.numero_immatriculation }}</td>
+                        <td>{{ tournee.date_depart|date:"d/m/Y H:i" }}</td>
+                        <td>{{ tournee.get_zone_cible_display }}</td>
+                        <td>{{ tournee.nb_expeditions }}</td>
+                        <td>
+                            <form method="post" action="{% url 'modifier_statut_tournee' tournee.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="source" value="home">
+                                <select name="statut" onchange="this.form.submit()">
+                                    {% for code, nom in statuts_tournee %}
+                                    <option value="{{ code }}" {% if tournee.statut == code %}selected{% endif %}>
+                                        {{ nom }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <a href="{% url 'detail_tournee' tournee.id %}">Détails</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucune tournée en cours</p>
+        {% endif %}
+    </section>
+    
+    <hr>
+    
+    <!-- ========== TOURNÉES PRÉVUES DEMAIN ========== -->
+    <section>
+        <h2>📅 Tournées prévues demain</h2>
+        
+        {% if tournees_demain %}
+            <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: #f0f0f0;">
+                    <tr>
+                        <th>ID</th>
+                        <th>Chauffeur</th>
+                        <th>Véhicule</th>
+                        <th>Heure départ</th>
+                        <th>Zone</th>
+                        <th>Nb expéditions</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tournee in tournees_demain %}
+                    <tr>
+                        <td>{{ tournee.id }}</td>
+                        <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }}</td>
+                        <td>{{ tournee.vehicule.numero_immatriculation }}</td>
+                        <td>{{ tournee.date_depart|date:"H:i" }}</td>
+                        <td>{{ tournee.get_zone_cible_display }}</td>
+                        <td>{{ tournee.nb_expeditions }}</td>
+                        <td>
+                            <form method="post" action="{% url 'modifier_statut_tournee' tournee.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="source" value="home">
+                                <select name="statut" onchange="this.form.submit()">
+                                    {% for code, nom in statuts_tournee %}
+                                    <option value="{{ code }}" {% if tournee.statut == code %}selected{% endif %}>
+                                        {{ nom }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <a href="{% url 'detail_tournee' tournee.id %}">Détails</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucune tournée prévue demain</p>
+        {% endif %}
+    </section>
+    
+    <hr>
+    
+    <p><a href="{% url 'liste_tournees' %}">→ Voir toutes les tournées</a></p>
+    
+</body>
+</html>

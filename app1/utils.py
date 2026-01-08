@@ -214,17 +214,19 @@ class ExpeditionService:
         tournees_compatibles = Tournee.objects.filter(
             zone_cible=expedition.destination.zone_logistique,
             statut='PREVUE',
+            est_privee=False,
             date_depart__gte=timezone.now()
         ).order_by('date_depart')
         
         # Chercher une tournée avec capacité suffisante
         for tournee in tournees_compatibles:
             totaux = tournee.expeditions.aggregate(poids_total=Sum('poids'))
-            poids_actuel = totaux['poids_total'] or 0
-            
+            poids_actuel = totaux['poids_total'] or 0 
+
             if float(poids_actuel) + float(expedition.poids) <= float(tournee.vehicule.capacite_poids):
                 expedition.tournee = tournee
-                return
+                expedition.save()
+                return tournee
         
         # Aucune tournée compatible → en créer une nouvelle
         ExpeditionService.creer_nouvelle_tournee(expedition)
@@ -623,7 +625,7 @@ class FacturationService:
         
         LOGIQUE DE REGROUPEMENT :
         - Si une facture IMPAYEE/PARTIELLEMENT_PAYEE existe AUJOURD'HUI
-          → Ajouter l'expédition à cette facture
+        → Ajouter l'expédition à cette facture
         - Sinon → Créer une nouvelle facture
         
         ✅ AVEC COMPENSATION AUTOMATIQUE si client a solde négatif (crédit)
@@ -634,6 +636,12 @@ class FacturationService:
         client = expedition.client
         aujourd_hui = date.today()
         
+        # ✅ VÉRIFIER SI L'EXPÉDITION EST DÉJÀ DANS UNE FACTURE
+        # Cela évite le double ajout du montant au solde
+        if expedition.factures.exists():
+            # L'expédition est déjà facturée, ne rien faire
+            return expedition.factures.first()
+        
         # Chercher une facture existante du jour pour ce client
         facture_du_jour = Facture.objects.filter(
             client=client,
@@ -642,7 +650,7 @@ class FacturationService:
         ).first()
         
         if facture_du_jour:
-            # AJOUTER à la facture existante
+            # AJOUTER À la facture existante
             facture_du_jour.expeditions.add(expedition)
             
             # Recalculer les montants
@@ -656,9 +664,6 @@ class FacturationService:
             client.solde += montant_exp_ttc
             client.save()
             
-            # ✅ COMPENSATION si solde négatif
-            if client.solde < 0:
-                FacturationService.appliquer_compensation_solde(client, facture_du_jour)
             
             # Mettre à jour le statut de la facture
             FacturationService.mettre_a_jour_statut_facture(facture_du_jour)
@@ -684,12 +689,8 @@ class FacturationService:
             client.solde += facture.montant_ttc
             client.save()
             
-            # ✅ COMPENSATION si solde négatif
-            if client.solde < 0:
-                FacturationService.appliquer_compensation_solde(client, facture)
-            
             return facture
-    
+    '''
     @staticmethod
     def appliquer_compensation_solde(client, facture):
         """
@@ -736,7 +737,7 @@ class FacturationService:
         # Log pour l'agent (optionnel)
         facture.remarques = (facture.remarques or '') + f"\n[Compensation : {credit_client} DA de crédit utilisé]"
         facture.save()
-    
+    '''
     @staticmethod
     def enregistrer_paiement(facture, montant, mode_paiement, reference=None, remarques=None):
         """
@@ -862,9 +863,7 @@ class NotificationService:
     """
     Service pour gérer les notifications et leurs traitements
     """
-    from .models import Notification, Client
-    from django.utils import timezone
-
+    
     @staticmethod
     @transaction.atomic
     def traiter_action_notification(notification_id, action):
@@ -872,12 +871,13 @@ class NotificationService:
         Traite l'action de l'agent sur une notification
         
         ACTIONS POSSIBLES :
-        - Pour SOLDE_NEGATIF : 'COMPENSER' ou 'REMBOURSER'
-        - Pour MAINTENANCE_AVANT : 'CONFIRMER_MAINTENANCE' ou 'REPORTER_MAINTENANCE'
-        - Pour MAINTENANCE_APRES : 'CONFIRMER_RETOUR' ou 'PAS_ENCORE_RETOUR'
+        - Pour SOLDE_NEGATIF : 'OK' (rembourser et mettre solde à 0)
+        - Pour MAINTENANCE_AVANT : 'OK' (confirmer) ou 'REPORTER' (rediriger vers modif)
+        - Pour MAINTENANCE_APRES : 'OUI' (revenu) ou 'NON' (pas encore)
+        - Pour REMBOURSEMENT_REQUIS : 'OK' (rembourser)
         
         Returns:
-            dict: Résultat du traitement {'success': bool, 'message': str}
+            dict: {'success': bool, 'message': str, 'redirect': str (optionnel)}
         """
         from .models import Notification, Client
         from django.utils import timezone
@@ -891,36 +891,16 @@ class NotificationService:
         
         # ========== NOTIFICATIONS SOLDE NÉGATIF ==========
         if notification.type_notification == 'SOLDE_NEGATIF':
-            client = Client.objects.select_for_update().get(id=notification.client.id)
             
-            if action == 'COMPENSER':
-                # ✅ Agent a choisi de COMPENSER sur prochaines factures
-                client.compensation_autorisee = True
-                client.save()
-                
-                notification.statut = 'TRAITEE'
-                notification.action_effectuee = 'COMPENSATION_AUTORISEE'
-                notification.commentaire_traitement = f"Compensation autorisée pour crédit de {abs(client.solde):,.2f} DA"
-                notification.date_traitement = timezone.now()
-                notification.save()
-                
-                resultat = {
-                    'success': True,
-                    'message': f"Compensation autorisée pour {abs(client.solde):,.2f} DA"
-                }
-            
-            elif action == 'REMBOURSER':
-                # ✅ Agent a choisi de REMBOURSER en argent
+            if action == 'OK':
+                client = Client.objects.select_for_update().get(id=notification.client.id)
                 montant_remboursement = abs(client.solde)
                 
-                # TODO: Générer ordre de virement / chèque
-                # RemboursementService.creer_ordre_remboursement(client, montant_remboursement)
-                
-                # Remettre solde à 0
+                # Remettre le solde à 0 après remboursement
                 client.solde = Decimal('0.00')
-                client.compensation_autorisee = False  # Pas de compensation (déjà remboursé)
                 client.save()
                 
+                # Marquer la notification comme traitée
                 notification.statut = 'TRAITEE'
                 notification.action_effectuee = 'REMBOURSE'
                 notification.commentaire_traitement = f"Remboursement de {montant_remboursement:,.2f} DA effectué"
@@ -929,15 +909,15 @@ class NotificationService:
                 
                 resultat = {
                     'success': True,
-                    'message': f"Remboursement de {montant_remboursement:,.2f} DA effectué"
+                    'message': f"Remboursement de {montant_remboursement:,.2f} DA effectué au client {client.prenom} {client.nom}"
                 }
         
         # ========== NOTIFICATIONS MAINTENANCE AVANT (J-1) ==========
         elif notification.type_notification == 'MAINTENANCE_AVANT':
             vehicule = notification.vehicule
             
-            if action == 'CONFIRMER_MAINTENANCE':
-                # ✅ Confirmer que le véhicule ira en maintenance demain
+            if action == 'OK':
+                # Confirmer que le véhicule va en maintenance
                 vehicule.statut = 'EN_MAINTENANCE'
                 vehicule.save()
                 
@@ -952,26 +932,23 @@ class NotificationService:
                     'message': f"Véhicule {vehicule.numero_immatriculation} mis en maintenance"
                 }
             
-            elif action == 'REPORTER_MAINTENANCE':
-                # ✅ Reporter la maintenance (l'agent doit fournir nouvelle date)
-                # Cette action sera gérée depuis la vue avec une nouvelle date
-                notification.statut = 'TRAITEE'
-                notification.action_effectuee = 'MAINTENANCE_REPORTEE'
-                notification.date_traitement = timezone.now()
-                # commentaire_traitement sera rempli depuis la vue avec la nouvelle date
+            elif action == 'REPORTER':
+                # Rediriger vers la page de modification du véhicule
+                notification.statut = 'LUE'
                 notification.save()
                 
                 resultat = {
                     'success': True,
-                    'message': 'Maintenance reportée'
+                    'message': 'Redirection vers la modification du véhicule',
+                    'redirect': f'/vehicules/{vehicule.id}/modifier/'  # URL de modification
                 }
         
         # ========== NOTIFICATIONS MAINTENANCE APRÈS (J+1, J+2...) ==========
         elif notification.type_notification == 'MAINTENANCE_APRES':
             vehicule = notification.vehicule
             
-            if action == 'CONFIRMER_RETOUR':
-                # ✅ Confirmer que le véhicule est revenu de maintenance
+            if action == 'OUI':
+                # Confirmer que le véhicule est revenu
                 VehiculeService.confirmer_revision(vehicule)
                 
                 notification.statut = 'TRAITEE'
@@ -985,24 +962,21 @@ class NotificationService:
                     'message': f"Véhicule {vehicule.numero_immatriculation} remis en service"
                 }
             
-            elif action == 'PAS_ENCORE_RETOUR':
-                # ✅ Le véhicule n'est pas encore revenu
+            elif action == 'NON':
+                # Le véhicule n'est pas encore revenu
                 notification.statut = 'LUE'
                 notification.save()
                 
                 resultat = {
                     'success': True,
-                    'message': 'Notification marquée comme lue'
+                    'message': '⏳ Notification marquée comme lue. Elle réapparaîtra demain.'
                 }
         
         # ========== REMBOURSEMENT REQUIS ==========
         elif notification.type_notification == 'REMBOURSEMENT_REQUIS':
             
-            if action == 'REMBOURSER':
+            if action == 'OK':
                 # Trouver l'incident lié
-                # (on peut le retrouver via le message de la notification ou ajouter un champ incident dans Notification)
-                
-                # Pour l'instant, on va chercher le dernier incident du client non remboursé
                 from .models import Incident
                 
                 incident = Incident.objects.filter(
@@ -1021,62 +995,21 @@ class NotificationService:
                 )
                 
                 if success:
-                    # Marquer la notification comme traitée
                     notification.statut = 'TRAITEE'
                     notification.action_effectuee = 'REMBOURSE'
                     notification.commentaire_traitement = message
                     notification.date_traitement = timezone.now()
                     notification.save()
                     
-                    resultat = {'success': True, 'message': message}
+                    resultat = {'success': True, 'message': f"{message}"}
                 else:
-                    resultat = {'success': False, 'message': message}
-            
-            elif action == 'IGNORER':
-                # L'agent décide de ne pas rembourser
-                notification.statut = 'TRAITEE'
-                notification.action_effectuee = 'IGNORE'
-                notification.commentaire_traitement = "Remboursement refusé par l'agent"
-                notification.date_traitement = timezone.now()
-                notification.save()
-                
-                resultat = {'success': True, 'message': 'Notification ignorée'}
-
+                    resultat = {'success': False, 'message': f"{message}"}
+        
         return resultat
     
     @staticmethod
-    def reporter_maintenance_vehicule(vehicule, nouvelle_date, commentaire=None):
-        """
-        Permet à l'agent de reporter manuellement une maintenance
-        
-        Args:
-            vehicule: Instance de Vehicule
-            nouvelle_date: date object de la nouvelle DPR
-            commentaire: Raison du report (optionnel)
-        """
-        from datetime import date
-        from .models import Notification
-        
-        ancienne_date = vehicule.date_prochaine_revision
-        
-        VehiculeService.reporter_revision(vehicule, nouvelle_date)
-        
-        # Log dans une notification
-        Notification.objects.create(
-            type_notification='INFO',
-            titre=f"Maintenance reportée - {vehicule.numero_immatriculation}",
-            message=f"Date de prochaine révision modifiée de {ancienne_date.strftime('%d/%m/%Y')} "
-                    f"à {nouvelle_date.strftime('%d/%m/%Y')}"
-                    + (f"\nRaison : {commentaire}" if commentaire else ""),
-            vehicule=vehicule,
-            statut='LUE'
-        )
-    
-    @staticmethod
     def marquer_comme_lue(notification_id):
-        """
-        Marque une notification comme lue (sans la traiter)
-        """
+        """Marque une notification comme lue"""
         from .models import Notification
         
         notification = Notification.objects.get(id=notification_id)

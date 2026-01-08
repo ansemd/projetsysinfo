@@ -9,9 +9,7 @@ class AnalyticsService:
     """
     Service pour les analyses et statistiques avancées
     """
-    
-    # ==================== ANALYSE COMMERCIALE ====================
-    
+
     @staticmethod
     def evolution_expeditions(annee_debut, annee_fin=None):
         """
@@ -159,8 +157,6 @@ class AnalyticsService:
         
         return list(destinations)
     
-    # ==================== ANALYSE OPÉRATIONNELLE ====================
-    
     @staticmethod
     def evolution_tournees(annee_debut, annee_fin=None):
         """
@@ -303,8 +299,6 @@ class AnalyticsService:
         ).order_by('mois')
         
         return list(activite_mois)
-    
-    # ==================== TABLEAU DE BORD GLOBAL ====================
     
     @staticmethod
     def tableau_bord_global(annee=None):

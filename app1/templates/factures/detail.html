@@ -133,7 +133,7 @@
     <h2>💰 Paiements Effectués ({{ stats_paiements.nb_paiements }})</h2>
     
     <p><strong>Total payé :</strong> {{ stats_paiements.total_paye|floatformat:2 }} DA</p>
-    <p><strong>Restant à payer :</strong> {{ facture.montant_ttc|floatformat:2 }} DA</p>
+    <p><strong>Restant à payer :</strong> {{ facture.montant_restant|floatformat:2 }} DA</p>
     
     {% if paiements %}
     <table border="1" cellpadding="10">

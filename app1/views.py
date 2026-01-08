@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Sum, Prefetch
-from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation
+from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation, Notification
 from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, IncidentResolutionForm, AssignationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm
 from .utils import generer_pdf_fiche, generer_pdf_liste, IncidentService, ReclamationService
 from django.utils import timezone
@@ -1266,7 +1266,6 @@ def liste_tournees(request):
     """
     tournees = Tournee.objects.all().select_related('chauffeur', 'vehicule')
     
-    # ========== RECHERCHE ==========
     search = request.GET.get('search', '')
     if search:
         tournees = tournees.filter(
@@ -1284,9 +1283,8 @@ def liste_tournees(request):
     if zone_filter:
         tournees = tournees.filter(zone_cible=zone_filter)
     
-    # ========== ANNOTATION : Nombre d'expéditions par tournée ==========
+    # ========== ANNOTATION ==========
     tournees = tournees.annotate(nb_expeditions=Count('expeditions'))
-    
     tournees = tournees.order_by('-date_depart')
     
     # ========== STATISTIQUES ==========
@@ -1297,6 +1295,7 @@ def liste_tournees(request):
         'terminees': Tournee.objects.filter(statut='TERMINEE').count(),
     }
     
+    # ========== STATUTS ==========
     statuts = [
         ('PREVUE', 'Prévue'),
         ('EN_COURS', 'En cours'),
@@ -1341,6 +1340,35 @@ def exporter_tournees_pdf(request):
     ]
     
     return generer_pdf_liste("Liste des Tournées", headers, data, "tournees")
+
+def modifier_statut_tournee(request, tournee_id):
+    """
+    Modifie le statut d'une tournée
+    Cette fonction marche depuis :
+    - Le dashboard (home)
+    - La liste des tournées
+    
+    Redirige vers la page d'origine grâce au paramètre 'source'
+    """
+    if request.method == 'POST':
+        tournee = get_object_or_404(Tournee, id=tournee_id)
+        nouveau_statut = request.POST.get('statut')
+        source = request.POST.get('source', 'liste_tournees')  
+        
+        if nouveau_statut in ['PREVUE', 'EN_COURS', 'TERMINEE']:
+            tournee.statut = nouveau_statut
+            tournee.save()
+            messages.success(request, f'✅ Statut de la tournée #{tournee.id} modifié avec succès !')
+        else:
+            messages.error(request, '❌ Statut invalide')
+        
+        # Rediriger vers la page d'origine
+        if source == 'home':
+            return redirect('home')
+        else:
+            return redirect('liste_tournees')
+    
+    return redirect('liste_tournees')
 
 def detail_tournee(request, tournee_id):
     """
@@ -1721,12 +1749,17 @@ def creer_expedition(request):
         
         if form.is_valid():
             try:
+                # Sauvegarder l'expédition
                 expedition = form.save()
-                messages.success(request, f"Expédition {expedition.get_numero_expedition()} créée avec succès !")
+                
+                messages.success(
+                    request, 
+                    f"✅ Expédition {expedition.get_numero_expedition()} créée avec succès ! "
+                )
                 return redirect('detail_expedition', expedition_id=expedition.id)
             
             except Exception as e:
-                messages.error(request, f"Erreur : {str(e)}")
+                messages.error(request, f"❌ Erreur : {str(e)}")
     else:
         form = ExpeditionForm()
     
@@ -1774,18 +1807,29 @@ def supprimer_expedition(request, expedition_id):
     La logique de validation est dans le signal pre_delete
     """
     expedition = get_object_or_404(Expedition, id=expedition_id)
-    
+
     if request.method == 'POST':
         try:
-            # Le signal pre_delete va gérer toute la logique
+            # ✅ Sauvegarder les infos AVANT suppression
+            numero_expedition = expedition.get_numero_expedition()
+
             expedition.delete()
-            messages.success(request, f"Expédition {expedition.get_numero_expedition()} supprimée avec succès")
+
+            messages.success(
+                request,
+                f"Expédition {numero_expedition} supprimée avec succès"
+            )
             return redirect('liste_expeditions')
-        
+
+        except ValidationError as e:
+            # ❌ Suppression refusée par le signal
+            messages.error(request, str(e))
+            return redirect('detail_expedition', expedition_id=expedition_id)
+
         except Exception as e:
             messages.error(request, f"Erreur : {str(e)}")
-            return redirect('detail_expedition', expedition_id=expedition_id)
-    
+            return redirect('liste_expeditions')
+
     return render(request, 'expeditions/supprimer.html', {
         'expedition': expedition,
     })
@@ -1929,6 +1973,7 @@ def detail_facture(request, facture_id):
     - Liste des expéditions facturées
     - Bouton "Ajouter paiement" (si facture pas PAYEE/ANNULEE)
     """
+    from .utils import FacturationService
     facture = get_object_or_404(
         Facture.objects.select_related('client'),
         id=facture_id
@@ -1952,6 +1997,8 @@ def detail_facture(request, facture_id):
     # ========== PEUT-ON AJOUTER UN PAIEMENT ? ==========
     # On ne peut pas payer une facture PAYEE ou ANNULEE
     peut_ajouter_paiement = facture.statut not in ['PAYEE', 'ANNULEE']
+
+    montant_restant = FacturationService.calculer_montant_restant(facture)
     
     return render(request, 'factures/detail.html', {
         'facture': facture,
@@ -3080,3 +3127,153 @@ def exporter_reclamation_detail_pdf(request, reclamation_id):
         f"reclamation_{reclamation.id}",
         remarques=reclamation.remarques
     )
+
+def home(request):
+    """
+    Page d'accueil (Dashboard)
+    Affiche :
+    - Favoris (4 raccourcis personnalisables)
+    - Notifications non lues
+    - Tournées en cours
+    - Tournées prévues demain
+    """
+    from datetime import date, timedelta
+    from django.db.models import Count
+    from .constants import FONCTIONNALITES_DISPONIBLES, FAVORIS_PAR_DEFAUT
+    
+    # ========== FAVORIS ==========
+    favoris_ids = request.session.get('favoris', FAVORIS_PAR_DEFAUT)
+    favoris = [
+        f for f in FONCTIONNALITES_DISPONIBLES 
+        if f['id'] in favoris_ids
+    ][:4]
+    
+    # ========== NOTIFICATIONS NON LUES ==========
+    notifications = Notification.objects.filter(
+        statut='NON_LUE'
+    ).order_by('-date_creation')
+    
+    # ========== TOURNÉES EN COURS ==========
+    # On récupère EXACTEMENT les mêmes champs que dans liste_tournees
+    tournees_en_cours = Tournee.objects.filter(
+        statut='EN_COURS'
+    ).select_related('chauffeur', 'vehicule').annotate(
+        nb_expeditions=Count('expeditions')
+    ).order_by('date_depart')
+    
+    # ========== TOURNÉES PRÉVUES DEMAIN ==========
+    demain = date.today() + timedelta(days=1)
+    tournees_demain = Tournee.objects.filter(
+        statut='PREVUE',
+        date_depart__date=demain
+    ).select_related('chauffeur', 'vehicule').annotate(
+        nb_expeditions=Count('expeditions')
+    ).order_by('date_depart')
+    
+    # ========== STATUTS DISPONIBLES (pour le select) ==========
+    statuts_tournee = [
+        ('PREVUE', 'Prévue'),
+        ('EN_COURS', 'En cours'),
+        ('TERMINEE', 'Terminée'),
+    ]
+    
+    context = {
+        'favoris': favoris,
+        'notifications': notifications,
+        'tournees_en_cours': tournees_en_cours,
+        'tournees_demain': tournees_demain,
+        'statuts_tournee': statuts_tournee,
+    }
+    
+    return render(request, 'home.html', context)
+
+def selectionner_favoris(request):
+    """
+    Page de sélection des favoris
+    Affiche TOUTES les fonctionnalités disponibles
+    L'utilisateur peut sélectionner max 4 favoris
+    """
+    from .constants import FONCTIONNALITES_DISPONIBLES, FAVORIS_PAR_DEFAUT
+    
+    if request.method == 'POST':
+        favoris_selectionnes = request.POST.getlist('favoris')
+        
+        if len(favoris_selectionnes) > 4:
+            messages.error(request, '❌ Vous ne pouvez sélectionner que 4 favoris maximum !')
+            return redirect('selectionner_favoris')
+        
+        if len(favoris_selectionnes) == 0:
+            messages.error(request, '❌ Veuillez sélectionner au moins 1 favori !')
+            return redirect('selectionner_favoris')
+        
+        # Enregistrer en session
+        request.session['favoris'] = favoris_selectionnes
+        
+        messages.success(request, f'✅ Vos {len(favoris_selectionnes)} favoris ont été enregistrés !')
+        return redirect('home')
+    
+    # GET : Afficher le formulaire
+    categories = {}
+    for fonc in FONCTIONNALITES_DISPONIBLES:
+        cat = fonc['categorie']
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(fonc)
+    
+    favoris_actuels = request.session.get('favoris', FAVORIS_PAR_DEFAUT)
+    
+    context = {
+        'categories': categories,
+        'favoris_actuels': favoris_actuels,
+    }
+    
+    return render(request, 'favoris/selectionner.html', context)
+
+def traiter_notification(request, notification_id):
+    """
+    Affiche les détails d'une notification et permet de la traiter
+    """
+    from .utils import NotificationService
+
+    notification = get_object_or_404(Notification, id=notification_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        try:
+            resultat = NotificationService.traiter_action_notification(
+                notification_id,
+                action
+            )
+            
+            if resultat['success']:
+                messages.success(request, resultat['message'])
+                
+                # Si redirection demandée (cas REPORTER)
+                if 'redirect' in resultat:
+                    return redirect(resultat['redirect'])
+                
+                # Sinon, retour au home
+                return redirect('home')
+            else:
+                messages.error(request, resultat['message'])
+                
+        except Exception as e:
+            messages.error(request, f"❌ Erreur : {str(e)}")
+        
+        return redirect('home')
+    
+    # GET : Afficher la notification
+    return render(request, 'notifications/traiter.html', {
+        'notification': notification,
+    })
+
+def liste_notifications(request):
+    """
+    Liste de toutes les notifications
+    """
+    notifications = Notification.objects.all().order_by('-date_creation')
+    
+    return render(request, 'notifications/liste.html', {
+        'notifications': notifications,
+    })

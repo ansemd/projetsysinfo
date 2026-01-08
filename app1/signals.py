@@ -86,7 +86,7 @@ def gerer_suppression_expedition(sender, instance, **kwargs):
     if not instance.factures.exists():
         # Pas de facture → juste supprimer le tracking
         instance.suivis.all().delete()
-        return  # Le delete() se fera automatiquement après le signal
+        return
     
     facture = instance.factures.filter(
         statut__in=['IMPAYEE', 'PARTIELLEMENT_PAYEE', 'PAYEE', 'EN_RETARD']
@@ -96,31 +96,23 @@ def gerer_suppression_expedition(sender, instance, **kwargs):
         instance.suivis.all().delete()
         return
     
-    # ========== CALCULS REMBOURSEMENT PROPORTIONNEL ==========
+    # ========== CALCULS POUR LE MONTANT DE L'EXPÉDITION ==========
     
     montant_exp_ht = instance.montant_total
     montant_exp_tva = montant_exp_ht * (facture.taux_tva / 100)
     montant_exp_ttc = montant_exp_ht + montant_exp_tva
     
-    total_paye_facture = facture.paiements.filter(statut='VALIDE').aggregate(
-        total=Sum('montant_paye')
-    )['total'] or Decimal('0.00')
-    
-    if facture.montant_ttc > 0:
-        proportion_payee = total_paye_facture / facture.montant_ttc
-    else:
-        proportion_payee = Decimal('0.00')
-    
-    montant_paye_pour_exp = montant_exp_ttc * proportion_payee
-    montant_non_paye_pour_exp = montant_exp_ttc - montant_paye_pour_exp
-    
     # ========== MISE À JOUR SOLDE CLIENT ==========
     
     client = Client.objects.select_for_update().get(id=instance.client.id)
     
-    # CRÉDIT CLIENT
-    client.solde -= montant_paye_pour_exp
-    client.solde -= montant_non_paye_pour_exp
+    # ✅ LOGIQUE CORRECTE :
+    # Quand on supprime une expédition, on retire toute sa contribution du solde
+    # Si le client avait payé pour cette expédition, il sera crédité (solde négatif)
+    # Exemple : solde = 1000.45 DA, expédition = 1100.45 DA, payé = 100 DA
+    # Nouveau solde = 1000.45 - 1100.45 = -100 DA (crédit de 100 DA) ✅
+    
+    client.solde -= montant_exp_ttc
     client.save()
     
     # ========== MISE À JOUR FACTURE ==========
@@ -129,6 +121,9 @@ def gerer_suppression_expedition(sender, instance, **kwargs):
     
     if facture.expeditions.count() == 0:
         # Plus d'expéditions → Annuler la facture
+        
+        # ✅ Annuler les paiements (changer le statut uniquement, ne PAS les supprimer)
+        # Cela permet de garder l'historique des paiements
         for paiement in facture.paiements.filter(statut='VALIDE'):
             paiement.statut = 'ANNULE'
             paiement.save()
@@ -139,7 +134,7 @@ def gerer_suppression_expedition(sender, instance, **kwargs):
         facture.montant_ttc = Decimal('0.00')
         facture.save()
     else:
-        # Recalculer la facture
+        # Recalculer la facture avec les expéditions restantes
         from .utils import FacturationService
         FacturationService.calculer_montants_facture(facture)
         FacturationService.mettre_a_jour_statut_facture(facture)
@@ -153,12 +148,16 @@ def gerer_suppression_expedition(sender, instance, **kwargs):
         Notification.objects.create(
             type_notification='SOLDE_NEGATIF',
             titre=f"Client en crédit - {client.nom} {client.prenom}",
-            message=f"Le client {client.nom} {client.prenom} a un solde de {client.solde} DA "
-                    f"suite à l'annulation de l'expédition {instance.get_numero_expedition()}. "
-                    f"Souhaitez-vous compenser sur la prochaine facture ou rembourser le client ?",
+            message=(
+                f"Le client {client.nom} {client.prenom} a un crédit de "
+                f"{abs(client.solde):,.2f} DA suite à l'annulation de l'expédition "
+                f"{instance.get_numero_expedition()}.\n\n"
+                "Un remboursement doit être effectué."
+            ),
             client=client,
             statut='NON_LUE'
         )
+
 
 
 # ========== SIGNAL 3 : Gestion suppression tournée ==========

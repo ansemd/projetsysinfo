@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Traiter Notification</title>
+</head>
+<body>
+    
+    <h1>🔔 {{ notification.titre }}</h1>
+    
+    <p><a href="{% url 'home' %}">← Retour au dashboard</a></p>
+    
+    <hr>
+    
+    <div style="border: 2px solid orange; padding: 20px; background-color: #fffbe6;">
+        <p><strong>Type :</strong> {{ notification.get_type_notification_display }}</p>
+        <p><strong>Date :</strong> {{ notification.date_creation|date:"d/m/Y H:i" }}</p>
+        
+        <hr>
+        
+        <p style="white-space: pre-line;">{{ notification.message }}</p>
+        
+        <hr>
+        
+        <!-- ========== BOUTONS SELON LE TYPE ========== -->
+        
+        {% if notification.type_notification == 'SOLDE_NEGATIF' %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: green; color: white; border: none; cursor: pointer;">
+                    ✅ OK - Rembourser le client
+                </button>
+            </form>
+        
+        {% elif notification.type_notification == 'MAINTENANCE_AVANT' %}
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: green; color: white; border: none; cursor: pointer; margin-right: 10px;">
+                    ✅ OK - Confirmer la maintenance
+                </button>
+                <button type="submit" name="action" value="REPORTER" style="padding: 10px 20px; background-color: orange; color: white; border: none; cursor: pointer;">
+                    ⏭️ Reporter - Modifier la date
+                </button>
+            </form>
+        
+        {% elif notification.type_notification == 'MAINTENANCE_APRES' %}
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" name="action" value="OUI" style="padding: 10px 20px; background-color: green; color: white; border: none; cursor: pointer; margin-right: 10px;">
+                    ✅ OUI - Le véhicule est revenu
+                </button>
+                <button type="submit" name="action" value="NON" style="padding: 10px 20px; background-color: red; color: white; border: none; cursor: pointer;">
+                    ❌ NON - Pas encore
+                </button>
+            </form>
+        
+        {% elif notification.type_notification == 'REMBOURSEMENT_REQUIS' %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: green; color: white; border: none; cursor: pointer;">
+                    ✅ OK - Effectuer le remboursement
+                </button>
+            </form>
+        
+        {% endif %}
+    </div>
+    
+</body>
+</html>

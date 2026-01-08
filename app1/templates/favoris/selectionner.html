@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sélectionner vos favoris - TransportPro</title>
+    <script>
+        // Limiter la sélection à 4 checkboxes maximum
+        function checkLimit() {
+            var checkboxes = document.querySelectorAll('input[name="favoris"]:checked');
+            var limit = 4;
+            
+            if (checkboxes.length > limit) {
+                alert('Vous ne pouvez sélectionner que ' + limit + ' favoris maximum !');
+                return false;
+            }
+            
+            if (checkboxes.length === 0) {
+                alert('Veuillez sélectionner au moins 1 favori !');
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+</head>
+<body>
+    
+    <h1>⭐ Sélectionner vos favoris (max 4)</h1>
+    
+    <p>
+        <a href="{% url 'home' %}">← Retour au dashboard</a>
+    </p>
+    
+    <hr>
+    
+    <p><strong>Choisissez jusqu'à 4 fonctionnalités qui apparaîtront sur votre dashboard.</strong></p>
+    
+    <form method="post" onsubmit="return checkLimit()">
+        {% csrf_token %}
+        
+        {% for categorie, fonctionnalites in categories.items %}
+            <fieldset style="margin-bottom: 20px;">
+                <legend><strong>{{ categorie }}</strong></legend>
+                
+                {% for fonc in fonctionnalites %}
+                    <label style="display: block; margin: 5px 0;">
+                        <input 
+                            type="checkbox" 
+                            name="favoris" 
+                            value="{{ fonc.id }}"
+                            {% if fonc.id in favoris_actuels %}checked{% endif %}
+                        >
+                        {{ fonc.icone }} {{ fonc.nom }}
+                    </label>
+                {% endfor %}
+            </fieldset>
+        {% endfor %}
+        
+        <hr>
+        
+        <button type="submit">💾 Enregistrer mes favoris</button>
+    </form>
+    
+</body>
+</html>

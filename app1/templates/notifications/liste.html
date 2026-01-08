@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Notifications</title>
+</head>
+<body>
+    
+    <h1>🔔 Toutes les Notifications</h1>
+    
+    <p><a href="{% url 'home' %}">← Retour au dashboard</a></p>
+    
+    <hr>
+    
+    {% if notifications %}
+        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Titre</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notif in notifications %}
+                <tr>
+                    <td>{{ notif.get_type_notification_display }}</td>
+                    <td>{{ notif.titre }}</td>
+                    <td>{{ notif.date_creation|date:"d/m/Y H:i" }}</td>
+                    <td>{{ notif.get_statut_display }}</td>
+                    <td>
+                        {% if notif.statut == 'NON_LUE' %}
+                            <a href="{% url 'traiter_notification' notif.id %}">Traiter</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucune notification</p>
+    {% endif %}
+    
+</body>
+</html>

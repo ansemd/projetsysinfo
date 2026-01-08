@@ -285,10 +285,6 @@ class Facture(models.Model):
         return f"{self.numero_facture} - {self.client}"
     
     def save(self, *args, **kwargs):
-        from .utils import FacturationService
-        FacturationService.calculer_facture(self)
-        
-
         if not self.numero_facture:
             super().save(*args, **kwargs)
             
@@ -302,6 +298,7 @@ class Facture(models.Model):
             kwargs['force_insert'] = False
         
         super().save(*args, **kwargs)
+    
 
 class Paiement(models.Model):
     
