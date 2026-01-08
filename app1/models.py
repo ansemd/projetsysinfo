@@ -372,7 +372,7 @@ class Notification(models.Model):
     Exemples : maintenance véhicule, alertes, etc.
     """
     
-    type_notification = models.CharField(max_length=30, choices=[('MAINTENANCE_AVANT', 'Maintenance prévue demain'),('MAINTENANCE_APRES', 'Véhicule en maintenance - Retour?'),('SOLDE_NEGATIF', 'Client en crédit'),('REMBOURSEMENT_REQUIS', 'Remboursement incident requis'),('INFO', 'Information'),('ALERTE', 'Alerte'),])
+    type_notification = models.CharField(max_length=30, choices=[('MAINTENANCE_AVANT', 'Maintenance prévue demain'),('MAINTENANCE_APRES', 'Véhicule en maintenance - Retour?'),('SOLDE_NEGATIF', 'Client en crédit'),('REMBOURSEMENT_REQUIS', 'Remboursement incident requis'),('TOURNEE_TERMINEE', 'Tournée terminée'),('INFO', 'Information'),('ALERTE', 'Alerte'),])
     titre = models.CharField(max_length=200)
     message = models.TextField()
     statut = models.CharField(max_length=20, choices=[('NON_LUE', 'Non lue'),('LUE', 'Lue'),('TRAITEE', 'Traitée'),], default='NON_LUE')

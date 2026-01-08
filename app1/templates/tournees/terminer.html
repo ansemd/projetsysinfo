@@ -2,86 +2,206 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Terminer Tournée #{{ tournee.id }}</title>
+    <title>Terminer Tournée {{ tournee.get_numero_tournee }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 200px;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group small {
+            display: block;
+            color: #666;
+            margin-top: 5px;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .info-box li {
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Terminer la Tournée #{{ tournee.id }}</h1>
-    
-    <a href="{% url 'detail_tournee' tournee.id %}"><button>← Annuler</button></a>
-    
-    <hr>
-    
-    <!-- Messages -->
-    {% if messages %}
-        {% for message in messages %}
-            <p style="color: red;"><strong>{{ message }}</strong></p>
-        {% endfor %}
-    {% endif %}
-    
-    <div style="background: #d4edda; padding: 20px; border: 2px solid #28a745; margin: 20px 0;">
-        <h2 style="color: #28a745;">✅ Terminer la tournée</h2>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Terminer la Tournée {{ tournee.get_numero_tournee }}</h1>
+            <a href="{% url 'detail_tournee' tournee.id %}" class="btn btn-secondary">← Retour</a>
+        </div>
         
-        <table border="1" cellpadding="10" style="margin: 20px 0; background: white;">
-            <tr>
-                <th>ID Tournée</th>
-                <td>#{{ tournee.id }}</td>
-            </tr>
-            <tr>
-                <th>Chauffeur</th>
-                <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }}</td>
-            </tr>
-            <tr>
-                <th>Véhicule</th>
-                <td>{{ tournee.vehicule.numero_immatriculation }}</td>
-            </tr>
-            <tr>
-                <th>Date de départ</th>
-                <td>{{ tournee.date_depart|date:"d/m/Y à H:i" }}</td>
-            </tr>
-            <tr>
-                <th>Kilométrage de départ</th>
-                <td>{{ tournee.kilometrage_depart }} km</td>
-            </tr>
-        </table>
+        <hr>
         
-        <form method="POST" style="margin-top: 20px;">
-            {% csrf_token %}
+        <!-- Messages d'erreur/succès -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+                    <strong>{{ message }}</strong>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="alert-success">
+            <h2 style="color: #28a745; margin-top: 0;">📋 Informations de la tournée</h2>
             
-            <h3>Informations de fin de tournée</h3>
             <table>
                 <tr>
-                    <td><label><strong>Kilométrage d'arrivée (obligatoire) :</strong></label></td>
-                    <td>
-                        <input type="number" name="kilometrage_arrivee" required min="{{ tournee.kilometrage_depart }}" step="1">
-                        km
-                        <br><small style="color: gray;">Doit être supérieur à {{ tournee.kilometrage_depart }} km</small>
-                    </td>
+                    <th>N° Tournée</th>
+                    <td>{{ tournee.get_numero_tournee }}</td>
+                </tr>
+                <tr>
+                    <th>Chauffeur</th>
+                    <td>{{ tournee.chauffeur.prenom }} {{ tournee.chauffeur.nom }}</td>
+                </tr>
+                <tr>
+                    <th>Véhicule</th>
+                    <td>{{ tournee.vehicule.numero_immatriculation }} ({{ tournee.vehicule.marque }} {{ tournee.vehicule.modele }})</td>
+                </tr>
+                <tr>
+                    <th>Zone cible</th>
+                    <td>{{ tournee.get_zone_cible_display }}</td>
+                </tr>
+                <tr>
+                    <th>Date de départ</th>
+                    <td>{{ tournee.date_depart|date:"d/m/Y à H:i" }}</td>
+                </tr>
+                <tr>
+                    <th>Kilométrage de départ</th>
+                    <td><strong>{{ tournee.kilometrage_depart }} km</strong></td>
+                </tr>
+                <tr>
+                    <th>Nombre d'expéditions</th>
+                    <td>{{ tournee.expeditions.count }}</td>
                 </tr>
             </table>
             
-            <br>
-            
-            <p style="color: #28a745;">
-                <strong>ℹ️ Actions automatiques lors de la clôture :</strong>
-            </p>
-            <ul>
-                <li>Le kilométrage parcouru sera calculé automatiquement</li>
-                <li>La consommation de carburant sera estimée</li>
-                <li>Le chauffeur et le véhicule seront remis DISPONIBLES</li>
-                <li>Toutes les expéditions EN_TRANSIT seront marquées LIVRÉES</li>
-                <li>Le kilométrage du véhicule sera mis à jour</li>
-            </ul>
-            
-            <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
-                ✅ Terminer la tournée
-            </button>
-            <a href="{% url 'detail_tournee' tournee.id %}">
-                <button type="button" style="background: #666; color: white; padding: 10px 20px; font-size: 16px; border: none; cursor: pointer;">
-                    Annuler
-                </button>
-            </a>
-        </form>
+            <form method="POST">
+                {% csrf_token %}
+                
+                <h3>📝 Informations de fin de tournée</h3>
+                
+                <div class="form-group">
+                    <label for="kilometrage_arrivee">
+                        🚗 Kilométrage d'arrivée (obligatoire) :
+                    </label>
+                    <input 
+                        type="number" 
+                        id="kilometrage_arrivee"
+                        name="kilometrage_arrivee" 
+                        required 
+                        min="{{ tournee.kilometrage_depart|add:1 }}" 
+                        step="1"
+                        placeholder="Ex: {{ tournee.kilometrage_depart|add:100 }}"
+                    > km
+                    <small>⚠️ Doit être supérieur à {{ tournee.kilometrage_depart }} km</small>
+                </div>
+                
+                <div class="info-box">
+                    <p style="margin-top: 0;">
+                        <strong>ℹ️ Actions automatiques lors de la finalisation :</strong>
+                    </p>
+                    <ul>
+                        <li>✅ Le <strong>kilométrage parcouru</strong> sera calculé automatiquement</li>
+                        <li>⛽ La <strong>consommation de carburant</strong> sera estimée ({{ tournee.vehicule.consommation_moyenne }} L/100km)</li>
+                        <li>📅 La <strong>date de retour réelle</strong> sera enregistrée</li>
+                        <li>👨‍✈️ Le <strong>chauffeur</strong> sera remis <span style="color: green;">DISPONIBLE</span></li>
+                        <li>🚗 Le <strong>véhicule</strong> sera remis <span style="color: green;">DISPONIBLE</span></li>
+                        <li>📦 Toutes les expéditions <span style="color: orange;">EN_TRANSIT</span> seront marquées <span style="color: green;">LIVRÉES</span></li>
+                        <li>🔧 Le kilométrage du véhicule sera mis à jour dans le système</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary">
+                        ✅ Finaliser la tournée
+                    </button>
+                    <a href="{% url 'detail_tournee' tournee.id %}" class="btn btn-secondary">
+                        ❌ Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
-    
 </body>
 </html>

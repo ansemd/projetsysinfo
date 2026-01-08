@@ -11,6 +11,34 @@
     
     <hr>
     
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <h1>Modifier la tournée {{ tournee.get_numero_tournee }}</h1>
+
+    {% if from_notification %}
+    <div class="alert alert-warning">
+        <strong>⚠️ Attention !</strong> Cette tournée est terminée. 
+        Vous devez obligatoirement renseigner le <strong>kilométrage d'arrivée</strong> pour finaliser la tournée.
+    </div>
+    {% endif %}
+
+    {% if tournee.statut == 'TERMINEE' %}
+    <div class="info-box">
+        <h3>Finalisation de la tournée</h3>
+        <p><strong>Kilométrage départ :</strong> {{ tournee.kilometrage_depart }} km</p>
+        <p>Le kilométrage d'arrivée doit être supérieur à {{ tournee.kilometrage_depart }} km</p>
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a href="{% url 'detail_tournee' tournee.id %}" class="btn btn-secondary">Annuler</a>
+    </form>
+    {% endblock %}
     <!-- Messages -->
     {% if messages %}
         {% for message in messages %}

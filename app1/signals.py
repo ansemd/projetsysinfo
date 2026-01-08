@@ -5,7 +5,6 @@ from decimal import Decimal
 from .models import Destination, TypeService, Tarification, Expedition, Tournee, Client, Paiement, Incident
 from django.db import transaction
 
-
 # ========== SIGNAL 1 : Création automatique des tarifications ==========
 @receiver(post_save, sender=Destination)
 def creer_tarifications_automatiquement(sender, instance, created, **kwargs):
@@ -49,7 +48,6 @@ def creer_tarifications_automatiquement(sender, instance, created, **kwargs):
                     'tarif_volume': 20.00
                 }
             )
-
 
 # ========== SIGNAL 2 : Validation suppression expédition ==========
 @receiver(pre_delete, sender=Expedition)
@@ -158,8 +156,6 @@ def gerer_suppression_expedition(sender, instance, **kwargs):
             statut='NON_LUE'
         )
 
-
-
 # ========== SIGNAL 3 : Gestion suppression tournée ==========
 @receiver(pre_delete, sender=Tournee)
 def gerer_suppression_tournee(sender, instance, **kwargs):
@@ -218,9 +214,7 @@ def gerer_suppression_paiement(sender, instance, **kwargs):
 
    # ======= SIGNAL POUR REMBOURSEMENT AUTOMATIQUE =======
 
-
 # ======= SIGNAL POUR REMBOURSEMENT AUTOMATIQUE =======
-
 @receiver(post_save, sender=Incident)
 def appliquer_remboursement_automatique(sender, instance, created, **kwargs):
     """
@@ -259,3 +253,35 @@ def appliquer_remboursement_automatique(sender, instance, created, **kwargs):
             )
             
             print(f"Notification de remboursement créée pour incident {instance.numero_incident}")
+
+# ========== SIGNAL 5 : Notification kilométrage tournée terminée ==========
+@receiver(post_save, sender=Tournee)
+def notifier_tournee_terminee(sender, instance, created, **kwargs):
+    """
+    Quand une tournée passe à TERMINEE, créer une notification
+    pour demander le kilométrage d'arrivée
+    """
+    if not created:  # Seulement lors d'une modification
+        from .models import Notification
+        
+        # Vérifier si la tournée vient de passer à TERMINEE
+        if instance.statut == 'TERMINEE':
+            # Vérifier si le kilométrage d'arrivée n'est pas déjà renseigné
+            if not instance.kilometrage_arrivee:
+                # Créer une notification
+                Notification.objects.get_or_create(
+                    type_notification='TOURNEE_TERMINEE',
+                    tournee=instance,
+                    statut='NON_LUE',
+                    defaults={
+                        'titre': f"Tournée terminée - {instance.get_numero_tournee()}",
+                        'message': (
+                            f"La tournée {instance.get_numero_tournee()} est terminée.\n\n"
+                            f"Chauffeur : {instance.chauffeur.prenom} {instance.chauffeur.nom}\n"
+                            f"Véhicule : {instance.vehicule.numero_immatriculation}\n"
+                            f"Kilométrage départ : {instance.kilometrage_depart} km\n\n"
+                            f"Veuillez renseigner le kilométrage d'arrivée pour finaliser la tournée."
+                        ),
+                        'vehicule': instance.vehicule,
+                    }
+                )

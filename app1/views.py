@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Sum, Prefetch
+from django.urls import reverse
 from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation, Notification
 from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, IncidentResolutionForm, AssignationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm
 from .utils import generer_pdf_fiche, generer_pdf_liste, IncidentService, ReclamationService
@@ -1547,16 +1548,13 @@ def supprimer_tournee(request, tournee_id):
 
 def terminer_tournee(request, tournee_id):
     """
-    Permet de terminer manuellement une tournée EN_COURS
+    Formulaire pour renseigner le kilométrage d'arrivée
+    et finaliser une tournée terminée
     """
     tournee = get_object_or_404(Tournee, id=tournee_id)
     
-    if tournee.statut != 'EN_COURS':
-        messages.error(
-            request,
-            f"Impossible de terminer : la tournée est {tournee.get_statut_display()}. "
-            "Seules les tournées EN_COURS peuvent être terminées."
-        )
+    if tournee.statut != 'TERMINEE':
+        messages.error(request, "⚠️ Cette tournée n'est pas terminée")
         return redirect('detail_tournee', tournee_id=tournee_id)
     
     if request.method == 'POST':
@@ -1564,20 +1562,71 @@ def terminer_tournee(request, tournee_id):
             kilometrage_arrivee = request.POST.get('kilometrage_arrivee')
             
             if not kilometrage_arrivee:
-                messages.error(request, "Le kilométrage d'arrivée est obligatoire")
-                return redirect('detail_tournee', tournee_id=tournee_id)
+                messages.error(request, "⚠️ Le kilométrage d'arrivée est requis")
+                return render(request, 'tournees/terminer.html', {'tournee': tournee})
             
-            tournee.kilometrage_arrivee = int(kilometrage_arrivee)
+            kilometrage_arrivee = int(kilometrage_arrivee)
+            
+            # Validation
+            if kilometrage_arrivee < tournee.kilometrage_depart:
+                messages.error(
+                    request, 
+                    f"❌ Le kilométrage d'arrivée ({kilometrage_arrivee} km) doit être supérieur "
+                    f"au kilométrage de départ ({tournee.kilometrage_depart} km)"
+                )
+                return render(request, 'tournees/terminer.html', {'tournee': tournee})
+            
+            # ✅ METTRE À JOUR LA TOURNÉE
+            from django.utils import timezone
+            from .utils import TourneeService
+            
+            tournee.kilometrage_arrivee = kilometrage_arrivee
             tournee.date_retour_reelle = timezone.now()
-            tournee.statut = 'TERMINEE'
+            
+            # Calculer kilométrage et consommation
+            TourneeService.calculer_kilometrage_et_consommation(tournee)
+            
+            # Mettre à jour le kilométrage du véhicule
+            tournee.vehicule.kilometrage = kilometrage_arrivee
+            tournee.vehicule.statut = 'DISPONIBLE'
+            tournee.vehicule.save()
+            
+            # Libérer le chauffeur
+            tournee.chauffeur.statut_disponibilite = 'DISPONIBLE'
+            tournee.chauffeur.save()
+            
+            # Marquer expéditions comme livrées
+            for exp in tournee.expeditions.all():
+                if exp.statut == 'EN_TRANSIT':
+                    exp.statut = 'LIVRE'
+                    exp.date_livraison_reelle = timezone.now().date()
+                    exp.save(update_fields=['statut', 'date_livraison_reelle'])
+            
             tournee.save()
             
-            messages.success(request, f"Tournée #{tournee.id} terminée avec succès !")
-            return redirect('detail_tournee', tournee_id=tournee.id)
+            # Marquer toutes les notifications de cette tournée comme traitées
+            from .models import Notification
+            Notification.objects.filter(
+                vehicule=tournee.vehicule,
+                type_notification='TOURNEE_TERMINEE',
+                statut__in=['NON_LUE', 'LUE']
+            ).update(
+                statut='TRAITEE',
+                action_effectuee='KILOMETRAGE_RENSEIGNE',
+                date_traitement=timezone.now()
+            )
+            
+            messages.success(
+                request, 
+                f"✅ Tournée {tournee.get_numero_tournee()} finalisée ! "
+                f"Kilométrage parcouru : {tournee.kilometrage_parcouru} km, "
+                f"Consommation : {tournee.consommation_carburant:.2f} L"
+            )
+            
+            return redirect('detail_tournee', tournee_id=tournee_id)
         
         except Exception as e:
-            messages.error(request, f"Erreur : {str(e)}")
-            return redirect('detail_tournee', tournee_id=tournee_id)
+            messages.error(request, f"❌ Erreur : {str(e)}")
     
     return render(request, 'tournees/terminer.html', {
         'tournee': tournee,
@@ -3277,3 +3326,6 @@ def liste_notifications(request):
     return render(request, 'notifications/liste.html', {
         'notifications': notifications,
     })
+
+
+

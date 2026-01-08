@@ -18,6 +18,7 @@
     
     <hr>
     
+    
     <!-- ========== SECTION FAVORIS ========== -->
     <section>
         <h2>Mes Favoris</h2>
@@ -104,6 +105,14 @@
                                 {% csrf_token %}
                                 <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
                                     ✅ OK - Effectuer le remboursement
+                                </button>
+                            </form>
+
+                        {% elif notif.type_notification == 'TOURNEE_TERMINEE' %}
+                            <form method="post" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="OK" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                                    ✅ OK - Renseigner le kilométrage
                                 </button>
                             </form>
                         

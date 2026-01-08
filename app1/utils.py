@@ -1004,7 +1004,25 @@ class NotificationService:
                     resultat = {'success': True, 'message': f"{message}"}
                 else:
                     resultat = {'success': False, 'message': f"{message}"}
-        
+
+        # ========== NOTIFICATIONS TOURNÉE TERMINÉE ==========
+        elif notification.type_notification == 'TOURNEE_TERMINEE':
+            tournee = notification.tournee
+            
+            if action == 'OK':
+                # L'agent doit fournir le kilométrage d'arrivée
+                # Cette action sera gérée depuis une vue dédiée
+                notification.statut = 'TRAITEE'
+                notification.action_effectuee = 'REDIRECTION_FORMULAIRE'
+                notification.date_traitement = timezone.now()
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers la modification de la tournée',
+                    'redirect': f'/tournees/{tournee.id}/terminer/' 
+                }
+                
         return resultat
     
     @staticmethod
