@@ -3364,41 +3364,47 @@ def logout_view(request):
 @login_required
 def ajouter_agent(request):
     """Ajouter un nouvel agent (réservé au responsable)"""
-    # Vérifier que l'utilisateur est responsable
     if not request.user.is_responsable:
         messages.error(request, "❌ Accès refusé : réservé à l'agent responsable")
         return redirect('home')
     
     if request.method == 'POST':
-        form = AjouterAgentForm(request.POST)
+        # Récupérer les données du formulaire
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        telephone = request.POST.get('telephone')
         
-        if form.is_valid():
-            # Créer l'agent sans sauvegarder
-            agent = form.save(commit=False)
-            
-            # Générer username et mot de passe
-            username = AgentUtilisateur.generer_username(
-                agent.first_name, 
-                agent.last_name
-            )
-            mot_de_passe = AgentUtilisateur.generer_mot_de_passe_securise()
-            
-            agent.username = username
-            agent.set_password(mot_de_passe)
-            agent.save()
-            
-            messages.success(
-                request,
-                f"✅ Agent créé avec succès !\n"
-                f"Nom d'utilisateur : {username}\n"
-                f"Mot de passe : {mot_de_passe}"
-            )
-            
-            return redirect('liste_agents')
-    else:
-        form = AjouterAgentForm()
+        if not all([first_name, last_name, email, telephone]):
+            messages.error(request, "❌ Tous les champs sont requis")
+            return render(request, 'auth/ajouter_agent.html')
+        
+        # Générer username et password
+        from .models import AgentUtilisateur
+        username = AgentUtilisateur.generer_username(first_name, last_name)
+        mot_de_passe = AgentUtilisateur.generer_mot_de_passe_securise()
+        
+        # Créer l'agent
+        agent = AgentUtilisateur(
+            username=username,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            telephone=telephone,
+            is_staff=False,
+            is_responsable=False
+        )
+        agent.set_password(mot_de_passe)
+        agent.save()
+        
+        # Afficher la page avec les identifiants
+        return render(request, 'auth/agent_cree.html', {
+            'agent': agent,
+            'username': username,
+            'mot_de_passe': mot_de_passe,
+        })
     
-    return render(request, 'auth/ajouter_agent.html', {'form': form})
+    return render(request, 'auth/ajouter_agent.html')
 
 @login_required
 def liste_agents(request):
