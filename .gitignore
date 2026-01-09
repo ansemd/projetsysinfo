@@ -4,3 +4,5 @@ __pycache__/
 .env
 media/
 .DS_Store
+.backup_data.json
+
