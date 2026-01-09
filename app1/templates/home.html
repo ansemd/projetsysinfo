@@ -6,6 +6,143 @@
     <title>TransportPro</title>
 </head>
 <body>
+    <style>
+        /* Style pour le menu utilisateur */
+        .user-menu {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .user-icon {
+            background: #667eea;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: background 0.3s;
+        }
+        
+        .user-icon:hover {
+            background: #5568d3;
+        }
+        
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 250px;
+            overflow: hidden;
+        }
+        
+        .user-dropdown.show {
+            display: block;
+        }
+        
+        .user-info {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+        
+        .user-info strong {
+            display: block;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .user-info small {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .dropdown-item {
+            padding: 12px 15px;
+            display: block;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item.danger {
+            color: #dc3545;
+        }
+        
+        .dropdown-item.success {
+            color: #28a745;
+        }
+    </style>
+    
+    <!-- Menu utilisateur -->
+    <div class="user-menu">
+        <div class="user-icon" onclick="toggleUserMenu()">
+            👤
+        </div>
+        
+        <div class="user-dropdown" id="userDropdown">
+            <div class="user-info">
+                <strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong>
+                <small>@{{ request.user.username }}</small>
+                {% if request.user.is_responsable %}
+                <small style="display: block; color: #28a745; margin-top: 5px;">
+                    ⭐ Agent Responsable
+                </small>
+                {% endif %}
+            </div>
+            
+            {% if request.user.is_responsable %}
+            <!-- Options pour l'agent responsable uniquement -->
+            <a href="{% url 'ajouter_agent' %}" class="dropdown-item success">
+                ➕ Ajouter un agent
+            </a>
+            <a href="{% url 'liste_agents' %}" class="dropdown-item">
+                👥 Liste des agents
+            </a>
+            {% endif %}
+            
+            <!-- Options pour tous les agents -->
+            <a href="{% url 'changer_mot_de_passe' %}" class="dropdown-item">
+                🔐 Changer le mot de passe
+            </a>
+            <a href="{% url 'logout' %}" class="dropdown-item danger">
+                🚪 Déconnexion
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+        
+        // Fermer le menu si on clique ailleurs
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-menu')) {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+    </script>
     
     <h1>TransportPro</h1>
     

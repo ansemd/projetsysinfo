@@ -1,6 +1,8 @@
 from django import forms
-from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, Reclamation
+from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, Reclamation, AgentUtilisateur
 from datetime import date
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm
 
 class ClientForm(forms.ModelForm):
     class Meta:
@@ -758,7 +760,65 @@ class AssignationForm(forms.Form):
         help_text="Agent qui sera responsable du traitement"
     )
 
+class LoginForm(AuthenticationForm):
+    """Formulaire de connexion"""
+    username = forms.CharField(
+        label="Nom d'utilisateur",
+        widget=forms.TextInput(attrs={
+            'placeholder': "Nom d'utilisateur",
+            'autofocus': True
+        })
+    )
+    password = forms.CharField(
+        label="Mot de passe",
+        widget=forms.PasswordInput(attrs={
+            'placeholder': "Mot de passe"
+        })
+    )
 
+class AjouterAgentForm(forms.ModelForm):
+    """Formulaire pour ajouter un nouvel agent (par le responsable)"""
+    
+    class Meta:
+        model = AgentUtilisateur
+        fields = ['first_name', 'last_name', 'email', 'telephone']
+        labels = {
+            'first_name': 'Prénom',
+            'last_name': 'Nom',
+            'email': 'Email',
+            'telephone': 'Téléphone',
+        }
+        widgets = {
+            'first_name': forms.TextInput(attrs={'placeholder': 'Ahmed'}),
+            'last_name': forms.TextInput(attrs={'placeholder': 'Benali'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'ahmed.benali@example.com'}),
+            'telephone': forms.TextInput(attrs={'placeholder': '+213 555 123 456'}),
+        }
+
+class ChangerMotDePasseForm(forms.Form):
+    """Formulaire pour changer le mot de passe"""
+    ancien_mot_de_passe = forms.CharField(
+        label="Mot de passe actuel",
+        widget=forms.PasswordInput(attrs={'placeholder': 'Mot de passe actuel'})
+    )
+    nouveau_mot_de_passe = forms.CharField(
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={'placeholder': 'Nouveau mot de passe'})
+    )
+    confirmer_mot_de_passe = forms.CharField(
+        label="Confirmer le nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={'placeholder': 'Confirmer le mot de passe'})
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        nouveau = cleaned_data.get('nouveau_mot_de_passe')
+        confirmer = cleaned_data.get('confirmer_mot_de_passe')
+        
+        if nouveau and confirmer and nouveau != confirmer:
+            raise forms.ValidationError("Les mots de passe ne correspondent pas")
+        
+        return cleaned_data
 
 
 

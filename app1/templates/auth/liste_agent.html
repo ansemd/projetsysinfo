@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des agents</title>
+</head>
+<body>
+    <h1>👥 Liste des agents utilisateurs</h1>
+    
+    <a href="{% url 'home' %}"><button>← Retour</button></a>
+    <a href="{% url 'ajouter_agent' %}"><button style="background: #28a745; color: white;">➕ Ajouter un agent</button></a>
+    
+    <hr>
+    
+    <h3>Total : {{ agents.count }} agent(s)</h3>
+    
+    <table border="1" cellpadding="10" style="margin-top: 20px;">
+        <thead>
+            <tr style="background: #f0f0f0;">
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Username</th>
+                <th>Mot de passe</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Responsable</th>
+                <th>Date création</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agent in agents %}
+            <tr>
+                <td>{{ agent.first_name }}</td>
+                <td>{{ agent.last_name }}</td>
+                <td><strong>{{ agent.username }}</strong></td>
+                <td>
+                    <span style="background: #fffacd; padding: 5px; font-family: monospace;">
+                        ⚠️ Mot de passe hashé (non visible)
+                    </span>
+                </td>
+                <td>{{ agent.email }}</td>
+                <td>{{ agent.telephone }}</td>
+                <td>
+                    {% if agent.is_responsable %}
+                        ✅ Oui
+                    {% else %}
+                        ❌ Non
+                    {% endif %}
+                </td>
+                <td>{{ agent.date_creation|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <p style="margin-top: 20px; color: #666;">
+        ⚠️ <strong>Note importante :</strong> Les mots de passe sont hashés dans la base de données pour des raisons de sécurité. 
+        Ils ne peuvent pas être affichés en clair après création. Notez-les lors de la création de l'agent.
+    </p>
+</body>
+</html>

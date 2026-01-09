@@ -1,0 +1,3962 @@
+🚀 Exécution initiale des tâches du matin...
+Exécution tâches du MATIN (8h)
+======================================================================
+Tâche quotidienne - Mode: MATIN - 2026-01-08 23:33:42.361216+00:00
+======================================================================
+
+--- 1. Mise à jour des tournées ---
+  Aucune tournée à mettre à jour
+
+--- 2. Mise à jour des factures ---
+  Aucune facture en retard
+
+--- 3. Vérification retours de maintenance ---
+  Aucun véhicule en attente de retour
+======================================================================
+✓ Tâche terminée
+======================================================================
+Scheduler démarré : 8h (matin) et 17h30 (soir)
+[
+{
+  "model": "admin.logentry",
+  "pk": 1,
+  "fields": {
+    "action_time": "2025-12-22T12:59:19.562Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "1",
+    "object_repr": "Express",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 2,
+  "fields": {
+    "action_time": "2025-12-22T18:40:28.518Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "1",
+    "object_repr": "Bab ezzouar - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 3,
+  "fields": {
+    "action_time": "2025-12-22T18:43:28.391Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "1",
+    "object_repr": "Bab ezzouar - Algérie",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 4,
+  "fields": {
+    "action_time": "2025-12-22T18:45:38.006Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "2",
+    "object_repr": "Standard",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 5,
+  "fields": {
+    "action_time": "2025-12-22T18:45:51.217Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "3",
+    "object_repr": "International",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 6,
+  "fields": {
+    "action_time": "2025-12-22T21:20:48.056Z",
+    "user": 1,
+    "content_type": 12,
+    "object_id": "1",
+    "object_repr": "Bab ezzouar - Express",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 7,
+  "fields": {
+    "action_time": "2025-12-22T21:22:07.906Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "1",
+    "object_repr": "Sihem Ansame Dahar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 8,
+  "fields": {
+    "action_time": "2025-12-22T21:41:25.957Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "1",
+    "object_repr": "EXP-000001 - Sihem Ansame Dahar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 9,
+  "fields": {
+    "action_time": "2025-12-22T21:42:48.034Z",
+    "user": 1,
+    "content_type": 12,
+    "object_id": "2",
+    "object_repr": "Bab ezzouar - Standard",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 10,
+  "fields": {
+    "action_time": "2025-12-22T21:42:59.972Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "1",
+    "object_repr": "EXP-000001 - Sihem Ansame Dahar",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 11,
+  "fields": {
+    "action_time": "2025-12-22T21:56:23.615Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "2",
+    "object_repr": "zeralda - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 12,
+  "fields": {
+    "action_time": "2025-12-22T21:57:29.272Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "2",
+    "object_repr": "EXP-000002 - Sihem Ansame Dahar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 13,
+  "fields": {
+    "action_time": "2025-12-22T22:53:00.512Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "2",
+    "object_repr": "zeralda - Algérie",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 14,
+  "fields": {
+    "action_time": "2025-12-22T22:53:04.018Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "1",
+    "object_repr": "Bab ezzouar - Algérie",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 15,
+  "fields": {
+    "action_time": "2025-12-22T23:15:38.903Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "1",
+    "object_repr": "mohamed bentaleb - CH-001",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 16,
+  "fields": {
+    "action_time": "2025-12-22T23:21:07.743Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "1",
+    "object_repr": "peugeot boxer - 102724 118 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 17,
+  "fields": {
+    "action_time": "2025-12-22T23:42:23.649Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "1",
+    "object_repr": "Tournée 1 (CENTRE) - PREVUE",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 18,
+  "fields": {
+    "action_time": "2025-12-22T23:45:47.647Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "2",
+    "object_repr": "EXP-000002 - Sihem Ansame Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 19,
+  "fields": {
+    "action_time": "2025-12-22T23:45:47.655Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "1",
+    "object_repr": "EXP-000001 - Sihem Ansame Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 20,
+  "fields": {
+    "action_time": "2025-12-22T23:54:38.065Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "2",
+    "object_repr": "said ziani - CH-002",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 21,
+  "fields": {
+    "action_time": "2025-12-22T23:56:47.848Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "2",
+    "object_repr": "peugeot boxer - 210897 114 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 22,
+  "fields": {
+    "action_time": "2025-12-22T23:57:25.431Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "2",
+    "object_repr": "Tournée 2 | 2026-01-02 09:00:00+00:00 | OUEST - PREVUE",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 23,
+  "fields": {
+    "action_time": "2025-12-23T00:02:18.980Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "3",
+    "object_repr": "EXP-000003 - Sihem Ansame Dahar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 24,
+  "fields": {
+    "action_time": "2025-12-23T00:14:23.482Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "3",
+    "object_repr": "EXP-000003 - Sihem Ansame Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 25,
+  "fields": {
+    "action_time": "2025-12-23T00:15:41.101Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "4",
+    "object_repr": "EXP-000004 - Sihem Ansame Dahar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 26,
+  "fields": {
+    "action_time": "2025-12-23T02:07:07.900Z",
+    "user": 1,
+    "content_type": 15,
+    "object_id": "1",
+    "object_repr": "TrackingExpedition object (1)",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 27,
+  "fields": {
+    "action_time": "2025-12-23T02:16:38.537Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "3",
+    "object_repr": "bir el djir - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 28,
+  "fields": {
+    "action_time": "2025-12-23T02:18:17.777Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "2",
+    "object_repr": "lydia bouras",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 29,
+  "fields": {
+    "action_time": "2025-12-23T02:20:30.962Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "3",
+    "object_repr": "hassan houari - CH-003",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 30,
+  "fields": {
+    "action_time": "2025-12-23T02:22:13.907Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "3",
+    "object_repr": "renault master - 56789 120 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 31,
+  "fields": {
+    "action_time": "2025-12-23T02:23:18.469Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "3",
+    "object_repr": "Tournée 3 | 02/01/2026 09:00 | OUEST - PREVUE",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 32,
+  "fields": {
+    "action_time": "2025-12-23T02:24:24.856Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "5",
+    "object_repr": "Expedition object (5)",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 33,
+  "fields": {
+    "action_time": "2025-12-23T10:12:11.310Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "4",
+    "object_repr": "renault master - 526634 118 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 34,
+  "fields": {
+    "action_time": "2025-12-23T10:23:41.405Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "4",
+    "object_repr": "sidi aich - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 35,
+  "fields": {
+    "action_time": "2025-12-23T11:02:43.317Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "6",
+    "object_repr": "Expedition object (6)",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 36,
+  "fields": {
+    "action_time": "2025-12-23T22:16:49.784Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "3",
+    "object_repr": "Tournée 3 | 02/01/2026 09:00 | OUEST - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 37,
+  "fields": {
+    "action_time": "2025-12-23T22:16:49.793Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "2",
+    "object_repr": "Tournée 2 | 02/01/2026 09:00 | OUEST - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 38,
+  "fields": {
+    "action_time": "2025-12-23T22:16:49.795Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "1",
+    "object_repr": "Tournée 1 | 30/12/2025 09:00 | CENTRE - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 39,
+  "fields": {
+    "action_time": "2025-12-23T22:16:59.502Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "4",
+    "object_repr": "renault master - 526634 118 16",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 40,
+  "fields": {
+    "action_time": "2025-12-23T22:16:59.507Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "3",
+    "object_repr": "renault master - 56789 120 16",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 41,
+  "fields": {
+    "action_time": "2025-12-23T22:16:59.508Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "2",
+    "object_repr": "peugeot boxer - 210897 114 16",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 42,
+  "fields": {
+    "action_time": "2025-12-23T22:16:59.510Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "1",
+    "object_repr": "peugeot boxer - 102724 118 16",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 43,
+  "fields": {
+    "action_time": "2025-12-23T22:17:16.274Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "6",
+    "object_repr": "Expedition object (6)",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 44,
+  "fields": {
+    "action_time": "2025-12-23T22:17:16.278Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "5",
+    "object_repr": "Expedition object (5)",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 45,
+  "fields": {
+    "action_time": "2025-12-23T22:17:16.279Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "4",
+    "object_repr": "Expedition object (4)",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 46,
+  "fields": {
+    "action_time": "2025-12-23T22:17:24.704Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "3",
+    "object_repr": "hassan houari - CH-003",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 47,
+  "fields": {
+    "action_time": "2025-12-23T22:17:24.708Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "2",
+    "object_repr": "said ziani - CH-002",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 48,
+  "fields": {
+    "action_time": "2025-12-23T22:17:24.709Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "1",
+    "object_repr": "mohamed bentaleb - CH-001",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 49,
+  "fields": {
+    "action_time": "2025-12-23T22:17:31.735Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "2",
+    "object_repr": "lydia bouras",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 50,
+  "fields": {
+    "action_time": "2025-12-23T22:17:31.739Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "1",
+    "object_repr": "Sihem Ansame Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 51,
+  "fields": {
+    "action_time": "2025-12-23T22:17:45.351Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "4",
+    "object_repr": "sidi aich - Algérie",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 52,
+  "fields": {
+    "action_time": "2025-12-23T22:17:45.354Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "3",
+    "object_repr": "bir el djir - Algérie",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 53,
+  "fields": {
+    "action_time": "2025-12-23T22:17:45.355Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "2",
+    "object_repr": "zeralda - Algérie",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 54,
+  "fields": {
+    "action_time": "2025-12-23T22:17:45.356Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "1",
+    "object_repr": "Bab ezzouar - Algérie",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 55,
+  "fields": {
+    "action_time": "2025-12-23T22:18:03.037Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "3",
+    "object_repr": "International",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 56,
+  "fields": {
+    "action_time": "2025-12-23T22:18:03.041Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "2",
+    "object_repr": "Standard",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 57,
+  "fields": {
+    "action_time": "2025-12-23T22:18:03.043Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "1",
+    "object_repr": "Express",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 58,
+  "fields": {
+    "action_time": "2025-12-24T14:23:19.938Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "4",
+    "object_repr": "STANDARD",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 59,
+  "fields": {
+    "action_time": "2025-12-24T14:23:25.813Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "5",
+    "object_repr": "EXPRESS",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 60,
+  "fields": {
+    "action_time": "2025-12-24T14:23:29.914Z",
+    "user": 1,
+    "content_type": 10,
+    "object_id": "6",
+    "object_repr": "INTERNATIONAL",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 61,
+  "fields": {
+    "action_time": "2025-12-24T14:23:52.807Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "5",
+    "object_repr": "Bab ezzouar - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 62,
+  "fields": {
+    "action_time": "2025-12-24T17:14:20.579Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "3",
+    "object_repr": "Ansem Dahar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 63,
+  "fields": {
+    "action_time": "2025-12-25T17:42:42.969Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "4",
+    "object_repr": "mohamed Benali - CH-004",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 64,
+  "fields": {
+    "action_time": "2025-12-25T17:44:31.755Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "5",
+    "object_repr": "ahmed Saidi - CH-005",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 65,
+  "fields": {
+    "action_time": "2025-12-25T17:46:59.628Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "6",
+    "object_repr": "karim Houari - CH-006",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 66,
+  "fields": {
+    "action_time": "2025-12-25T17:50:16.914Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "7",
+    "object_repr": "hafid bentaleb - CH-007",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 67,
+  "fields": {
+    "action_time": "2025-12-25T17:51:42.731Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "4",
+    "object_repr": "CL-004 oumniya messadi",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 68,
+  "fields": {
+    "action_time": "2025-12-25T17:52:48.495Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "5",
+    "object_repr": "CL-005 hocine slimani",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 69,
+  "fields": {
+    "action_time": "2025-12-25T17:54:10.472Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "6",
+    "object_repr": "bir el djir - oran - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 70,
+  "fields": {
+    "action_time": "2025-12-25T17:55:44.081Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "7",
+    "object_repr": "zerlada - Alger - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 71,
+  "fields": {
+    "action_time": "2025-12-25T17:56:46.653Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "8",
+    "object_repr": "cheraga - Alger - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 72,
+  "fields": {
+    "action_time": "2025-12-25T17:57:56.763Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "9",
+    "object_repr": "ain taya - Alger - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 73,
+  "fields": {
+    "action_time": "2025-12-25T17:58:05.290Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "5",
+    "object_repr": "Bab ezzouar - Alger - Algérie",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Distance estimee\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 74,
+  "fields": {
+    "action_time": "2025-12-25T17:58:40.069Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "5",
+    "object_repr": "Bab ezzouar - Alger - Algérie",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Tarif base\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 75,
+  "fields": {
+    "action_time": "2025-12-25T18:00:32.322Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "10",
+    "object_repr": "chenoua - tipaza - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 76,
+  "fields": {
+    "action_time": "2025-12-25T18:04:46.110Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "11",
+    "object_repr": "None - bejaia - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 77,
+  "fields": {
+    "action_time": "2025-12-25T18:09:52.091Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "5",
+    "object_repr": "renault master - 34567 118 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 78,
+  "fields": {
+    "action_time": "2025-12-25T18:11:00.944Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "6",
+    "object_repr": "peugeot boxer - 65784 117 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 79,
+  "fields": {
+    "action_time": "2025-12-25T18:12:45.110Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "7",
+    "object_repr": "peugeot partner - 23568 120 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 80,
+  "fields": {
+    "action_time": "2025-12-25T18:13:33.567Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "1",
+    "object_repr": "Tournée #1 - mohamed Benali - CH-004 - PREVUE",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 81,
+  "fields": {
+    "action_time": "2025-12-25T18:15:34.288Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "1",
+    "object_repr": "EXP-000001 - CL-003 Ansem Dahar → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 82,
+  "fields": {
+    "action_time": "2025-12-25T18:15:52.122Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "1",
+    "object_repr": "EXP-000001 - CL-003 Ansem Dahar → cheraga",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 83,
+  "fields": {
+    "action_time": "2025-12-25T18:29:35.633Z",
+    "user": 1,
+    "content_type": 12,
+    "object_id": "3",
+    "object_repr": "Bab ezzouar - Alger - STANDARD",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Tarif volume\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 84,
+  "fields": {
+    "action_time": "2025-12-25T18:39:46.489Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "2",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 85,
+  "fields": {
+    "action_time": "2025-12-25T22:49:11.319Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "1",
+    "object_repr": "Tournée #1 - mohamed Benali - CH-004 - EN_COURS",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Date depart\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 86,
+  "fields": {
+    "action_time": "2025-12-25T22:49:53.865Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "4",
+    "object_repr": "mohamed Benali - CH-004",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 87,
+  "fields": {
+    "action_time": "2025-12-25T22:53:46.727Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "3",
+    "object_repr": "CL-003 Ansem Dahar → bir el djir",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 88,
+  "fields": {
+    "action_time": "2025-12-25T23:04:34.216Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "4",
+    "object_repr": "CL-003 Ansem Dahar → None",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 89,
+  "fields": {
+    "action_time": "2025-12-25T23:55:33.637Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "4",
+    "object_repr": "CL-003 Ansem Dahar → None",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Email destinataire\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 90,
+  "fields": {
+    "action_time": "2025-12-25T23:55:44.402Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "3",
+    "object_repr": "CL-003 Ansem Dahar → bir el djir",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Email destinataire\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 91,
+  "fields": {
+    "action_time": "2025-12-25T23:59:42.419Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "8",
+    "object_repr": "renault master - 34567 119 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 92,
+  "fields": {
+    "action_time": "2025-12-26T00:00:16.105Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "5",
+    "object_repr": "CL-005 hocine slimani → Bab ezzouar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 93,
+  "fields": {
+    "action_time": "2025-12-26T00:42:03.294Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "9",
+    "object_repr": "citroen jumper - 45677 120 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 94,
+  "fields": {
+    "action_time": "2025-12-26T18:05:39.605Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "6",
+    "object_repr": "CL-003 Ansem Dahar → Bab ezzouar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 95,
+  "fields": {
+    "action_time": "2025-12-26T18:24:43.101Z",
+    "user": 1,
+    "content_type": 15,
+    "object_id": "2",
+    "object_repr": "CL-003 Ansem Dahar → Bab ezzouar - Livré",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut etape\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 96,
+  "fields": {
+    "action_time": "2025-12-26T18:49:43.549Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "7",
+    "object_repr": "zerlada - Alger - Algérie",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Tarif base\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 97,
+  "fields": {
+    "action_time": "2025-12-26T18:50:16.202Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "11",
+    "object_repr": "bejaia - bejaia - Algérie",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Ville\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 98,
+  "fields": {
+    "action_time": "2025-12-26T19:24:37.299Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "6",
+    "object_repr": "CL-003 Ansem Dahar → Bab ezzouar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 99,
+  "fields": {
+    "action_time": "2025-12-27T21:22:17.807Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "8",
+    "object_repr": "rayan mekhbat - CH-008",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 100,
+  "fields": {
+    "action_time": "2025-12-27T21:23:33.635Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "10",
+    "object_repr": "renault master - 102562 118 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 101,
+  "fields": {
+    "action_time": "2025-12-27T21:24:11.232Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "7",
+    "object_repr": "CL-004 oumniya messadi → Bab ezzouar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 102,
+  "fields": {
+    "action_time": "2025-12-28T16:24:00.252Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "9",
+    "object_repr": "said abdat - CH-009",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 103,
+  "fields": {
+    "action_time": "2025-12-28T16:25:53.057Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "11",
+    "object_repr": "citroen jumper - 234562 118 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 104,
+  "fields": {
+    "action_time": "2025-12-28T16:51:43.499Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "8",
+    "object_repr": "CL-005 hocine slimani → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 105,
+  "fields": {
+    "action_time": "2025-12-28T16:52:37.651Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "1",
+    "object_repr": "Paiement 1245 DA - FACT-20251228-00001",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 106,
+  "fields": {
+    "action_time": "2025-12-28T18:27:31.963Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "8",
+    "object_repr": "CL-005 hocine slimani → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 107,
+  "fields": {
+    "action_time": "2025-12-28T18:27:54.020Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "9",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 108,
+  "fields": {
+    "action_time": "2025-12-28T18:29:38.305Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "1",
+    "object_repr": "FACT-20251228-00001 - CL-005 hocine slimani",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 109,
+  "fields": {
+    "action_time": "2025-12-28T18:29:56.263Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "2",
+    "object_repr": "FACT-20251228-00002 - CL-003 Ansem Dahar",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 110,
+  "fields": {
+    "action_time": "2025-12-28T18:30:01.774Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "2",
+    "object_repr": "FACT-20251228-00002 - CL-003 Ansem Dahar",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 111,
+  "fields": {
+    "action_time": "2025-12-28T18:30:30.004Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "2",
+    "object_repr": "Paiement 300 DA - FACT-20251228-00002",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 112,
+  "fields": {
+    "action_time": "2025-12-28T18:37:57.163Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "10",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 113,
+  "fields": {
+    "action_time": "2025-12-28T18:40:02.891Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "3",
+    "object_repr": "Paiement 200 DA - FACT-20251228-00002",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 114,
+  "fields": {
+    "action_time": "2025-12-28T18:41:11.910Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "10",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 115,
+  "fields": {
+    "action_time": "2025-12-28T18:41:39.060Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "4",
+    "object_repr": "Paiement 300 DA - FACT-20251228-00002",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 116,
+  "fields": {
+    "action_time": "2025-12-28T18:54:09.403Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "2",
+    "object_repr": "FACT-20251228-00002 - CL-003 Ansem Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 117,
+  "fields": {
+    "action_time": "2025-12-28T18:54:22.172Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "9",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 118,
+  "fields": {
+    "action_time": "2025-12-28T18:55:25.907Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "11",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 119,
+  "fields": {
+    "action_time": "2025-12-28T18:56:29.493Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "12",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 120,
+  "fields": {
+    "action_time": "2025-12-28T18:57:17.856Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "12",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 121,
+  "fields": {
+    "action_time": "2025-12-28T18:59:41.140Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "5",
+    "object_repr": "Paiement 1000 DA - FACT-20251228-00003",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 122,
+  "fields": {
+    "action_time": "2025-12-28T19:11:34.990Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "11",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 123,
+  "fields": {
+    "action_time": "2025-12-28T19:12:01.102Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "3",
+    "object_repr": "FACT-20251228-00003 - CL-003 Ansem Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 124,
+  "fields": {
+    "action_time": "2025-12-28T20:44:22.374Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "3",
+    "object_repr": "CL-003 Ansem Dahar",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Solde\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 125,
+  "fields": {
+    "action_time": "2025-12-28T20:44:30.085Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "5",
+    "object_repr": "CL-005 hocine slimani",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Solde\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 126,
+  "fields": {
+    "action_time": "2025-12-28T20:44:40.718Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "3",
+    "object_repr": "CL-003 Ansem Dahar",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 127,
+  "fields": {
+    "action_time": "2025-12-28T23:11:06.322Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "7",
+    "object_repr": "CL-004 oumniya messadi → Bab ezzouar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 128,
+  "fields": {
+    "action_time": "2025-12-28T23:11:06.331Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "5",
+    "object_repr": "CL-005 hocine slimani → Bab ezzouar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 129,
+  "fields": {
+    "action_time": "2025-12-28T23:11:06.333Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "4",
+    "object_repr": "CL-003 Ansem Dahar → bejaia",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 130,
+  "fields": {
+    "action_time": "2025-12-28T23:11:06.333Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "3",
+    "object_repr": "CL-003 Ansem Dahar → bir el djir",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 131,
+  "fields": {
+    "action_time": "2025-12-28T23:11:06.334Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "2",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 132,
+  "fields": {
+    "action_time": "2025-12-28T23:11:06.335Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "1",
+    "object_repr": "CL-003 Ansem Dahar → cheraga",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 133,
+  "fields": {
+    "action_time": "2025-12-28T23:11:23.784Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "6",
+    "object_repr": "Tournée #6 - said abdat - CH-009 - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 134,
+  "fields": {
+    "action_time": "2025-12-28T23:11:23.789Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "5",
+    "object_repr": "Tournée #5 - rayan mekhbat - CH-008 - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 135,
+  "fields": {
+    "action_time": "2025-12-28T23:11:23.790Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "4",
+    "object_repr": "Tournée #4 - hafid bentaleb - CH-007 - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 136,
+  "fields": {
+    "action_time": "2025-12-28T23:11:23.791Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "3",
+    "object_repr": "Tournée #3 - karim Houari - CH-006 - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 137,
+  "fields": {
+    "action_time": "2025-12-28T23:11:23.792Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "2",
+    "object_repr": "Tournée #2 - ahmed Saidi - CH-005 - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 138,
+  "fields": {
+    "action_time": "2025-12-28T23:11:23.794Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "1",
+    "object_repr": "Tournée #1 - mohamed Benali - CH-004 - EN_COURS",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 139,
+  "fields": {
+    "action_time": "2025-12-28T23:17:57.270Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "11",
+    "object_repr": "citroen jumper - 234562 118 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 140,
+  "fields": {
+    "action_time": "2025-12-28T23:18:06.264Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "10",
+    "object_repr": "renault master - 102562 118 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 141,
+  "fields": {
+    "action_time": "2025-12-28T23:18:29.417Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "9",
+    "object_repr": "citroen jumper - 45677 120 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 142,
+  "fields": {
+    "action_time": "2025-12-28T23:18:40.315Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "9",
+    "object_repr": "citroen jumper - 45677 120 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 143,
+  "fields": {
+    "action_time": "2025-12-28T23:20:45.544Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "8",
+    "object_repr": "renault master - 34567 119 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 144,
+  "fields": {
+    "action_time": "2025-12-28T23:20:50.981Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "7",
+    "object_repr": "peugeot partner - 23568 120 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 145,
+  "fields": {
+    "action_time": "2025-12-28T23:20:58.030Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "6",
+    "object_repr": "peugeot boxer - 65784 117 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 146,
+  "fields": {
+    "action_time": "2025-12-28T23:21:06.448Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "5",
+    "object_repr": "renault master - 34567 118 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 147,
+  "fields": {
+    "action_time": "2025-12-28T23:24:46.977Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "9",
+    "object_repr": "citroen jumper - 45677 120 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 148,
+  "fields": {
+    "action_time": "2025-12-28T23:24:57.076Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "9",
+    "object_repr": "said abdat - CH-009",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 149,
+  "fields": {
+    "action_time": "2025-12-28T23:25:02.733Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "8",
+    "object_repr": "rayan mekhbat - CH-008",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 150,
+  "fields": {
+    "action_time": "2025-12-28T23:25:07.748Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "7",
+    "object_repr": "hafid bentaleb - CH-007",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 151,
+  "fields": {
+    "action_time": "2025-12-28T23:25:13.214Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "6",
+    "object_repr": "karim Houari - CH-006",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 152,
+  "fields": {
+    "action_time": "2025-12-28T23:25:17.965Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "5",
+    "object_repr": "ahmed Saidi - CH-005",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 153,
+  "fields": {
+    "action_time": "2025-12-28T23:25:23.349Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "4",
+    "object_repr": "mohamed Benali - CH-004",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 154,
+  "fields": {
+    "action_time": "2025-12-28T23:25:59.458Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "13",
+    "object_repr": "CL-003 Ansem Dahar → zerlada",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 155,
+  "fields": {
+    "action_time": "2025-12-28T23:26:24.635Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "6",
+    "object_repr": "Paiement 300 DA - FACT-20251228-00004",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 156,
+  "fields": {
+    "action_time": "2025-12-28T23:29:33.040Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "7",
+    "object_repr": "Paiement 400 DA - FACT-20251228-00004",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 157,
+  "fields": {
+    "action_time": "2025-12-28T23:32:52.298Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "7",
+    "object_repr": "Paiement 400.00 DA - FACT-20251228-00004",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 158,
+  "fields": {
+    "action_time": "2025-12-28T23:35:15.645Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "8",
+    "object_repr": "Paiement 400 DA - FACT-20251228-00004",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 159,
+  "fields": {
+    "action_time": "2025-12-28T23:35:28.364Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "5",
+    "object_repr": "CL-005 hocine slimani",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Solde\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 160,
+  "fields": {
+    "action_time": "2025-12-28T23:36:02.716Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "14",
+    "object_repr": "CL-003 Ansem Dahar → zerlada",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 161,
+  "fields": {
+    "action_time": "2025-12-28T23:36:45.660Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "9",
+    "object_repr": "Paiement 1000 DA - FACT-20251228-00004",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 162,
+  "fields": {
+    "action_time": "2025-12-28T23:36:53.791Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "14",
+    "object_repr": "CL-003 Ansem Dahar → zerlada",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 163,
+  "fields": {
+    "action_time": "2025-12-28T23:37:24.525Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "13",
+    "object_repr": "CL-003 Ansem Dahar → zerlada",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 164,
+  "fields": {
+    "action_time": "2025-12-28T23:38:49.673Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "3",
+    "object_repr": "CL-003 Ansem Dahar",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Solde\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 165,
+  "fields": {
+    "action_time": "2025-12-31T19:06:15.390Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "8",
+    "object_repr": "Tournée #8 - ahmed Saidi - CH-005 - PREVUE",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 166,
+  "fields": {
+    "action_time": "2025-12-31T19:08:25.091Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "8",
+    "object_repr": "Tournée #8 - ahmed Saidi - CH-005 - PREVUE",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Date depart\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 167,
+  "fields": {
+    "action_time": "2025-12-31T19:09:10.852Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "8",
+    "object_repr": "Tournée #8 - ahmed Saidi - CH-005 - PREVUE",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Date depart\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 168,
+  "fields": {
+    "action_time": "2026-01-01T18:32:06.255Z",
+    "user": 1,
+    "content_type": 7,
+    "object_id": "7",
+    "object_repr": "CL-007 ines mohamdi",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 169,
+  "fields": {
+    "action_time": "2026-01-01T18:33:35.285Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "10",
+    "object_repr": "ilyas bouras - CH-010",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 170,
+  "fields": {
+    "action_time": "2026-01-01T18:36:26.788Z",
+    "user": 1,
+    "content_type": 9,
+    "object_id": "12",
+    "object_repr": "rouiba - Alger - Algérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 171,
+  "fields": {
+    "action_time": "2026-01-01T18:38:41.702Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "12",
+    "object_repr": "nissan nv200 - 28763 116 16",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 172,
+  "fields": {
+    "action_time": "2026-01-01T18:40:37.018Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "15",
+    "object_repr": "CL-003 Ansem Dahar → bejaia",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 173,
+  "fields": {
+    "action_time": "2026-01-01T18:42:14.311Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "10",
+    "object_repr": "Paiement 1000 DA - FACT-20260101-00005",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 174,
+  "fields": {
+    "action_time": "2026-01-02T05:34:29.387Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "11",
+    "object_repr": "Paiement 1500 DA - FACT-20260101-00005",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 175,
+  "fields": {
+    "action_time": "2026-01-02T05:35:20.460Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "11",
+    "object_repr": "Paiement 1500.00 DA - FACT-20260101-00005",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 176,
+  "fields": {
+    "action_time": "2026-01-02T05:40:15.774Z",
+    "user": 1,
+    "content_type": 18,
+    "object_id": "12",
+    "object_repr": "Paiement 1500 DA - FACT-20260101-00005",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 177,
+  "fields": {
+    "action_time": "2026-01-02T05:42:52.406Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "15",
+    "object_repr": "CL-003 Ansem Dahar → bejaia",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 178,
+  "fields": {
+    "action_time": "2026-01-02T05:43:07.427Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "9",
+    "object_repr": "Tournée #9 - karim Houari - CH-006 - PREVUE",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 179,
+  "fields": {
+    "action_time": "2026-01-02T05:49:58.883Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "5",
+    "object_repr": "FACT-20260101-00005 - CL-003 Ansem Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 180,
+  "fields": {
+    "action_time": "2026-01-02T05:49:58.889Z",
+    "user": 1,
+    "content_type": 17,
+    "object_id": "4",
+    "object_repr": "FACT-20251228-00004 - CL-003 Ansem Dahar",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 181,
+  "fields": {
+    "action_time": "2026-01-02T05:50:20.773Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "8",
+    "object_repr": "Tournée #8 - ahmed Saidi - CH-005 - EN_COURS",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 182,
+  "fields": {
+    "action_time": "2026-01-02T05:50:20.779Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "7",
+    "object_repr": "Tournée #7 - mohamed Benali - CH-004 - EN_COURS",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 183,
+  "fields": {
+    "action_time": "2026-01-02T05:53:38.037Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "8",
+    "object_repr": "Tournée #8 - ahmed Saidi - CH-005 - EN_COURS",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 184,
+  "fields": {
+    "action_time": "2026-01-02T05:53:38.044Z",
+    "user": 1,
+    "content_type": 14,
+    "object_id": "7",
+    "object_repr": "Tournée #7 - mohamed Benali - CH-004 - EN_COURS",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 185,
+  "fields": {
+    "action_time": "2026-01-02T05:53:58.355Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "5",
+    "object_repr": "ahmed Saidi - CH-005",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 186,
+  "fields": {
+    "action_time": "2026-01-02T05:54:04.455Z",
+    "user": 1,
+    "content_type": 8,
+    "object_id": "4",
+    "object_repr": "mohamed Benali - CH-004",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut disponibilite\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 187,
+  "fields": {
+    "action_time": "2026-01-02T05:54:17.701Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "6",
+    "object_repr": "peugeot boxer - 65784 117 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 188,
+  "fields": {
+    "action_time": "2026-01-02T05:54:24.385Z",
+    "user": 1,
+    "content_type": 11,
+    "object_id": "5",
+    "object_repr": "renault master - 34567 118 16",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Statut\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 189,
+  "fields": {
+    "action_time": "2026-01-03T17:39:09.182Z",
+    "user": 1,
+    "content_type": 13,
+    "object_id": "16",
+    "object_repr": "CL-003 Ansem Dahar → Bab ezzouar",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "grv7zqjwj6cjl2abi2rosf52bfigaxhh",
+  "fields": {
+    "session_data": ".eJxVjEEOgjAQRe_StWmYQsfWpXvP0AwzU4saSCisjHcXEha6fe_9_zaJ1qWkteqcBjEXA-b0y3rip467kAeN98nyNC7z0Ns9sYet9jaJvq5H-3dQqJZt7T1J5h4cU9cpAqKKcOdYIcQzNDk4cA21EhgbiXHj6JFVW1TPkM3nC_gROFw:1vZxAd:Ji4WW-aGAFV_AKaOft0uJo9tEqceuroPJPfVZun6Mns",
+    "expire_date": "2026-01-11T20:15:19.554Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "p1ax4nk5xs2kicoyw0pl49c4viuo765b",
+  "fields": {
+    "session_data": ".eJxVjEEOgjAQRe_StWmYQsfWpXvP0AwzU4saSCisjHcXEha6fe_9_zaJ1qWkteqcBjEXA-b0y3rip467kAeN98nyNC7z0Ns9sYet9jaJvq5H-3dQqJZt7T1J5h4cU9cpAqKKcOdYIcQzNDk4cA21EhgbiXHj6JFVW1TPkM3nC_gROFw:1vVFrO:P0saExC_KUFLKdsmmM5A9qoRbkpk2eF_QT2ikyN5tfg",
+    "expire_date": "2025-12-29T21:12:02.614Z"
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 3,
+  "fields": {
+    "nom": "Dahar",
+    "prenom": "Ansem",
+    "date_naissance": "2005-02-16",
+    "telephone": "+21312345678",
+    "email": "ansemdahar83@gmail.com",
+    "adresse": "",
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "solde": "999.60",
+    "date_inscription": "2025-12-24T17:14:20.576Z",
+    "date_modification": "2026-01-08T17:13:49.296Z",
+    "remarques": "",
+    "compensation_autorisee": true
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 4,
+  "fields": {
+    "nom": "messadi",
+    "prenom": "oumniya",
+    "date_naissance": "2004-12-02",
+    "telephone": "+213560989760",
+    "email": "messadioumniya@gmail.com",
+    "adresse": "",
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "solde": "12459.30",
+    "date_inscription": "2025-12-25T17:51:42.729Z",
+    "date_modification": "2026-01-03T18:45:42.595Z",
+    "remarques": "",
+    "compensation_autorisee": true
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 5,
+  "fields": {
+    "nom": "slimani",
+    "prenom": "hocine",
+    "date_naissance": "1980-03-27",
+    "telephone": "+213550678345",
+    "email": "slimanihocine@gmail.com",
+    "adresse": "",
+    "ville": "bir khadem",
+    "wilaya": "Alger",
+    "solde": "0.00",
+    "date_inscription": "2025-12-25T17:52:48.494Z",
+    "date_modification": "2026-01-08T20:01:39.337Z",
+    "remarques": "",
+    "compensation_autorisee": true
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 6,
+  "fields": {
+    "nom": "yacine",
+    "prenom": "belkaidi",
+    "date_naissance": "1989-04-04",
+    "telephone": "+213550398832",
+    "email": "yacinebelaidi65@gmail.com",
+    "adresse": "n 53",
+    "ville": "dar el beida",
+    "wilaya": "Alger",
+    "solde": "0.00",
+    "date_inscription": "2025-12-29T13:36:30.127Z",
+    "date_modification": "2026-01-08T20:34:16.250Z",
+    "remarques": "",
+    "compensation_autorisee": false
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 7,
+  "fields": {
+    "nom": "mohamdi",
+    "prenom": "ines",
+    "date_naissance": "2000-11-09",
+    "telephone": "+213560225656",
+    "email": "mohamdiines34@gmail.com",
+    "adresse": "",
+    "ville": "bordj el kiffan",
+    "wilaya": "Alger",
+    "solde": "-200.00",
+    "date_inscription": "2026-01-01T18:32:06.252Z",
+    "date_modification": "2026-01-08T17:26:52.381Z",
+    "remarques": "",
+    "compensation_autorisee": false
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 4,
+  "fields": {
+    "nom": "Benali",
+    "prenom": "mohamed",
+    "date_naissance": "1980-10-10",
+    "telephone": "+213550123456",
+    "email": "benalimohamed@gmail.com",
+    "adresse": "",
+    "ville": "shaoula",
+    "wilaya": "Alger",
+    "numero_permis": "1234567895674",
+    "date_obtention_permis": "2020-01-01",
+    "date_expiration_permis": "2029-01-01",
+    "date_embauche": "2012-10-16",
+    "salaire": "40000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-25T17:42:42.967Z",
+    "date_modification": "2026-01-08T22:21:35.839Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 5,
+  "fields": {
+    "nom": "Saidi",
+    "prenom": "ahmed",
+    "date_naissance": "1978-12-09",
+    "telephone": "+213550233924",
+    "email": "saidiahmed@gmail.com",
+    "adresse": "",
+    "ville": "ain naadja",
+    "wilaya": "Alger",
+    "numero_permis": "23456789438320",
+    "date_obtention_permis": "2022-01-01",
+    "date_expiration_permis": "2028-01-01",
+    "date_embauche": "2019-10-16",
+    "salaire": "40000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-25T17:44:31.754Z",
+    "date_modification": "2026-01-08T21:29:57.049Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 6,
+  "fields": {
+    "nom": "Houari",
+    "prenom": "karim",
+    "date_naissance": "1987-03-12",
+    "telephone": "+213560002678",
+    "email": "houarikarim66@gmail.com",
+    "adresse": "",
+    "ville": "bir khadem",
+    "wilaya": "Alger",
+    "numero_permis": "98843903042",
+    "date_obtention_permis": "2023-09-01",
+    "date_expiration_permis": "2033-09-01",
+    "date_embauche": "2017-03-30",
+    "salaire": "35000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-25T17:46:59.626Z",
+    "date_modification": "2026-01-08T20:02:20.769Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 7,
+  "fields": {
+    "nom": "bentaleb",
+    "prenom": "hafid",
+    "date_naissance": "1980-10-10",
+    "telephone": "+213550898960",
+    "email": "bentalebb@gmail.com",
+    "adresse": "",
+    "ville": "bordj el kiffan",
+    "wilaya": "Alger",
+    "numero_permis": "73647532646378",
+    "date_obtention_permis": "2020-07-08",
+    "date_expiration_permis": "2030-07-08",
+    "date_embauche": "2019-06-30",
+    "salaire": "35000.00",
+    "statut_disponibilite": "EN_TOURNEE",
+    "date_creation": "2025-12-25T17:50:16.912Z",
+    "date_modification": "2026-01-08T19:57:15.227Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 8,
+  "fields": {
+    "nom": "mekhbat",
+    "prenom": "rayan",
+    "date_naissance": "1987-09-30",
+    "telephone": "+213560984567",
+    "email": "mekhbattryn@yahoo.fr",
+    "adresse": "",
+    "ville": "bir khadem",
+    "wilaya": "Alger",
+    "numero_permis": "6452364762174864",
+    "date_obtention_permis": "2020-01-01",
+    "date_expiration_permis": "2030-01-01",
+    "date_embauche": "2022-02-19",
+    "salaire": "30000.00",
+    "statut_disponibilite": "MALADIE",
+    "date_creation": "2025-12-27T21:22:17.805Z",
+    "date_modification": "2025-12-29T16:23:57.798Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 9,
+  "fields": {
+    "nom": "abdat",
+    "prenom": "said",
+    "date_naissance": "1980-02-19",
+    "telephone": "+213560908765",
+    "email": "abdatsaid@gmail.com",
+    "adresse": "",
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "numero_permis": "6356562789",
+    "date_obtention_permis": "2020-01-01",
+    "date_expiration_permis": "2030-01-01",
+    "date_embauche": "2012-10-16",
+    "salaire": "450000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-28T16:24:00.250Z",
+    "date_modification": "2026-01-08T18:18:27.002Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 10,
+  "fields": {
+    "nom": "bouras",
+    "prenom": "ilyas",
+    "date_naissance": "1987-09-18",
+    "telephone": "+213550806656",
+    "email": "bourasilyas@yahoo.com",
+    "adresse": "",
+    "ville": "ain naadja",
+    "wilaya": "Alger",
+    "numero_permis": "65324632749832",
+    "date_obtention_permis": "2024-09-12",
+    "date_expiration_permis": "2034-09-12",
+    "date_embauche": "2022-12-01",
+    "salaire": "35000.00",
+    "statut_disponibilite": "MALADIE",
+    "date_creation": "2026-01-01T18:33:35.283Z",
+    "date_modification": "2026-01-07T19:37:48.595Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 5,
+  "fields": {
+    "numero_immatriculation": "34567 118 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2018,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "15.00",
+    "consommation_moyenne": "7.50",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 30200,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-25T18:09:52.088Z",
+    "date_modification": "2026-01-08T22:21:35.840Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 6,
+  "fields": {
+    "numero_immatriculation": "65784 117 16",
+    "marque": "peugeot",
+    "modele": "boxer",
+    "annee": 2017,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 20000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-25T18:11:00.943Z",
+    "date_modification": "2026-01-08T21:29:57.051Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 7,
+  "fields": {
+    "numero_immatriculation": "23568 120 16",
+    "marque": "peugeot",
+    "modele": "partner",
+    "annee": 2020,
+    "type_vehicule": "CAMIONNETTE",
+    "capacite_poids": "1000.00",
+    "capacite_volume": "8.00",
+    "consommation_moyenne": "5.00",
+    "etat": "EXCELLENT",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 10000,
+    "date_acquisition": "2023-09-01",
+    "date_creation": "2025-12-25T18:12:45.107Z",
+    "date_modification": "2026-01-08T20:02:20.771Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 8,
+  "fields": {
+    "numero_immatriculation": "34567 119 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2019,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "7.50",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 40000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-25T23:59:42.417Z",
+    "date_modification": "2026-01-08T18:18:35.997Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 9,
+  "fields": {
+    "numero_immatriculation": "45677 120 16",
+    "marque": "citroen",
+    "modele": "jumper",
+    "annee": 2020,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-06-26",
+    "date_prochaine_revision": "2025-12-26",
+    "kilometrage": 30000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-26T00:42:03.293Z",
+    "date_modification": "2026-01-08T18:18:27.003Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 10,
+  "fields": {
+    "numero_immatriculation": "102562 118 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2018,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3500.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "7.50",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-10",
+    "date_prochaine_revision": "2026-03-09",
+    "kilometrage": 70000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-27T21:23:33.634Z",
+    "date_modification": "2025-12-28T23:18:06.262Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 11,
+  "fields": {
+    "numero_immatriculation": "234562 118 16",
+    "marque": "citroen",
+    "modele": "jumper",
+    "annee": 2018,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3500.00",
+    "capacite_volume": "19.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-10-09",
+    "date_prochaine_revision": "2026-04-07",
+    "kilometrage": 15000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-28T16:25:53.055Z",
+    "date_modification": "2025-12-28T23:17:57.268Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 12,
+  "fields": {
+    "numero_immatriculation": "28763 116 16",
+    "marque": "nissan",
+    "modele": "nv200",
+    "annee": 2016,
+    "type_vehicule": "CAMIONNETTE",
+    "capacite_poids": "2100.00",
+    "capacite_volume": "9.00",
+    "consommation_moyenne": "5.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-11",
+    "kilometrage": 200000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2026-01-01T18:38:41.701Z",
+    "date_modification": "2026-01-02T05:00:14.898Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 13,
+  "fields": {
+    "numero_immatriculation": "24378 119 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2019,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3500.00",
+    "capacite_volume": "18.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "EN_TOURNEE",
+    "date_derniere_revision": "2025-12-12",
+    "date_prochaine_revision": "2026-06-10",
+    "kilometrage": 231000,
+    "date_acquisition": "2022-03-16",
+    "date_creation": "2026-01-02T05:02:09.037Z",
+    "date_modification": "2026-01-08T19:57:15.230Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 5,
+  "fields": {
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 5,
+    "tarif_base": "150.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16042",
+    "date_creation": "2025-12-24T14:23:52.800Z",
+    "date_modification": "2025-12-25T17:58:40.068Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 6,
+  "fields": {
+    "ville": "bir el djir",
+    "wilaya": "oran",
+    "pays": "Algérie",
+    "zone_geographique": "NATIONALE",
+    "zone_logistique": "OUEST",
+    "distance_estimee": 410,
+    "tarif_base": "750.00",
+    "delai_livraison_estime": 4,
+    "code_postal": "31023",
+    "date_creation": "2025-12-25T17:54:10.466Z",
+    "date_modification": "2025-12-25T17:54:10.466Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 7,
+  "fields": {
+    "ville": "zerlada",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 35,
+    "tarif_base": "400.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16063",
+    "date_creation": "2025-12-25T17:55:44.077Z",
+    "date_modification": "2025-12-26T18:49:43.547Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 8,
+  "fields": {
+    "ville": "cheraga",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 25,
+    "tarif_base": "250.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16014",
+    "date_creation": "2025-12-25T17:56:46.648Z",
+    "date_modification": "2025-12-25T17:56:46.648Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 9,
+  "fields": {
+    "ville": "ain taya",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 19,
+    "tarif_base": "250.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16019",
+    "date_creation": "2025-12-25T17:57:56.757Z",
+    "date_modification": "2025-12-25T17:57:56.758Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 10,
+  "fields": {
+    "ville": "chenoua",
+    "wilaya": "tipaza",
+    "pays": "Algérie",
+    "zone_geographique": "NATIONALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 90,
+    "tarif_base": "450.00",
+    "delai_livraison_estime": 2,
+    "code_postal": "42000",
+    "date_creation": "2025-12-25T18:00:32.316Z",
+    "date_modification": "2025-12-25T18:00:32.316Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 11,
+  "fields": {
+    "ville": "bejaia",
+    "wilaya": "bejaia",
+    "pays": "Algérie",
+    "zone_geographique": "NATIONALE",
+    "zone_logistique": "EST",
+    "distance_estimee": 235,
+    "tarif_base": "700.00",
+    "delai_livraison_estime": 3,
+    "code_postal": "06000",
+    "date_creation": "2025-12-25T18:04:46.104Z",
+    "date_modification": "2025-12-26T18:50:16.200Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 12,
+  "fields": {
+    "ville": "rouiba",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 10,
+    "tarif_base": "350.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16017",
+    "date_creation": "2026-01-01T18:36:26.783Z",
+    "date_modification": "2026-01-01T18:36:26.783Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.typeservice",
+  "pk": 4,
+  "fields": {
+    "type_service": "STANDARD",
+    "description": ""
+  }
+},
+{
+  "model": "app1.typeservice",
+  "pk": 5,
+  "fields": {
+    "type_service": "EXPRESS",
+    "description": ""
+  }
+},
+{
+  "model": "app1.typeservice",
+  "pk": 6,
+  "fields": {
+    "type_service": "INTERNATIONAL",
+    "description": ""
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 3,
+  "fields": {
+    "destination": 5,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "10.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 4,
+  "fields": {
+    "destination": 5,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 5,
+  "fields": {
+    "destination": 6,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 6,
+  "fields": {
+    "destination": 6,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 7,
+  "fields": {
+    "destination": 7,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 8,
+  "fields": {
+    "destination": 7,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 9,
+  "fields": {
+    "destination": 8,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 10,
+  "fields": {
+    "destination": 8,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 11,
+  "fields": {
+    "destination": 9,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 12,
+  "fields": {
+    "destination": 9,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 13,
+  "fields": {
+    "destination": 10,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 14,
+  "fields": {
+    "destination": 10,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 15,
+  "fields": {
+    "destination": 11,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 16,
+  "fields": {
+    "destination": 11,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 17,
+  "fields": {
+    "destination": 12,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 18,
+  "fields": {
+    "destination": 12,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tournee",
+  "pk": 10,
+  "fields": {
+    "chauffeur": 4,
+    "vehicule": 5,
+    "date_depart": "2026-01-04T09:00:00Z",
+    "date_retour_prevue": null,
+    "date_retour_reelle": "2026-01-08T22:21:35.832Z",
+    "zone_cible": "CENTRE",
+    "kilometrage_depart": 30000,
+    "kilometrage_arrivee": 30200,
+    "kilometrage_parcouru": 200,
+    "consommation_carburant": "15.00",
+    "statut": "TERMINEE",
+    "est_privee": false,
+    "remarques": "",
+    "date_creation": "2026-01-03T17:23:54.694Z",
+    "date_modification": "2026-01-08T22:21:35.841Z"
+  }
+},
+{
+  "model": "app1.tournee",
+  "pk": 11,
+  "fields": {
+    "chauffeur": 5,
+    "vehicule": 6,
+    "date_depart": "2026-01-04T08:00:00.578Z",
+    "date_retour_prevue": null,
+    "date_retour_reelle": null,
+    "zone_cible": "OUEST",
+    "kilometrage_depart": 20000,
+    "kilometrage_arrivee": null,
+    "kilometrage_parcouru": null,
+    "consommation_carburant": null,
+    "statut": "TERMINEE",
+    "est_privee": true,
+    "remarques": "Tournée privée EXPRESS vers bir el djir, oran",
+    "date_creation": "2026-01-03T18:45:42.582Z",
+    "date_modification": "2026-01-08T21:29:57.052Z"
+  }
+},
+{
+  "model": "app1.tournee",
+  "pk": 18,
+  "fields": {
+    "chauffeur": 7,
+    "vehicule": 13,
+    "date_depart": "2026-01-09T09:00:00Z",
+    "date_retour_prevue": "2026-01-09T17:30:00Z",
+    "date_retour_reelle": null,
+    "zone_cible": "CENTRE",
+    "kilometrage_depart": 231000,
+    "kilometrage_arrivee": null,
+    "kilometrage_parcouru": null,
+    "consommation_carburant": null,
+    "statut": "PREVUE",
+    "est_privee": false,
+    "remarques": "",
+    "date_creation": "2026-01-08T19:57:15.231Z",
+    "date_modification": "2026-01-08T19:57:15.231Z"
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 16,
+  "fields": {
+    "client": 3,
+    "destination": 5,
+    "type_service": 4,
+    "tournee": 10,
+    "nom_destinataire": "messadi oumniya",
+    "telephone_destinataire": "+213560987800",
+    "email_destinataire": "messasioumniya88@gmail.com",
+    "adresse_destinataire": "douzi",
+    "poids": "12.00",
+    "volume": "4.00",
+    "description": "",
+    "montant_total": "310.00",
+    "date_livraison_prevue": "2026-01-05",
+    "statut": "LIVRE",
+    "date_creation": "2026-01-03T17:39:09.171Z",
+    "date_livraison_reelle": "2026-01-08",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 17,
+  "fields": {
+    "client": 3,
+    "destination": 5,
+    "type_service": 4,
+    "tournee": 10,
+    "nom_destinataire": "messadi oumniya",
+    "telephone_destinataire": "+213560987800",
+    "email_destinataire": "messasioumniya88@gmail.com",
+    "adresse_destinataire": "douzi",
+    "poids": "25.00",
+    "volume": "13.00",
+    "description": "",
+    "montant_total": "530.00",
+    "date_livraison_prevue": "2026-01-05",
+    "statut": "LIVRE",
+    "date_creation": "2026-01-03T18:43:39.392Z",
+    "date_livraison_reelle": "2026-01-08",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 18,
+  "fields": {
+    "client": 4,
+    "destination": 6,
+    "type_service": 5,
+    "tournee": 11,
+    "nom_destinataire": "bouchekour amina",
+    "telephone_destinataire": "+213557890600",
+    "email_destinataire": "bouchekouramina@gmail.com",
+    "adresse_destinataire": "boulevard des lions",
+    "poids": "12.00",
+    "volume": "5.00",
+    "description": "",
+    "montant_total": "10470.00",
+    "date_livraison_prevue": "2026-01-05",
+    "statut": "LIVRE",
+    "date_creation": "2026-01-03T18:45:42.569Z",
+    "date_livraison_reelle": "2026-01-08",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 33,
+  "fields": {
+    "client": 6,
+    "destination": 7,
+    "type_service": 4,
+    "tournee": 18,
+    "nom_destinataire": "lydia yallaoui",
+    "telephone_destinataire": "+213776897600",
+    "email_destinataire": "ansemdahar83@gmail.com",
+    "adresse_destinataire": "qlq part",
+    "poids": "13.00",
+    "volume": "4.00",
+    "description": "",
+    "montant_total": "610.00",
+    "date_livraison_prevue": "2026-01-10",
+    "statut": "EN_ATTENTE",
+    "date_creation": "2026-01-08T20:03:06.806Z",
+    "date_livraison_reelle": null,
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 20,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-03T17:39:09.176Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 21,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-03T17:39:09.176Z",
+    "commentaire": "Affecté à la tournée #10. Départ prévu: 04/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 22,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-03T18:43:39.403Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 23,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-03T18:43:39.405Z",
+    "commentaire": "Affecté à la tournée #10. Départ prévu: 04/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 24,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-03T18:45:42.586Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 25,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-03T18:45:42.587Z",
+    "commentaire": "Affecté à la tournée #11. Départ prévu: 04/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 26,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-05T22:26:05.483Z",
+    "commentaire": "Colis en transit vers Bab ezzouar"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 27,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-05T22:26:05.485Z",
+    "commentaire": "Colis en transit vers Bab ezzouar"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 28,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-05T22:26:05.492Z",
+    "commentaire": "Colis en transit vers bir el djir"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 29,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T15:43:08.951Z",
+    "commentaire": "Colis livré à messadi oumniya"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 30,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T15:43:08.952Z",
+    "commentaire": "Colis livré à messadi oumniya"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 57,
+  "fields": {
+    "expedition": 33,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-08T20:03:06.815Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 58,
+  "fields": {
+    "expedition": 33,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-08T20:03:06.816Z",
+    "commentaire": "Affecté à la tournée #18. Départ prévu: 09/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 59,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T21:29:57.048Z",
+    "commentaire": "Colis livré à bouchekour amina"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 60,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-08T22:16:32.012Z",
+    "commentaire": "Colis en transit vers Bab ezzouar"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 61,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T22:16:36.647Z",
+    "commentaire": "Colis livré à messadi oumniya"
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 6,
+  "fields": {
+    "client": 3,
+    "numero_facture": "FACT-20260103-00006",
+    "montant_ht": "840.00",
+    "montant_tva": "159.60",
+    "montant_ttc": "999.60",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-03T17:39:09.178Z",
+    "date_echeance": "2026-02-02",
+    "statut": "IMPAYEE",
+    "remarques": null,
+    "expeditions": [
+      16,
+      17
+    ]
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 7,
+  "fields": {
+    "client": 4,
+    "numero_facture": "FACT-20260103-00007",
+    "montant_ht": "10470.00",
+    "montant_tva": "1989.30",
+    "montant_ttc": "12459.30",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-03T18:45:42.589Z",
+    "date_echeance": "2026-02-02",
+    "statut": "IMPAYEE",
+    "remarques": null,
+    "expeditions": [
+      18
+    ]
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 8,
+  "fields": {
+    "client": 3,
+    "numero_facture": "F-20260108-CL-003-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T16:41:34.095Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 9,
+  "fields": {
+    "client": 3,
+    "numero_facture": "F-20260108-CL-003-002",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T16:50:23.543Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 10,
+  "fields": {
+    "client": 7,
+    "numero_facture": "F-20260108-CL-007-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T17:02:34.764Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 11,
+  "fields": {
+    "client": 7,
+    "numero_facture": "F-20260108-CL-007-002",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T17:19:28.242Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 12,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T17:28:02.979Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 14,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-002",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T18:30:49.275Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 15,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-003",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T18:38:55.667Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 17,
+  "fields": {
+    "client": 5,
+    "numero_facture": "F-20260108-CL-005-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T19:55:24.399Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 18,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-004",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T19:58:25.217Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 19,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-005",
+    "montant_ht": "610.00",
+    "montant_tva": "115.90",
+    "montant_ttc": "725.90",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T20:03:06.818Z",
+    "date_echeance": "2026-02-07",
+    "statut": "PARTIELLEMENT_PAYEE",
+    "remarques": null,
+    "expeditions": [
+      33
+    ]
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 13,
+  "fields": {
+    "facture": 9,
+    "client": 3,
+    "montant_paye": "200.00",
+    "date_paiement": "2026-01-08T16:59:43.605Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 14,
+  "fields": {
+    "facture": 10,
+    "client": 7,
+    "montant_paye": "200.00",
+    "date_paiement": "2026-01-08T17:03:34.932Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 15,
+  "fields": {
+    "facture": 11,
+    "client": 7,
+    "montant_paye": "200.00",
+    "date_paiement": "2026-01-08T17:19:56.059Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 16,
+  "fields": {
+    "facture": 12,
+    "client": 6,
+    "montant_paye": "100.00",
+    "date_paiement": "2026-01-08T17:28:33.973Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 18,
+  "fields": {
+    "facture": 14,
+    "client": 6,
+    "montant_paye": "100.00",
+    "date_paiement": "2026-01-08T18:31:19.140Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 19,
+  "fields": {
+    "facture": 15,
+    "client": 6,
+    "montant_paye": "690.20",
+    "date_paiement": "2026-01-08T18:39:27.218Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 21,
+  "fields": {
+    "facture": 19,
+    "client": 6,
+    "montant_paye": "120.00",
+    "date_paiement": "2026-01-08T20:05:10.206Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "VALIDE"
+  }
+},
+{
+  "model": "app1.notification",
+  "pk": 1,
+  "fields": {
+    "type_notification": "SOLDE_NEGATIF",
+    "titre": "Client en crédit - yacine belkaidi",
+    "message": "Le client yacine belkaidi a un solde de -100.0000 DA suite à l'annulation de l'expédition EXP-000028. Souhaitez-vous compenser sur la prochaine facture ou rembourser le client ?",
+    "statut": "TRAITEE",
+    "vehicule": null,
+    "chauffeur": null,
+    "tournee": null,
+    "client": 6,
+    "action_effectuee": "REMBOURSE",
+    "commentaire_traitement": "Remboursement de 0.00 DA effectué",
+    "date_creation": "2026-01-08T18:32:22.733Z",
+    "date_traitement": "2026-01-08T20:34:16.252Z"
+  }
+},
+{
+  "model": "app1.notification",
+  "pk": 2,
+  "fields": {
+    "type_notification": "SOLDE_NEGATIF",
+    "titre": "Client en crédit - yacine belkaidi",
+    "message": "Le client yacine belkaidi a un crédit de 183.30 DA suite à l'annulation de l'expédition EXP-000029.\n\nUn remboursement doit être effectué.",
+    "statut": "TRAITEE",
+    "vehicule": null,
+    "chauffeur": null,
+    "tournee": null,
+    "client": 6,
+    "action_effectuee": "REMBOURSE",
+    "commentaire_traitement": "Remboursement de 605.90 DA effectué",
+    "date_creation": "2026-01-08T19:22:11.710Z",
+    "date_traitement": "2026-01-08T20:29:49.619Z"
+  }
+},
+{
+  "model": "app1.notification",
+  "pk": 3,
+  "fields": {
+    "type_notification": "TOURNEE_TERMINEE",
+    "titre": "Tournée terminée - TR-CENTRE-04-01-Benali",
+    "message": "La tournée TR-CENTRE-04-01-Benali est terminée.\n\nChauffeur : mohamed Benali\nVéhicule : 34567 118 16\nKilométrage départ : 30000 km\n\nVeuillez renseigner le kilométrage d'arrivée pour finaliser la tournée.",
+    "statut": "TRAITEE",
+    "vehicule": 5,
+    "chauffeur": null,
+    "tournee": 10,
+    "client": null,
+    "action_effectuee": "REDIRECTION_FORMULAIRE",
+    "commentaire_traitement": null,
+    "date_creation": "2026-01-08T22:16:36.653Z",
+    "date_traitement": "2026-01-08T22:21:13.171Z"
+  }
+}
+]

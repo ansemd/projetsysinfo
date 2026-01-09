@@ -4,10 +4,14 @@ from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Sum, Prefetch
 from django.urls import reverse
-from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation, Notification
-from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, IncidentResolutionForm, AssignationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm
+from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation, Notification,AgentUtilisateur
+from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, IncidentResolutionForm, AssignationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm, LoginForm, AjouterAgentForm, ChangerMotDePasseForm
 from .utils import generer_pdf_fiche, generer_pdf_liste, IncidentService, ReclamationService
 from django.utils import timezone
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
+
+
 
 
 def liste_clients(request):
@@ -3327,5 +3331,110 @@ def liste_notifications(request):
         'notifications': notifications,
     })
 
+def login_view(request):
+    """Page de connexion"""
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
+        
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            
+            if user is not None:
+                login(request, user)
+                messages.success(request, f"Bienvenue {user.first_name} {user.last_name} !")
+                return redirect('home')
+        else:
+            messages.error(request, "❌ Nom d'utilisateur ou mot de passe incorrect")
+    else:
+        form = LoginForm()
+    
+    return render(request, 'auth/login.html', {'form': form})
 
+def logout_view(request):
+    """Déconnexion"""
+    logout(request)
+    messages.success(request, "✅ Vous avez été déconnecté avec succès")
+    return redirect('login')
 
+@login_required
+def ajouter_agent(request):
+    """Ajouter un nouvel agent (réservé au responsable)"""
+    # Vérifier que l'utilisateur est responsable
+    if not request.user.is_responsable:
+        messages.error(request, "❌ Accès refusé : réservé à l'agent responsable")
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form = AjouterAgentForm(request.POST)
+        
+        if form.is_valid():
+            # Créer l'agent sans sauvegarder
+            agent = form.save(commit=False)
+            
+            # Générer username et mot de passe
+            username = AgentUtilisateur.generer_username(
+                agent.first_name, 
+                agent.last_name
+            )
+            mot_de_passe = AgentUtilisateur.generer_mot_de_passe_securise()
+            
+            agent.username = username
+            agent.set_password(mot_de_passe)
+            agent.save()
+            
+            messages.success(
+                request,
+                f"✅ Agent créé avec succès !\n"
+                f"Nom d'utilisateur : {username}\n"
+                f"Mot de passe : {mot_de_passe}"
+            )
+            
+            return redirect('liste_agents')
+    else:
+        form = AjouterAgentForm()
+    
+    return render(request, 'auth/ajouter_agent.html', {'form': form})
+
+@login_required
+def liste_agents(request):
+    """Liste de tous les agents (réservé au responsable)"""
+    if not request.user.is_responsable:
+        messages.error(request, "❌ Accès refusé : réservé à l'agent responsable")
+        return redirect('home')
+    
+    agents = AgentUtilisateur.objects.all().order_by('-date_creation')
+    
+    return render(request, 'auth/liste_agents.html', {'agents': agents})
+
+@login_required
+def changer_mot_de_passe(request):
+    """Changer son mot de passe"""
+    if request.method == 'POST':
+        form = ChangerMotDePasseForm(request.POST)
+        
+        if form.is_valid():
+            ancien = form.cleaned_data.get('ancien_mot_de_passe')
+            nouveau = form.cleaned_data.get('nouveau_mot_de_passe')
+            
+            # Vérifier l'ancien mot de passe
+            if not request.user.check_password(ancien):
+                messages.error(request, "❌ Mot de passe actuel incorrect")
+            else:
+                # Changer le mot de passe
+                request.user.set_password(nouveau)
+                request.user.save()
+                
+                # Re-connecter l'utilisateur (sinon il sera déconnecté)
+                login(request, request.user)
+                
+                messages.success(request, "✅ Mot de passe modifié avec succès !")
+                return redirect('home')
+    else:
+        form = ChangerMotDePasseForm()
+    
+    return render(request, 'auth/changer_mot_de_passe.html', {'form': form})

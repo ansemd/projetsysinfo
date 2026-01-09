@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Changer le mot de passe</title>
+</head>
+<body>
+    <h1>🔐 Changer mon mot de passe</h1>
+    
+    <a href="{% url 'home' %}"><button>← Retour</button></a>
+    
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <p>
+                <strong>{{ message }}</strong>
+            </p>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <table>
+            <tr>
+                <td><label>{{ form.ancien_mot_de_passe.label }} :</label></td>
+                <td>{{ form.ancien_mot_de_passe }}</td>
+            </tr>
+            <tr>
+                <td><label>{{ form.nouveau_mot_de_passe.label }} :</label></td>
+                <td>{{ form.nouveau_mot_de_passe }}</td>
+            </tr>
+            <tr>
+                <td><label>{{ form.confirmer_mot_de_passe.label }} :</label></td>
+                <td>{{ form.confirmer_mot_de_passe }}</td>
+            </tr>
+        </table>
+        
+        {% if form.errors %}
+            <p style="color: red;">{{ form.non_field_errors }}</p>
+        {% endif %}
+        
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-top: 10px;">
+            ✅ Modifier le mot de passe
+        </button>
+    </form>
+</body>
+</html>

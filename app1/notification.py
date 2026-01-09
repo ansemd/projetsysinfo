@@ -347,6 +347,7 @@ class ExpeditionEmailService:
         
         subject = f"✅ Colis livré - {expedition.get_numero_expedition()}"
         
+        aujourdhui = "Aujourd'hui"
         message = f"""
     Bonjour {client.prenom} {client.nom},
 
@@ -355,7 +356,7 @@ class ExpeditionEmailService:
     N° Expédition : {expedition.get_numero_expedition()}
     Destinataire : {expedition.nom_destinataire}
     Destination : {expedition.destination.ville}, {expedition.destination.wilaya}
-    Date de livraison : {expedition.date_livraison_reelle.strftime('%d/%m/%Y') if expedition.date_livraison_reelle else 'Aujourd\'hui'}
+    Date de livraison : {expedition.date_livraison_reelle.strftime('%d/%m/%Y') if expedition.date_livraison_reelle else aujourdhui}
 
     Nous espérons que le service vous a satisfait.
 

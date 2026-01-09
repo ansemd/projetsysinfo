@@ -39,8 +39,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'phonenumber_field',
-    'app1',
+    'app1',  
 ]
+
+# Modèle d'utilisateur personnalisé
+AUTH_USER_MODEL = 'app1.AgentUtilisateur'
+
+# URLs de redirection après login/logout
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Backend SMTP de Django
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

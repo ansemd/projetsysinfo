@@ -5,6 +5,12 @@ urlpatterns = [
 
     path('', views.home, name='home'),
 
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('agents/ajouter/', views.ajouter_agent, name='ajouter_agent'),
+    path('agents/liste/', views.liste_agents, name='liste_agents'),
+    path('changer-mot-de-passe/', views.changer_mot_de_passe, name='changer_mot_de_passe'),
+
     path('favoris/selectionner/', views.selectionner_favoris, name='selectionner_favoris'),
 
     path('notifications/', views.liste_notifications, name='liste_notifications'),

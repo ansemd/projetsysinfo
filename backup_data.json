@@ -1,0 +1,1481 @@
+[
+{
+  "model": "app1.client",
+  "pk": 3,
+  "fields": {
+    "nom": "Dahar",
+    "prenom": "Ansem",
+    "date_naissance": "2005-02-16",
+    "telephone": "+21312345678",
+    "email": "ansemdahar83@gmail.com",
+    "adresse": "",
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "solde": "999.60",
+    "date_inscription": "2025-12-24T17:14:20.576Z",
+    "date_modification": "2026-01-08T17:13:49.296Z",
+    "remarques": "",
+    "compensation_autorisee": true
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 4,
+  "fields": {
+    "nom": "messadi",
+    "prenom": "oumniya",
+    "date_naissance": "2004-12-02",
+    "telephone": "+213560989760",
+    "email": "messadioumniya@gmail.com",
+    "adresse": "",
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "solde": "12459.30",
+    "date_inscription": "2025-12-25T17:51:42.729Z",
+    "date_modification": "2026-01-03T18:45:42.595Z",
+    "remarques": "",
+    "compensation_autorisee": true
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 5,
+  "fields": {
+    "nom": "slimani",
+    "prenom": "hocine",
+    "date_naissance": "1980-03-27",
+    "telephone": "+213550678345",
+    "email": "slimanihocine@gmail.com",
+    "adresse": "",
+    "ville": "bir khadem",
+    "wilaya": "Alger",
+    "solde": "0.00",
+    "date_inscription": "2025-12-25T17:52:48.494Z",
+    "date_modification": "2026-01-08T20:01:39.337Z",
+    "remarques": "",
+    "compensation_autorisee": true
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 6,
+  "fields": {
+    "nom": "yacine",
+    "prenom": "belkaidi",
+    "date_naissance": "1989-04-04",
+    "telephone": "+213550398832",
+    "email": "yacinebelaidi65@gmail.com",
+    "adresse": "n 53",
+    "ville": "dar el beida",
+    "wilaya": "Alger",
+    "solde": "0.00",
+    "date_inscription": "2025-12-29T13:36:30.127Z",
+    "date_modification": "2026-01-08T20:34:16.250Z",
+    "remarques": "",
+    "compensation_autorisee": false
+  }
+},
+{
+  "model": "app1.client",
+  "pk": 7,
+  "fields": {
+    "nom": "mohamdi",
+    "prenom": "ines",
+    "date_naissance": "2000-11-09",
+    "telephone": "+213560225656",
+    "email": "mohamdiines34@gmail.com",
+    "adresse": "",
+    "ville": "bordj el kiffan",
+    "wilaya": "Alger",
+    "solde": "-200.00",
+    "date_inscription": "2026-01-01T18:32:06.252Z",
+    "date_modification": "2026-01-08T17:26:52.381Z",
+    "remarques": "",
+    "compensation_autorisee": false
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 4,
+  "fields": {
+    "nom": "Benali",
+    "prenom": "mohamed",
+    "date_naissance": "1980-10-10",
+    "telephone": "+213550123456",
+    "email": "benalimohamed@gmail.com",
+    "adresse": "",
+    "ville": "shaoula",
+    "wilaya": "Alger",
+    "numero_permis": "1234567895674",
+    "date_obtention_permis": "2020-01-01",
+    "date_expiration_permis": "2029-01-01",
+    "date_embauche": "2012-10-16",
+    "salaire": "40000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-25T17:42:42.967Z",
+    "date_modification": "2026-01-08T22:21:35.839Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 5,
+  "fields": {
+    "nom": "Saidi",
+    "prenom": "ahmed",
+    "date_naissance": "1978-12-09",
+    "telephone": "+213550233924",
+    "email": "saidiahmed@gmail.com",
+    "adresse": "",
+    "ville": "ain naadja",
+    "wilaya": "Alger",
+    "numero_permis": "23456789438320",
+    "date_obtention_permis": "2022-01-01",
+    "date_expiration_permis": "2028-01-01",
+    "date_embauche": "2019-10-16",
+    "salaire": "40000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-25T17:44:31.754Z",
+    "date_modification": "2026-01-08T21:29:57.049Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 6,
+  "fields": {
+    "nom": "Houari",
+    "prenom": "karim",
+    "date_naissance": "1987-03-12",
+    "telephone": "+213560002678",
+    "email": "houarikarim66@gmail.com",
+    "adresse": "",
+    "ville": "bir khadem",
+    "wilaya": "Alger",
+    "numero_permis": "98843903042",
+    "date_obtention_permis": "2023-09-01",
+    "date_expiration_permis": "2033-09-01",
+    "date_embauche": "2017-03-30",
+    "salaire": "35000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-25T17:46:59.626Z",
+    "date_modification": "2026-01-08T20:02:20.769Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 7,
+  "fields": {
+    "nom": "bentaleb",
+    "prenom": "hafid",
+    "date_naissance": "1980-10-10",
+    "telephone": "+213550898960",
+    "email": "bentalebb@gmail.com",
+    "adresse": "",
+    "ville": "bordj el kiffan",
+    "wilaya": "Alger",
+    "numero_permis": "73647532646378",
+    "date_obtention_permis": "2020-07-08",
+    "date_expiration_permis": "2030-07-08",
+    "date_embauche": "2019-06-30",
+    "salaire": "35000.00",
+    "statut_disponibilite": "EN_TOURNEE",
+    "date_creation": "2025-12-25T17:50:16.912Z",
+    "date_modification": "2026-01-09T13:15:04.080Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 8,
+  "fields": {
+    "nom": "mekhbat",
+    "prenom": "rayan",
+    "date_naissance": "1987-09-30",
+    "telephone": "+213560984567",
+    "email": "mekhbattryn@yahoo.fr",
+    "adresse": "",
+    "ville": "bir khadem",
+    "wilaya": "Alger",
+    "numero_permis": "6452364762174864",
+    "date_obtention_permis": "2020-01-01",
+    "date_expiration_permis": "2030-01-01",
+    "date_embauche": "2022-02-19",
+    "salaire": "30000.00",
+    "statut_disponibilite": "MALADIE",
+    "date_creation": "2025-12-27T21:22:17.805Z",
+    "date_modification": "2025-12-29T16:23:57.798Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 9,
+  "fields": {
+    "nom": "abdat",
+    "prenom": "said",
+    "date_naissance": "1980-02-19",
+    "telephone": "+213560908765",
+    "email": "abdatsaid@gmail.com",
+    "adresse": "",
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "numero_permis": "6356562789",
+    "date_obtention_permis": "2020-01-01",
+    "date_expiration_permis": "2030-01-01",
+    "date_embauche": "2012-10-16",
+    "salaire": "450000.00",
+    "statut_disponibilite": "DISPONIBLE",
+    "date_creation": "2025-12-28T16:24:00.250Z",
+    "date_modification": "2026-01-08T18:18:27.002Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.chauffeur",
+  "pk": 10,
+  "fields": {
+    "nom": "bouras",
+    "prenom": "ilyas",
+    "date_naissance": "1987-09-18",
+    "telephone": "+213550806656",
+    "email": "bourasilyas@yahoo.com",
+    "adresse": "",
+    "ville": "ain naadja",
+    "wilaya": "Alger",
+    "numero_permis": "65324632749832",
+    "date_obtention_permis": "2024-09-12",
+    "date_expiration_permis": "2034-09-12",
+    "date_embauche": "2022-12-01",
+    "salaire": "35000.00",
+    "statut_disponibilite": "MALADIE",
+    "date_creation": "2026-01-01T18:33:35.283Z",
+    "date_modification": "2026-01-07T19:37:48.595Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 5,
+  "fields": {
+    "numero_immatriculation": "34567 118 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2018,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "15.00",
+    "consommation_moyenne": "7.50",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 30200,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-25T18:09:52.088Z",
+    "date_modification": "2026-01-08T22:21:35.840Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 6,
+  "fields": {
+    "numero_immatriculation": "65784 117 16",
+    "marque": "peugeot",
+    "modele": "boxer",
+    "annee": 2017,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 20000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-25T18:11:00.943Z",
+    "date_modification": "2026-01-08T21:29:57.051Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 7,
+  "fields": {
+    "numero_immatriculation": "23568 120 16",
+    "marque": "peugeot",
+    "modele": "partner",
+    "annee": 2020,
+    "type_vehicule": "CAMIONNETTE",
+    "capacite_poids": "1000.00",
+    "capacite_volume": "8.00",
+    "consommation_moyenne": "5.00",
+    "etat": "EXCELLENT",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 10000,
+    "date_acquisition": "2023-09-01",
+    "date_creation": "2025-12-25T18:12:45.107Z",
+    "date_modification": "2026-01-08T20:02:20.771Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 8,
+  "fields": {
+    "numero_immatriculation": "34567 119 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2019,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "7.50",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-12",
+    "kilometrage": 40000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-25T23:59:42.417Z",
+    "date_modification": "2026-01-08T18:18:35.997Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 9,
+  "fields": {
+    "numero_immatriculation": "45677 120 16",
+    "marque": "citroen",
+    "modele": "jumper",
+    "annee": 2020,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3000.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-06-26",
+    "date_prochaine_revision": "2025-12-26",
+    "kilometrage": 30000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-26T00:42:03.293Z",
+    "date_modification": "2026-01-08T18:18:27.003Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 10,
+  "fields": {
+    "numero_immatriculation": "102562 118 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2018,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3500.00",
+    "capacite_volume": "17.00",
+    "consommation_moyenne": "7.50",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-10",
+    "date_prochaine_revision": "2026-03-09",
+    "kilometrage": 70000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-27T21:23:33.634Z",
+    "date_modification": "2025-12-28T23:18:06.262Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 11,
+  "fields": {
+    "numero_immatriculation": "234562 118 16",
+    "marque": "citroen",
+    "modele": "jumper",
+    "annee": 2018,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3500.00",
+    "capacite_volume": "19.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-10-09",
+    "date_prochaine_revision": "2026-04-07",
+    "kilometrage": 15000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2025-12-28T16:25:53.055Z",
+    "date_modification": "2025-12-28T23:17:57.268Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 12,
+  "fields": {
+    "numero_immatriculation": "28763 116 16",
+    "marque": "nissan",
+    "modele": "nv200",
+    "annee": 2016,
+    "type_vehicule": "CAMIONNETTE",
+    "capacite_poids": "2100.00",
+    "capacite_volume": "9.00",
+    "consommation_moyenne": "5.00",
+    "etat": "BON",
+    "statut": "DISPONIBLE",
+    "date_derniere_revision": "2025-09-12",
+    "date_prochaine_revision": "2026-03-11",
+    "kilometrage": 200000,
+    "date_acquisition": "2020-09-10",
+    "date_creation": "2026-01-01T18:38:41.701Z",
+    "date_modification": "2026-01-02T05:00:14.898Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.vehicule",
+  "pk": 13,
+  "fields": {
+    "numero_immatriculation": "24378 119 16",
+    "marque": "renault",
+    "modele": "master",
+    "annee": 2019,
+    "type_vehicule": "FOURGON",
+    "capacite_poids": "3500.00",
+    "capacite_volume": "18.00",
+    "consommation_moyenne": "8.00",
+    "etat": "BON",
+    "statut": "EN_TOURNEE",
+    "date_derniere_revision": "2025-12-12",
+    "date_prochaine_revision": "2026-06-10",
+    "kilometrage": 231000,
+    "date_acquisition": "2022-03-16",
+    "date_creation": "2026-01-02T05:02:09.037Z",
+    "date_modification": "2026-01-09T13:15:04.085Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 5,
+  "fields": {
+    "ville": "Bab ezzouar",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 5,
+    "tarif_base": "150.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16042",
+    "date_creation": "2025-12-24T14:23:52.800Z",
+    "date_modification": "2025-12-25T17:58:40.068Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 6,
+  "fields": {
+    "ville": "bir el djir",
+    "wilaya": "oran",
+    "pays": "Algérie",
+    "zone_geographique": "NATIONALE",
+    "zone_logistique": "OUEST",
+    "distance_estimee": 410,
+    "tarif_base": "750.00",
+    "delai_livraison_estime": 4,
+    "code_postal": "31023",
+    "date_creation": "2025-12-25T17:54:10.466Z",
+    "date_modification": "2025-12-25T17:54:10.466Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 7,
+  "fields": {
+    "ville": "zerlada",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 35,
+    "tarif_base": "400.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16063",
+    "date_creation": "2025-12-25T17:55:44.077Z",
+    "date_modification": "2025-12-26T18:49:43.547Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 8,
+  "fields": {
+    "ville": "cheraga",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 25,
+    "tarif_base": "250.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16014",
+    "date_creation": "2025-12-25T17:56:46.648Z",
+    "date_modification": "2025-12-25T17:56:46.648Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 9,
+  "fields": {
+    "ville": "ain taya",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 19,
+    "tarif_base": "250.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16019",
+    "date_creation": "2025-12-25T17:57:56.757Z",
+    "date_modification": "2025-12-25T17:57:56.758Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 10,
+  "fields": {
+    "ville": "chenoua",
+    "wilaya": "tipaza",
+    "pays": "Algérie",
+    "zone_geographique": "NATIONALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 90,
+    "tarif_base": "450.00",
+    "delai_livraison_estime": 2,
+    "code_postal": "42000",
+    "date_creation": "2025-12-25T18:00:32.316Z",
+    "date_modification": "2025-12-25T18:00:32.316Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 11,
+  "fields": {
+    "ville": "bejaia",
+    "wilaya": "bejaia",
+    "pays": "Algérie",
+    "zone_geographique": "NATIONALE",
+    "zone_logistique": "EST",
+    "distance_estimee": 235,
+    "tarif_base": "700.00",
+    "delai_livraison_estime": 3,
+    "code_postal": "06000",
+    "date_creation": "2025-12-25T18:04:46.104Z",
+    "date_modification": "2025-12-26T18:50:16.200Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.destination",
+  "pk": 12,
+  "fields": {
+    "ville": "rouiba",
+    "wilaya": "Alger",
+    "pays": "Algérie",
+    "zone_geographique": "LOCALE",
+    "zone_logistique": "CENTRE",
+    "distance_estimee": 10,
+    "tarif_base": "350.00",
+    "delai_livraison_estime": 1,
+    "code_postal": "16017",
+    "date_creation": "2026-01-01T18:36:26.783Z",
+    "date_modification": "2026-01-01T18:36:26.783Z",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.typeservice",
+  "pk": 4,
+  "fields": {
+    "type_service": "STANDARD",
+    "description": ""
+  }
+},
+{
+  "model": "app1.typeservice",
+  "pk": 5,
+  "fields": {
+    "type_service": "EXPRESS",
+    "description": ""
+  }
+},
+{
+  "model": "app1.typeservice",
+  "pk": 6,
+  "fields": {
+    "type_service": "INTERNATIONAL",
+    "description": ""
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 3,
+  "fields": {
+    "destination": 5,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "10.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 4,
+  "fields": {
+    "destination": 5,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 5,
+  "fields": {
+    "destination": 6,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 6,
+  "fields": {
+    "destination": 6,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 7,
+  "fields": {
+    "destination": 7,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 8,
+  "fields": {
+    "destination": 7,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 9,
+  "fields": {
+    "destination": 8,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 10,
+  "fields": {
+    "destination": 8,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 11,
+  "fields": {
+    "destination": 9,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 12,
+  "fields": {
+    "destination": 9,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 13,
+  "fields": {
+    "destination": 10,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 14,
+  "fields": {
+    "destination": 10,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 15,
+  "fields": {
+    "destination": 11,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 16,
+  "fields": {
+    "destination": 11,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 17,
+  "fields": {
+    "destination": 12,
+    "type_service": 4,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tarification",
+  "pk": 18,
+  "fields": {
+    "destination": 12,
+    "type_service": 5,
+    "tarif_poids": "10.00",
+    "tarif_volume": "20.00"
+  }
+},
+{
+  "model": "app1.tournee",
+  "pk": 10,
+  "fields": {
+    "chauffeur": 4,
+    "vehicule": 5,
+    "date_depart": "2026-01-04T09:00:00Z",
+    "date_retour_prevue": null,
+    "date_retour_reelle": "2026-01-08T22:21:35.832Z",
+    "zone_cible": "CENTRE",
+    "kilometrage_depart": 30000,
+    "kilometrage_arrivee": 30200,
+    "kilometrage_parcouru": 200,
+    "consommation_carburant": "15.00",
+    "statut": "TERMINEE",
+    "est_privee": false,
+    "remarques": "",
+    "date_creation": "2026-01-03T17:23:54.694Z",
+    "date_modification": "2026-01-08T22:21:35.841Z"
+  }
+},
+{
+  "model": "app1.tournee",
+  "pk": 11,
+  "fields": {
+    "chauffeur": 5,
+    "vehicule": 6,
+    "date_depart": "2026-01-04T08:00:00.578Z",
+    "date_retour_prevue": null,
+    "date_retour_reelle": null,
+    "zone_cible": "OUEST",
+    "kilometrage_depart": 20000,
+    "kilometrage_arrivee": null,
+    "kilometrage_parcouru": null,
+    "consommation_carburant": null,
+    "statut": "TERMINEE",
+    "est_privee": true,
+    "remarques": "Tournée privée EXPRESS vers bir el djir, oran",
+    "date_creation": "2026-01-03T18:45:42.582Z",
+    "date_modification": "2026-01-08T21:29:57.052Z"
+  }
+},
+{
+  "model": "app1.tournee",
+  "pk": 18,
+  "fields": {
+    "chauffeur": 7,
+    "vehicule": 13,
+    "date_depart": "2026-01-09T09:00:00Z",
+    "date_retour_prevue": "2026-01-09T17:30:00Z",
+    "date_retour_reelle": null,
+    "zone_cible": "CENTRE",
+    "kilometrage_depart": 231000,
+    "kilometrage_arrivee": null,
+    "kilometrage_parcouru": null,
+    "consommation_carburant": null,
+    "statut": "EN_COURS",
+    "est_privee": false,
+    "remarques": "",
+    "date_creation": "2026-01-08T19:57:15.231Z",
+    "date_modification": "2026-01-09T13:15:04.086Z"
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 16,
+  "fields": {
+    "client": 3,
+    "destination": 5,
+    "type_service": 4,
+    "tournee": 10,
+    "nom_destinataire": "messadi oumniya",
+    "telephone_destinataire": "+213560987800",
+    "email_destinataire": "messasioumniya88@gmail.com",
+    "adresse_destinataire": "douzi",
+    "poids": "12.00",
+    "volume": "4.00",
+    "description": "",
+    "montant_total": "310.00",
+    "date_livraison_prevue": "2026-01-05",
+    "statut": "LIVRE",
+    "date_creation": "2026-01-03T17:39:09.171Z",
+    "date_livraison_reelle": "2026-01-08",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 17,
+  "fields": {
+    "client": 3,
+    "destination": 5,
+    "type_service": 4,
+    "tournee": 10,
+    "nom_destinataire": "messadi oumniya",
+    "telephone_destinataire": "+213560987800",
+    "email_destinataire": "messasioumniya88@gmail.com",
+    "adresse_destinataire": "douzi",
+    "poids": "25.00",
+    "volume": "13.00",
+    "description": "",
+    "montant_total": "530.00",
+    "date_livraison_prevue": "2026-01-05",
+    "statut": "LIVRE",
+    "date_creation": "2026-01-03T18:43:39.392Z",
+    "date_livraison_reelle": "2026-01-08",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 18,
+  "fields": {
+    "client": 4,
+    "destination": 6,
+    "type_service": 5,
+    "tournee": 11,
+    "nom_destinataire": "bouchekour amina",
+    "telephone_destinataire": "+213557890600",
+    "email_destinataire": "bouchekouramina@gmail.com",
+    "adresse_destinataire": "boulevard des lions",
+    "poids": "12.00",
+    "volume": "5.00",
+    "description": "",
+    "montant_total": "10470.00",
+    "date_livraison_prevue": "2026-01-05",
+    "statut": "LIVRE",
+    "date_creation": "2026-01-03T18:45:42.569Z",
+    "date_livraison_reelle": "2026-01-08",
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.expedition",
+  "pk": 33,
+  "fields": {
+    "client": 6,
+    "destination": 7,
+    "type_service": 4,
+    "tournee": 18,
+    "nom_destinataire": "lydia yallaoui",
+    "telephone_destinataire": "+213776897600",
+    "email_destinataire": "ansemdahar83@gmail.com",
+    "adresse_destinataire": "qlq part",
+    "poids": "13.00",
+    "volume": "4.00",
+    "description": "",
+    "montant_total": "610.00",
+    "date_livraison_prevue": "2026-01-10",
+    "statut": "EN_TRANSIT",
+    "date_creation": "2026-01-08T20:03:06.806Z",
+    "date_livraison_reelle": null,
+    "remarques": ""
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 20,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-03T17:39:09.176Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 21,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-03T17:39:09.176Z",
+    "commentaire": "Affecté à la tournée #10. Départ prévu: 04/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 22,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-03T18:43:39.403Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 23,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-03T18:43:39.405Z",
+    "commentaire": "Affecté à la tournée #10. Départ prévu: 04/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 24,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-03T18:45:42.586Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 25,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-03T18:45:42.587Z",
+    "commentaire": "Affecté à la tournée #11. Départ prévu: 04/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 26,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-05T22:26:05.483Z",
+    "commentaire": "Colis en transit vers Bab ezzouar"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 27,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-05T22:26:05.485Z",
+    "commentaire": "Colis en transit vers Bab ezzouar"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 28,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-05T22:26:05.492Z",
+    "commentaire": "Colis en transit vers bir el djir"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 29,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T15:43:08.951Z",
+    "commentaire": "Colis livré à messadi oumniya"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 30,
+  "fields": {
+    "expedition": 17,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T15:43:08.952Z",
+    "commentaire": "Colis livré à messadi oumniya"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 57,
+  "fields": {
+    "expedition": 33,
+    "statut_etape": "COLIS_CREE",
+    "date_heure": "2026-01-08T20:03:06.815Z",
+    "commentaire": "Colis enregistré dans le système"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 58,
+  "fields": {
+    "expedition": 33,
+    "statut_etape": "EN_ATTENTE",
+    "date_heure": "2026-01-08T20:03:06.816Z",
+    "commentaire": "Affecté à la tournée #18. Départ prévu: 09/01/2026"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 59,
+  "fields": {
+    "expedition": 18,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T21:29:57.048Z",
+    "commentaire": "Colis livré à bouchekour amina"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 60,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-08T22:16:32.012Z",
+    "commentaire": "Colis en transit vers Bab ezzouar"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 61,
+  "fields": {
+    "expedition": 16,
+    "statut_etape": "LIVRE",
+    "date_heure": "2026-01-08T22:16:36.647Z",
+    "commentaire": "Colis livré à messadi oumniya"
+  }
+},
+{
+  "model": "app1.trackingexpedition",
+  "pk": 62,
+  "fields": {
+    "expedition": 33,
+    "statut_etape": "EN_TRANSIT",
+    "date_heure": "2026-01-09T13:08:32.568Z",
+    "commentaire": "Colis en transit vers zerlada"
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 6,
+  "fields": {
+    "client": 3,
+    "numero_facture": "FACT-20260103-00006",
+    "montant_ht": "840.00",
+    "montant_tva": "159.60",
+    "montant_ttc": "999.60",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-03T17:39:09.178Z",
+    "date_echeance": "2026-02-02",
+    "statut": "IMPAYEE",
+    "remarques": null,
+    "expeditions": [
+      16,
+      17
+    ]
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 7,
+  "fields": {
+    "client": 4,
+    "numero_facture": "FACT-20260103-00007",
+    "montant_ht": "10470.00",
+    "montant_tva": "1989.30",
+    "montant_ttc": "12459.30",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-03T18:45:42.589Z",
+    "date_echeance": "2026-02-02",
+    "statut": "IMPAYEE",
+    "remarques": null,
+    "expeditions": [
+      18
+    ]
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 8,
+  "fields": {
+    "client": 3,
+    "numero_facture": "F-20260108-CL-003-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T16:41:34.095Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 9,
+  "fields": {
+    "client": 3,
+    "numero_facture": "F-20260108-CL-003-002",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T16:50:23.543Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 10,
+  "fields": {
+    "client": 7,
+    "numero_facture": "F-20260108-CL-007-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T17:02:34.764Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 11,
+  "fields": {
+    "client": 7,
+    "numero_facture": "F-20260108-CL-007-002",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T17:19:28.242Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 12,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T17:28:02.979Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 14,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-002",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T18:30:49.275Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 15,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-003",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T18:38:55.667Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 17,
+  "fields": {
+    "client": 5,
+    "numero_facture": "F-20260108-CL-005-001",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T19:55:24.399Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 18,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-004",
+    "montant_ht": "0.00",
+    "montant_tva": "0.00",
+    "montant_ttc": "0.00",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T19:58:25.217Z",
+    "date_echeance": "2026-02-07",
+    "statut": "ANNULEE",
+    "remarques": null,
+    "expeditions": []
+  }
+},
+{
+  "model": "app1.facture",
+  "pk": 19,
+  "fields": {
+    "client": 6,
+    "numero_facture": "F-20260108-CL-006-005",
+    "montant_ht": "610.00",
+    "montant_tva": "115.90",
+    "montant_ttc": "725.90",
+    "taux_tva": "19.00",
+    "date_creation": "2026-01-08T20:03:06.818Z",
+    "date_echeance": "2026-02-07",
+    "statut": "PARTIELLEMENT_PAYEE",
+    "remarques": null,
+    "expeditions": [
+      33
+    ]
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 13,
+  "fields": {
+    "facture": 9,
+    "client": 3,
+    "montant_paye": "200.00",
+    "date_paiement": "2026-01-08T16:59:43.605Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 14,
+  "fields": {
+    "facture": 10,
+    "client": 7,
+    "montant_paye": "200.00",
+    "date_paiement": "2026-01-08T17:03:34.932Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 15,
+  "fields": {
+    "facture": 11,
+    "client": 7,
+    "montant_paye": "200.00",
+    "date_paiement": "2026-01-08T17:19:56.059Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 16,
+  "fields": {
+    "facture": 12,
+    "client": 6,
+    "montant_paye": "100.00",
+    "date_paiement": "2026-01-08T17:28:33.973Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 18,
+  "fields": {
+    "facture": 14,
+    "client": 6,
+    "montant_paye": "100.00",
+    "date_paiement": "2026-01-08T18:31:19.140Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 19,
+  "fields": {
+    "facture": 15,
+    "client": 6,
+    "montant_paye": "690.20",
+    "date_paiement": "2026-01-08T18:39:27.218Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "ANNULE"
+  }
+},
+{
+  "model": "app1.paiement",
+  "pk": 21,
+  "fields": {
+    "facture": 19,
+    "client": 6,
+    "montant_paye": "120.00",
+    "date_paiement": "2026-01-08T20:05:10.206Z",
+    "mode_paiement": "ESPECES",
+    "reference_transaction": null,
+    "remarques": "",
+    "statut": "VALIDE"
+  }
+},
+{
+  "model": "app1.notification",
+  "pk": 1,
+  "fields": {
+    "type_notification": "SOLDE_NEGATIF",
+    "titre": "Client en crédit - yacine belkaidi",
+    "message": "Le client yacine belkaidi a un solde de -100.0000 DA suite à l'annulation de l'expédition EXP-000028. Souhaitez-vous compenser sur la prochaine facture ou rembourser le client ?",
+    "statut": "TRAITEE",
+    "vehicule": null,
+    "chauffeur": null,
+    "tournee": null,
+    "client": 6,
+    "action_effectuee": "REMBOURSE",
+    "commentaire_traitement": "Remboursement de 0.00 DA effectué",
+    "date_creation": "2026-01-08T18:32:22.733Z",
+    "date_traitement": "2026-01-08T20:34:16.252Z"
+  }
+},
+{
+  "model": "app1.notification",
+  "pk": 2,
+  "fields": {
+    "type_notification": "SOLDE_NEGATIF",
+    "titre": "Client en crédit - yacine belkaidi",
+    "message": "Le client yacine belkaidi a un crédit de 183.30 DA suite à l'annulation de l'expédition EXP-000029.\n\nUn remboursement doit être effectué.",
+    "statut": "TRAITEE",
+    "vehicule": null,
+    "chauffeur": null,
+    "tournee": null,
+    "client": 6,
+    "action_effectuee": "REMBOURSE",
+    "commentaire_traitement": "Remboursement de 605.90 DA effectué",
+    "date_creation": "2026-01-08T19:22:11.710Z",
+    "date_traitement": "2026-01-08T20:29:49.619Z"
+  }
+},
+{
+  "model": "app1.notification",
+  "pk": 3,
+  "fields": {
+    "type_notification": "TOURNEE_TERMINEE",
+    "titre": "Tournée terminée - TR-CENTRE-04-01-Benali",
+    "message": "La tournée TR-CENTRE-04-01-Benali est terminée.\n\nChauffeur : mohamed Benali\nVéhicule : 34567 118 16\nKilométrage départ : 30000 km\n\nVeuillez renseigner le kilométrage d'arrivée pour finaliser la tournée.",
+    "statut": "TRAITEE",
+    "vehicule": 5,
+    "chauffeur": null,
+    "tournee": 10,
+    "client": null,
+    "action_effectuee": "REDIRECTION_FORMULAIRE",
+    "commentaire_traitement": null,
+    "date_creation": "2026-01-08T22:16:36.653Z",
+    "date_traitement": "2026-01-08T22:21:13.171Z"
+  }
+}
+]

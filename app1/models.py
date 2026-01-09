@@ -5,6 +5,9 @@ from decimal import Decimal
 from datetime import date, timedelta 
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
+import secrets
+import string
 
 # SECTION 1 : TABLES DE BASE
 class Client(models.Model):
@@ -619,3 +622,58 @@ class HistoriqueReclamation(models.Model):
     
     def __str__(self):
         return f"{self.reclamation.numero_reclamation} - {self.action} - {self.date_action.strftime('%d/%m/%Y %H:%M')}"
+
+class AgentUtilisateur(AbstractUser):
+    """
+    Modèle d'utilisateur pour les agents
+    Hérite de AbstractUser de Django
+    """
+    telephone = models.CharField(max_length=15)
+    is_responsable = models.BooleanField(default=False, verbose_name="Agent responsable")
+    date_creation = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Agent Utilisateur"
+        verbose_name_plural = "Agents Utilisateurs"
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.username})"
+    
+    @staticmethod
+    def generer_username(prenom, nom):
+        """
+        Génère un username unique basé sur prénom.nom
+        Si doublon, ajoute un numéro : prenom.nom2, prenom.nom3, etc.
+        """
+        # Normaliser : minuscules, sans accents
+        base_username = f"{prenom.lower()}.{nom.lower()}"
+        base_username = base_username.replace(' ', '').replace('-', '')
+        
+        username = base_username
+        counter = 2
+        
+        # Vérifier si le username existe déjà
+        while AgentUtilisateur.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+        
+        return username
+    
+    @staticmethod
+    def generer_mot_de_passe_securise(longueur=12):
+        """
+        Génère un mot de passe sécurisé aléatoire
+        Format : Lettres majuscules + minuscules + chiffres + caractères spéciaux
+        Exemple : Kx9#mP2$wL4
+        """
+        caracteres = string.ascii_letters + string.digits + "!@#$%^&*"
+        mot_de_passe = ''.join(secrets.choice(caracteres) for _ in range(longueur))
+        
+        # S'assurer qu'il y a au moins 1 majuscule, 1 minuscule, 1 chiffre, 1 spécial
+        while not (any(c.isupper() for c in mot_de_passe) and
+                   any(c.islower() for c in mot_de_passe) and
+                   any(c.isdigit() for c in mot_de_passe) and
+                   any(c in "!@#$%^&*" for c in mot_de_passe)):
+            mot_de_passe = ''.join(secrets.choice(caracteres) for _ in range(longueur))
+        
+        return mot_de_passe
