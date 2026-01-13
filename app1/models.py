@@ -1,11 +1,11 @@
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
-import math
 from decimal import Decimal
 from datetime import date, timedelta 
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 import secrets
 import string
 
@@ -48,6 +48,8 @@ class Chauffeur(models.Model):
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     remarques = models.TextField(blank=True, null=True)
+    cree_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='chauffeurs_crees',verbose_name="Créé par")
+    modifie_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='chauffeurs_modifies',verbose_name="Modifié par")
 
     def __str__(self):
         return f"{self.prenom} {self.nom} - {self.get_id_chauffeur()}"
@@ -74,6 +76,8 @@ class Vehicule(models.Model):
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
     remarques = models.TextField(blank=True, null=True)
+    cree_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='vehicules_crees',verbose_name="Créé par")
+    modifie_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='vehicules_modifies',verbose_name="Modifié par")
 
     def __str__(self):
         return f"{self.marque} {self.modele} - {self.numero_immatriculation}"
@@ -165,6 +169,8 @@ class Tournee(models.Model):
     remarques = models.TextField(blank=True, null=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
+    cree_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='tournees_crees',verbose_name="Créé par")
+    modifie_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='tournees_modifies',verbose_name="Modifié par")
     
     def __str__(self):
         return f"Tournée #{self.id} - {self.chauffeur} - {self.statut}"
@@ -203,10 +209,12 @@ class Expedition(models.Model):
     description = models.TextField(blank=True, null=True)
     montant_total = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
     date_livraison_prevue = models.DateField(blank=True, null=True, editable=False)
-    statut = models.CharField(max_length=20, choices=[('EN_ATTENTE', 'En attente'),('EN_TRANSIT', 'En transit'),('LIVRE', 'Livré'),('ECHEC', 'Échec'),], default='EN_ATTENTE')
+    statut = models.CharField(max_length=20, choices=[('EN_ATTENTE', 'En attente'),('EN_TRANSIT', 'En transit'),('LIVRE', 'Livré'),('ECHEC', 'Échec'),('REENVOYE', 'Réexpédié'),], default='EN_ATTENTE')
     date_creation = models.DateTimeField(auto_now_add=True)
     date_livraison_reelle = models.DateField(blank=True, null=True)
     remarques = models.TextField(blank=True, null=True)
+    cree_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='expeditions_crees',verbose_name="Créé par")
+    modifie_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='expeditions_modifies',verbose_name="Modifié par")
     
     def __str__(self):
         return f"{self.client} → {self.destination.ville}"
@@ -255,7 +263,7 @@ class Expedition(models.Model):
 
 class TrackingExpedition(models.Model):
     expedition = models.ForeignKey('Expedition', on_delete=models.CASCADE, related_name='suivis')
-    statut_etape = models.CharField(max_length=20, choices=[('COLIS_CREE', 'Colis créé'),('EN_ATTENTE', 'En attente'),('EN_TRANSIT', 'En transit'),('LIVRE', 'Livré'),('ECHEC', 'Échec'),])
+    statut_etape = models.CharField(max_length=20, choices=[('COLIS_CREE', 'Colis créé'),('EN_ATTENTE', 'En attente'),('EN_TRANSIT', 'En transit'),('LIVRE', 'Livré'),('ECHEC', 'Échec'),('INCIDENT', 'Incident signalé'),('INCIDENT_RESOLU', 'Incident résolu'),('ANNULE', 'Annulé'),('REENVOYE', 'Réexpédié'),])
     date_heure = models.DateTimeField(auto_now_add=True)
     commentaire = models.TextField(blank=True, null=True)
     
@@ -280,6 +288,7 @@ class Facture(models.Model):
     date_echeance = models.DateField()
     statut = models.CharField(max_length=20, choices=[('IMPAYEE', 'Impayée'),('PARTIELLEMENT_PAYEE', 'Partiellement payée'),('PAYEE', 'Payée'),('EN_RETARD', 'En retard'),('ANNULEE', 'Annulée'),], default='IMPAYEE')
     remarques = models.TextField(blank=True, null=True)
+    cree_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='factures_creees',verbose_name="Créé par (agent)")
     
     class Meta:
         ordering = ['-date_creation']
@@ -302,7 +311,6 @@ class Facture(models.Model):
         
         super().save(*args, **kwargs)
     
-
 class Paiement(models.Model):
     
     facture = models.ForeignKey('Facture', on_delete=models.CASCADE, related_name='paiements')
@@ -313,6 +321,7 @@ class Paiement(models.Model):
     reference_transaction = models.CharField(max_length=100, blank=True, null=True)
     remarques = models.TextField(blank=True, null=True)
     statut = models.CharField(max_length=20, default='VALIDE')
+    cree_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='paiements_crees',verbose_name="Créé par")
     
     class Meta:
         ordering = ['-date_paiement']
@@ -375,7 +384,7 @@ class Notification(models.Model):
     Exemples : maintenance véhicule, alertes, etc.
     """
     
-    type_notification = models.CharField(max_length=30, choices=[('MAINTENANCE_AVANT', 'Maintenance prévue demain'),('MAINTENANCE_APRES', 'Véhicule en maintenance - Retour?'),('SOLDE_NEGATIF', 'Client en crédit'),('REMBOURSEMENT_REQUIS', 'Remboursement incident requis'),('TOURNEE_TERMINEE', 'Tournée terminée'),('INFO', 'Information'),('ALERTE', 'Alerte'),])
+    type_notification = models.CharField(max_length=30, choices=[('MAINTENANCE_AVANT', 'Maintenance prévue demain'),('MAINTENANCE_APRES', 'Véhicule en maintenance - Retour?'),('SOLDE_NEGATIF', 'Client en crédit'),('REMBOURSEMENT_REQUIS', 'Remboursement incident requis'),('TOURNEE_TERMINEE', 'Tournée terminée'),('INFO', 'Information'),('ALERTE', 'Alerte'),('INCIDENT_CREE', 'Nouvel incident créé'),('INCIDENT_AFFECTE', 'Incident affecté'),('RECLAMATION_CREEE', 'Réclamation créée'),('RECLAMATION_AFFECTEE', 'Réclamation affectée'),('INCIDENT_RESOLU', 'Incident résolu'),('RECLAMATION_RESOLUE', 'Réclamation résolue'),])
     titre = models.CharField(max_length=200)
     message = models.TextField()
     statut = models.CharField(max_length=20, choices=[('NON_LUE', 'Non lue'),('LUE', 'Lue'),('TRAITEE', 'Traitée'),], default='NON_LUE')
@@ -384,7 +393,8 @@ class Notification(models.Model):
     chauffeur = models.ForeignKey('Chauffeur', on_delete=models.CASCADE, null=True, blank=True)
     tournee = models.ForeignKey('Tournee', on_delete=models.CASCADE, null=True, blank=True)
     client = models.ForeignKey('Client', on_delete=models.CASCADE, null=True, blank=True)
-    
+    incident = models.ForeignKey('Incident',on_delete=models.CASCADE,null=True,blank=True,related_name='notifications')
+    reclamation = models.ForeignKey('Reclamation',on_delete=models.CASCADE,null=True,blank=True,related_name='notifications')
     action_effectuee = models.CharField(max_length=50, blank=True, null=True, help_text="Action effectuée par l'agent (ex: COMPENSATION_AUTORISEE, REMBOURSE, REVISION_CONFIRMEE)")
     commentaire_traitement = models.TextField(blank=True, null=True, help_text="Commentaire de l'agent lors du traitement")
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -426,9 +436,8 @@ class Incident(models.Model):
     
     statut = models.CharField(max_length=20, choices=[ ('SIGNALE', 'Signalé'), ('EN_COURS', 'En cours de traitement'),
         ('RESOLU', 'Résolu'),('CLOS', 'Clôturé'),] , default='SIGNALE')
-    
-    signale_par = models.CharField(max_length=100, help_text="Nom de la personne ayant signalé")
-    agent_responsable = models.CharField(max_length=100, blank=True, null=True, help_text="Agent en charge du traitement")
+    signale_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='incidents_signales',verbose_name="Signalé par (agent)")
+    agent_responsable = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='incidents_geres',verbose_name="Agent responsable")
     actions_entreprises = models.TextField(blank=True, null=True, help_text="Actions effectuées pour résoudre l'incident")
     date_resolution = models.DateTimeField(blank=True, null=True)
     cout_estime = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Coût estimé en DA")
@@ -477,20 +486,17 @@ class Incident(models.Model):
         
         super().save(*args, **kwargs)
         
-        # Traitement post-sauvegarde
-        if is_new:
-            IncidentService.traiter_nouvel_incident(self)
 
     def clean(self):
-        if self.expedition and self.tournee:
-         raise ValidationError(
-            "Un incident ne peut pas être lié à une expédition ET une tournée."
-        )
-
-        if not self.expedition and not self.tournee:
-         raise ValidationError(
-            "Un incident doit être lié soit à une expédition soit à une tournée."
-        )
+    # Vérifier qu'il y a au moins une expédition
+        if not self.expedition:
+            raise ValidationError(
+                "Un incident doit obligatoirement être lié à une expédition."
+            )
+        
+        # ✅ LOGIQUE CORRECTE : Auto-remplir la tournée si l'expédition en a une
+        if self.expedition and self.expedition.tournee:
+            self.tournee = self.expedition.tournee
 
 class HistoriqueIncident(models.Model):
     
@@ -548,7 +554,8 @@ class Reclamation(models.Model):
         ('EN_ATTENTE_CLIENT', 'En attente de réponse du client'),('RESOLUE', 'Résolue'),
         ('CLOSE', 'Clôturée'),('ANNULEE', 'Annulée'),], default='OUVERTE')
     
-    agent_responsable = models.CharField(max_length=100, blank=True, null=True, help_text="Agent assigné")
+    agent_responsable = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='reclamations_assignees',verbose_name="Agent responsable")
+    signale_par = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='reclamations_signales',verbose_name="Signalé par (agent)")
     date_assignation = models.DateTimeField(blank=True, null=True)
     reponse_agent = models.TextField(blank=True, null=True, help_text="Réponse de l'agent")
     solution_proposee = models.TextField(blank=True, null=True)

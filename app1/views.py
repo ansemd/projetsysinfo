@@ -4,16 +4,16 @@ from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Sum, Prefetch
 from django.urls import reverse
-from .models import Client, Chauffeur, Vehicule, TypeService, Facture, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation, Notification,AgentUtilisateur
-from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, IncidentResolutionForm, AssignationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm, LoginForm, AjouterAgentForm, ChangerMotDePasseForm
-from .utils import generer_pdf_fiche, generer_pdf_liste, IncidentService, ReclamationService
+from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, HistoriqueIncident, Reclamation, HistoriqueReclamation, Notification, AgentUtilisateur
+from .forms import ClientForm, ChauffeurForm, VehiculeForm, TypeServiceForm, DestinationForm, TarificationForm, TourneeForm, ExpeditionForm, FactureForm, PaiementForm, IncidentForm, IncidentModificationForm, ReclamationForm, ReclamationModificationForm, ReclamationReponseForm, ReclamationResolutionForm, LoginForm, ChangerMotDePasseForm
+from .utils import generer_pdf_fiche, generer_pdf_liste, IncidentService, ReclamationService, ExpeditionService
 from django.utils import timezone
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 
 
 
-
+@login_required
 def liste_clients(request):
     """
     Page principale : Liste de tous les clients avec recherche et statistiques
@@ -46,12 +46,14 @@ def liste_clients(request):
         'stats': stats,
     })
 
+@login_required
 def exporter_clients_pdf(request):
     clients = Client.objects.all()
     headers = ['Id', 'Nom', 'Prénom', 'Téléphone', 'Solde']
     data = [[f"CL-{c.id:03d}", c.nom, c.prenom, c.telephone, c.solde] for c in clients]
     return generer_pdf_liste("Liste Clients", headers, data, "clients")
 
+@login_required
 def detail_client(request, client_id):
     """
     Affiche tous les détails d'un client + ses expéditions
@@ -80,6 +82,7 @@ def detail_client(request, client_id):
         'factures': factures,
     })
 
+@login_required
 def exporter_client_detail_pdf(request, client_id):
     client = get_object_or_404(Client, id=client_id)
     
@@ -102,7 +105,13 @@ def exporter_client_detail_pdf(request, client_id):
                 ['Ville', client.ville or 'Non renseignée'],
                 ['Wilaya', client.wilaya or 'Non renseignée'],
                 ['Solde', f"{client.solde:,.2f} DA"],
+                ['Créé par', 
+                 f"{client.cree_par.first_name} {client.cree_par.last_name} (@{client.cree_par.username})" 
+                 if client.cree_par else 'Non renseigné'],
                 ['Date d\'inscription', client.date_inscription.strftime('%d/%m/%Y %H:%M')],
+                ['Modifié par', 
+                 f"{client.modifie_par.first_name} {client.modifie_par.last_name} (@{client.modifie_par.username})" 
+                 if client.modifie_par else 'Jamais modifié'],
                 ['Dernière modification', client.date_modification.strftime('%d/%m/%Y %H:%M')],
                 ['Remarques', client.remarques or 'Aucune remarque'],
             ]
@@ -153,6 +162,7 @@ def exporter_client_detail_pdf(request, client_id):
         remarques=None  # Déjà dans la table
     )
 
+@login_required
 def creer_client(request):
     """
     Formulaire de création d'un nouveau client
@@ -160,9 +170,11 @@ def creer_client(request):
     if request.method == 'POST':
         form = ClientForm(request.POST)
         if form.is_valid():
-            client = form.save()
-            messages.success(request, f'Client {client.prenom} {client.nom} créé avec succès!')
-            return redirect('detail_client', client_id=client.id)
+            client = form.save(commit=False)
+            client.cree_par = request.user  # ✅ AJOUTE L'AGENT QUI CRÉE
+            client.save()
+            messages.success(request, f"✅ Client {client.prenom} {client.nom} créé par {request.user.username}")
+            return redirect('liste_clients')
         else:
             # Les erreurs sont automatiquement passées au template via form.errors
             messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
@@ -171,6 +183,7 @@ def creer_client(request):
     
     return render(request, 'clients/creer.html', {'form': form})
 
+@login_required
 def modifier_client(request, client_id):
     """
     Formulaire de modification d'un client existant
@@ -180,8 +193,10 @@ def modifier_client(request, client_id):
     if request.method == 'POST':
         form = ClientForm(request.POST, instance=client)
         if form.is_valid():
+            client = form.save(commit=False)
+            client.modifie_par = request.user
             client = form.save()
-            messages.success(request, f'Client {client.prenom} {client.nom} modifié avec succès!')
+            messages.success(request, f'Client {client.prenom} {client.nom} modifié par {request.user.username}!')
             return redirect('detail_client', client_id=client.id)
         else:
             messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
@@ -193,6 +208,7 @@ def modifier_client(request, client_id):
         'client': client,
     })
 
+@login_required
 def supprimer_client(request, client_id):
     """
     Suppression d'un client (avec confirmation)
@@ -215,6 +231,7 @@ def supprimer_client(request, client_id):
         'client': client,
     })
 
+@login_required
 def liste_chauffeurs(request):
     """
     Page principale : Liste de tous les chauffeurs avec recherche et filtrage par statut
@@ -267,6 +284,7 @@ def liste_chauffeurs(request):
         'stats': stats,
     })
 
+@login_required
 def exporter_chauffeurs_pdf(request):
     """
     Export PDF de la liste complète des chauffeurs
@@ -293,6 +311,7 @@ def exporter_chauffeurs_pdf(request):
         nom_fichier_base="chauffeurs"
     )
 
+@login_required
 def modifier_statut_chauffeur(request, chauffeur_id):
     """
     Modifie uniquement le statut d'un chauffeur (appelé depuis la liste)
@@ -310,6 +329,7 @@ def modifier_statut_chauffeur(request, chauffeur_id):
     
     return redirect('liste_chauffeurs')
 
+@login_required
 def detail_chauffeur(request, chauffeur_id):
     """
     Affiche tous les détails d'un chauffeur + sa tournée actuelle (EN_COURS ou PREVUE)
@@ -336,6 +356,7 @@ def detail_chauffeur(request, chauffeur_id):
         'stats_chauffeur': stats_chauffeur,
     })
 
+@login_required
 def exporter_chauffeur_detail_pdf(request, chauffeur_id):
     """
     Export PDF de la fiche détaillée d'un chauffeur
@@ -363,7 +384,13 @@ def exporter_chauffeur_detail_pdf(request, chauffeur_id):
                 ['Date d\'embauche', chauffeur.date_embauche.strftime('%d/%m/%Y') if chauffeur.date_embauche else 'Non renseignée'],
                 ['Salaire', f"{chauffeur.salaire:,.2f} DA" if chauffeur.salaire else 'Non renseigné'],
                 ['Statut', chauffeur.get_statut_disponibilite_display()],
+                ['Créé par', 
+                f"{chauffeur.cree_par.first_name} {chauffeur.cree_par.last_name} (@{chauffeur.cree_par.username})" 
+                if chauffeur.cree_par else 'Non renseigné'],
                 ['Date de création', chauffeur.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Modifié par', 
+                f"{chauffeur.modifie_par.first_name} {chauffeur.modifie_par.last_name} (@{chauffeur.modifie_par.username})" 
+                if chauffeur.modifie_par else 'Jamais modifié'],
                 ['Dernière modification', chauffeur.date_modification.strftime('%d/%m/%Y %H:%M')],
                 ['Remarques', chauffeur.remarques or 'Aucune remarque'],
             ]
@@ -396,6 +423,7 @@ def exporter_chauffeur_detail_pdf(request, chauffeur_id):
         remarques=None  # Déjà dans la table
     )
 
+@login_required
 def creer_chauffeur(request):
     """
     Formulaire de création d'un nouveau chauffeur
@@ -403,8 +431,10 @@ def creer_chauffeur(request):
     if request.method == 'POST':
         form = ChauffeurForm(request.POST)
         if form.is_valid():
-            chauffeur = form.save()
-            messages.success(request, f'Chauffeur {chauffeur.prenom} {chauffeur.nom} créé avec succès!')
+            chauffeur = form.save(commit=False)
+            chauffeur.cree_par = request.user  
+            chauffeur.save()
+            messages.success(request, f"✅ Chauffeur {chauffeur.prenom} {chauffeur.nom} créé par {request.user.username}")
             return redirect('detail_chauffeur', chauffeur_id=chauffeur.id)
         else:
             # Les erreurs sont automatiquement passées au template via form.errors
@@ -414,6 +444,7 @@ def creer_chauffeur(request):
     
     return render(request, 'chauffeurs/creer.html', {'form': form})
 
+@login_required
 def modifier_chauffeur(request, chauffeur_id):
     """
     Formulaire de modification d'un chauffeur existant
@@ -423,8 +454,10 @@ def modifier_chauffeur(request, chauffeur_id):
     if request.method == 'POST':
         form = ChauffeurForm(request.POST, instance=chauffeur)
         if form.is_valid():
+            chauffeur = form.save(commit=False)
+            chauffeur.modifie_par = request.user
             chauffeur = form.save()
-            messages.success(request, f'Chauffeur {chauffeur.prenom} {chauffeur.nom} modifié avec succès!')
+            messages.success(request, f'Chauffeur {chauffeur.prenom} {chauffeur.nom} modifié par {request.user.username}')
             return redirect('detail_chauffeur', chauffeur_id=chauffeur.id)
         else:
             messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
@@ -436,6 +469,7 @@ def modifier_chauffeur(request, chauffeur_id):
         'chauffeur': chauffeur,
     })
 
+@login_required
 def supprimer_chauffeur(request, chauffeur_id):
     """
     Suppression d'un chauffeur (avec confirmation)
@@ -457,6 +491,7 @@ def supprimer_chauffeur(request, chauffeur_id):
         'chauffeur': chauffeur,
     })
 
+@login_required
 def liste_vehicules(request):
     """
     Page principale : Liste de tous les véhicules avec recherche et filtrage par statut
@@ -506,6 +541,7 @@ def liste_vehicules(request):
         'stats': stats,
     })
 
+@login_required
 def exporter_vehicules_pdf(request):
     """
     Export PDF de la liste complète des véhicules
@@ -532,6 +568,7 @@ def exporter_vehicules_pdf(request):
         nom_fichier_base="vehicules"
     )
 
+@login_required
 def modifier_statut_vehicule(request, vehicule_id):
     """
     Modifie uniquement le statut d'un véhicule (appelé depuis la liste)
@@ -549,6 +586,7 @@ def modifier_statut_vehicule(request, vehicule_id):
     
     return redirect('liste_vehicules')
 
+@login_required
 def detail_vehicule(request, vehicule_id):
     """
     Affiche tous les détails d'un véhicule + sa tournée actuelle (EN_COURS ou PREVUE)
@@ -575,6 +613,7 @@ def detail_vehicule(request, vehicule_id):
         'stats_vehicule': stats_vehicule,
     })
 
+@login_required
 def exporter_vehicule_detail_pdf(request, vehicule_id):
     """
     Export PDF de la fiche détaillée d'un véhicule
@@ -603,7 +642,13 @@ def exporter_vehicule_detail_pdf(request, vehicule_id):
                 ['Kilométrage', f"{vehicule.kilometrage} km"],
                 ['Dernière révision', vehicule.date_derniere_revision.strftime('%d/%m/%Y') if vehicule.date_derniere_revision else 'Aucune révision'],
                 ['Prochaine révision', vehicule.date_prochaine_revision.strftime('%d/%m/%Y') if vehicule.date_prochaine_revision else 'Non calculée'],
+                ['Créé par', 
+                f"{vehicule.cree_par.first_name} {vehicule.cree_par.last_name} (@{vehicule.cree_par.username})" 
+                if vehicule.cree_par else 'Non renseigné'],
                 ['Date de création', vehicule.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Modifié par', 
+                f"{vehicule.modifie_par.first_name} {vehicule.modifie_par.last_name} (@{vehicule.modifie_par.username})" 
+                if vehicule.modifie_par else 'Jamais modifié'],
                 ['Dernière modification', vehicule.date_modification.strftime('%d/%m/%Y %H:%M')],
                 ['Remarques', vehicule.remarques or 'Aucune remarque'],
             ]
@@ -636,13 +681,15 @@ def exporter_vehicule_detail_pdf(request, vehicule_id):
         remarques=None  # Déjà dans la table
     )
 
+@login_required
 def creer_vehicule(request):
     if request.method == 'POST':
         form = VehiculeForm(request.POST)
         if form.is_valid():
-            vehicule = form.save()  
-            
-            messages.success(request, f'Véhicule {vehicule.numero_immatriculation} créé avec succès!')
+            vehicule = form.save(commit=False)
+            vehicule.cree_par = request.user  # ✅ AJOUTE L'AGENT QUI CRÉE
+            vehicule.save()
+            messages.success(request, f'Véhicule {vehicule.numero_immatriculation} créé par {request.user.username}')
             return redirect('detail_vehicule', vehicule_id=vehicule.id)
         else:
             messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
@@ -651,15 +698,18 @@ def creer_vehicule(request):
     
     return render(request, 'vehicules/creer.html', {'form': form})
 
+@login_required
 def modifier_vehicule(request, vehicule_id):
     vehicule = get_object_or_404(Vehicule, id=vehicule_id)
     
     if request.method == 'POST':
         form = VehiculeForm(request.POST, instance=vehicule)
         if form.is_valid():
-            vehicule = form.save() 
+            vehicule = form.save(commit=False)
+            vehicule.modifie_par = request.user
+            vehicule = form.save()
             
-            messages.success(request, f'Véhicule {vehicule.numero_immatriculation} modifié avec succès!')
+            messages.success(request, f'Véhicule {vehicule.numero_immatriculation} modifié par {request.user.username}!')
             return redirect('detail_vehicule', vehicule_id=vehicule.id)
         else:
             messages.error(request, 'Erreur de validation. Veuillez vérifier les champs.')
@@ -671,6 +721,7 @@ def modifier_vehicule(request, vehicule_id):
         'vehicule': vehicule,
     })
 
+@login_required
 def supprimer_vehicule(request, vehicule_id):
     """
     Suppression d'un véhicule (avec confirmation)
@@ -692,6 +743,7 @@ def supprimer_vehicule(request, vehicule_id):
         'vehicule': vehicule,
     })
 
+@login_required
 def liste_typeservices(request):
     """
     Page principale : Liste de tous les types de service
@@ -702,6 +754,7 @@ def liste_typeservices(request):
         'typeservices': typeservices,
     })
 
+@login_required
 def exporter_typeservices_pdf(request):
     """
     Export PDF de la liste complète des types de service
@@ -727,6 +780,7 @@ def exporter_typeservices_pdf(request):
         nom_fichier_base="types_service"
     )
 
+@login_required
 def detail_typeservice(request, typeservice_id):
     """
     Affiche tous les détails d'un type de service
@@ -742,6 +796,7 @@ def detail_typeservice(request, typeservice_id):
         'nb_expeditions': nb_expeditions,
     })
 
+@login_required
 def exporter_typeservice_detail_pdf(request, typeservice_id):
     """
     Export PDF de la fiche détaillée d'un type de service
@@ -778,6 +833,7 @@ def exporter_typeservice_detail_pdf(request, typeservice_id):
         remarques=None
     )
 
+@login_required
 def creer_typeservice(request):
     """
     Formulaire de création d'un nouveau type de service
@@ -795,6 +851,7 @@ def creer_typeservice(request):
     
     return render(request, 'typeservices/creer.html', {'form': form})
 
+@login_required
 def modifier_typeservice(request, typeservice_id):
     """
     Formulaire de modification d'un type de service existant
@@ -817,6 +874,7 @@ def modifier_typeservice(request, typeservice_id):
         'typeservice': typeservice,
     })
 
+@login_required
 def supprimer_typeservice(request, typeservice_id):
     """
     Suppression d'un type de service (avec validation)
@@ -858,6 +916,7 @@ def supprimer_typeservice(request, typeservice_id):
         'nb_tarifications': nb_tarifications,
     })
 
+@login_required
 def liste_destinations(request):
     """
     Liste de toutes les destinations avec recherche
@@ -903,6 +962,7 @@ def liste_destinations(request):
         'stats': stats,
     })
 
+@login_required
 def exporter_destinations_pdf(request):
     """
     Export PDF de la liste complète des destinations
@@ -929,6 +989,7 @@ def exporter_destinations_pdf(request):
         nom_fichier_base="destinations"
     )
 
+@login_required
 def detail_destination(request, destination_id):
     """
     Détails d'une destination + statistiques
@@ -945,6 +1006,7 @@ def detail_destination(request, destination_id):
         'nb_expeditions': nb_expeditions,
     })
 
+@login_required
 def exporter_destination_detail_pdf(request, destination_id):
     """
     Export PDF de la fiche détaillée d'une destination
@@ -990,6 +1052,7 @@ def exporter_destination_detail_pdf(request, destination_id):
         remarques=None
     )
 
+@login_required
 def creer_destination(request):
     """
     Créer une nouvelle destination
@@ -1007,6 +1070,7 @@ def creer_destination(request):
     
     return render(request, 'destinations/creer.html', {'form': form})
 
+@login_required
 def modifier_destination(request, destination_id):
     """
     Modifier une destination existante
@@ -1029,6 +1093,7 @@ def modifier_destination(request, destination_id):
         'destination': destination,
     })
 
+@login_required
 def supprimer_destination(request, destination_id):
     """
     Supprimer une destination (avec validation)
@@ -1065,6 +1130,7 @@ def supprimer_destination(request, destination_id):
         'nb_expeditions': nb_expeditions,
     })
 
+@login_required
 def liste_tarifications(request):
     """
     Liste de toutes les tarifications avec recherche et filtres
@@ -1115,6 +1181,7 @@ def liste_tarifications(request):
         'stats': stats,
     })
 
+@login_required
 def exporter_tarifications_pdf(request):
     """
     Export PDF de la liste complète des tarifications
@@ -1140,6 +1207,7 @@ def exporter_tarifications_pdf(request):
         nom_fichier_base="tarifications"
     )
 
+@login_required
 def detail_tarification(request, tarification_id):
     """
     Détails d'une tarification + statistiques
@@ -1156,6 +1224,7 @@ def detail_tarification(request, tarification_id):
         'nb_expeditions': nb_expeditions,
     })
 
+@login_required
 def exporter_tarification_detail_pdf(request, tarification_id):
     """
     Export PDF de la fiche détaillée d'une tarification
@@ -1196,6 +1265,7 @@ def exporter_tarification_detail_pdf(request, tarification_id):
         remarques=None
     )
 
+@login_required
 def creer_tarification(request):
     """
     Créer une nouvelle tarification
@@ -1213,6 +1283,7 @@ def creer_tarification(request):
     
     return render(request, 'tarifications/creer.html', {'form': form})
 
+@login_required
 def modifier_tarification(request, tarification_id):
     """
     Modifier une tarification existante
@@ -1235,6 +1306,7 @@ def modifier_tarification(request, tarification_id):
         'tarification': tarification,
     })
 
+@login_required
 def supprimer_tarification(request, tarification_id):
     """
     Supprimer une tarification (avec validation)
@@ -1265,6 +1337,7 @@ def supprimer_tarification(request, tarification_id):
         'nb_expeditions': nb_expeditions,
     })
 
+@login_required
 def liste_tournees(request):
     """
     Liste des tournées avec recherche, filtres et statistiques
@@ -1324,6 +1397,7 @@ def liste_tournees(request):
         'zones': zones,
     })
 
+@login_required
 def exporter_tournees_pdf(request):
     """
     Exporte la liste de toutes les tournées en PDF
@@ -1346,6 +1420,7 @@ def exporter_tournees_pdf(request):
     
     return generer_pdf_liste("Liste des Tournées", headers, data, "tournees")
 
+@login_required
 def modifier_statut_tournee(request, tournee_id):
     """
     Modifie le statut d'une tournée
@@ -1375,6 +1450,7 @@ def modifier_statut_tournee(request, tournee_id):
     
     return redirect('liste_tournees')
 
+@login_required
 def detail_tournee(request, tournee_id):
     """
     Détails d'une tournée + liste des expéditions affectées
@@ -1401,6 +1477,7 @@ def detail_tournee(request, tournee_id):
         'stats_expeditions': stats_expeditions,
     })
 
+@login_required
 def exporter_tournee_detail_pdf(request, tournee_id):
     """
     Exporte les détails d'une tournée en PDF
@@ -1433,7 +1510,15 @@ def exporter_tournee_detail_pdf(request, tournee_id):
                 ['Kilométrage arrivée', f"{tournee.kilometrage_arrivee} km" if tournee.kilometrage_arrivee else 'Non enregistré'],
                 ['Kilométrage parcouru', f"{tournee.kilometrage_parcouru} km" if tournee.kilometrage_parcouru else 'Non calculé'],
                 ['Consommation carburant', f"{tournee.consommation_carburant:.2f} L" if tournee.consommation_carburant else 'Non calculée'],
+                ['Créé par', 
+                f"{tournee.cree_par.first_name} {tournee.cree_par.last_name} (@{tournee.cree_par.username})" 
+                if tournee.cree_par else 'Non renseigné'],
                 ['Date de création', tournee.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Modifié par', 
+                f"{tournee.modifie_par.first_name} {tournee.modifie_par.last_name} (@{tournee.modifie_par.username})" 
+                if tournee.modifie_par else 'Jamais modifié'],
+                ['Date de modification', 
+                tournee.date_modification.strftime('%d/%m/%Y à %H:%M') if tournee.modifie_par else '-'],
                 ['Remarques', tournee.remarques or 'Aucune remarque'],
             ]
         }
@@ -1467,6 +1552,7 @@ def exporter_tournee_detail_pdf(request, tournee_id):
         remarques=None  # Déjà dans la table
     )
 
+@login_required
 def creer_tournee(request):
     """
     Création d'une tournée manuelle
@@ -1478,9 +1564,11 @@ def creer_tournee(request):
             try:
                 # ✅ Pas de calcul de date_retour_prevue ici !
                 # C'est déjà géré dans utils.py TourneeService.traiter_tournee()
-                tournee = form.save()
+                tournee = form.save(commit=False)
+                tournee.cree_par = request.user  
+                tournee.save()
                 
-                messages.success(request, f"Tournée #{tournee.id} créée avec succès !")
+                messages.success(request, f"Tournée #{tournee.id} créé par {request.user.username} !")
                 return redirect('detail_tournee', tournee_id=tournee.id)
             
             except Exception as e:
@@ -1492,6 +1580,7 @@ def creer_tournee(request):
         'form': form,
     })
 
+@login_required
 def modifier_tournee(request, tournee_id):
     """
     Modification d'une tournée (PREVUE uniquement)
@@ -1512,9 +1601,11 @@ def modifier_tournee(request, tournee_id):
         if form.is_valid():
             try:
                 # ✅ Pas de calcul ici non plus !
+                tournee = form.save(commit=False)
+                tournee.modifie_par = request.user
                 tournee = form.save()
                 
-                messages.success(request, f"Tournée #{tournee.id} modifiée avec succès !")
+                messages.success(request, f"Tournée #{tournee.id} modifiée par {request.user.username} !")
                 return redirect('detail_tournee', tournee_id=tournee.id)
             
             except Exception as e:
@@ -1527,6 +1618,7 @@ def modifier_tournee(request, tournee_id):
         'tournee': tournee,
     })
 
+@login_required
 def supprimer_tournee(request, tournee_id):
     """
     Suppression d'une tournée (PREVUE uniquement)
@@ -1550,6 +1642,7 @@ def supprimer_tournee(request, tournee_id):
         'nb_expeditions': nb_expeditions,
     })
 
+@login_required
 def terminer_tournee(request, tournee_id):
     """
     Formulaire pour renseigner le kilométrage d'arrivée
@@ -1636,6 +1729,7 @@ def terminer_tournee(request, tournee_id):
         'tournee': tournee,
     })
 
+@login_required
 def liste_expeditions(request):
     """
     Liste des expéditions avec recherche et filtres
@@ -1697,6 +1791,7 @@ def liste_expeditions(request):
         'types': types,
     })
 
+@login_required
 def exporter_expeditions_pdf(request):
     """Export PDF liste expéditions"""
     expeditions = Expedition.objects.all().select_related(
@@ -1718,6 +1813,7 @@ def exporter_expeditions_pdf(request):
     
     return generer_pdf_liste("Liste des Expéditions", headers, data, "expeditions")
 
+@login_required
 def detail_expedition(request, expedition_id):
     """
     Détails d'une expédition + table tracking détaillée dessous
@@ -1737,6 +1833,7 @@ def detail_expedition(request, expedition_id):
         'trackings': trackings,
     })
 
+@login_required
 def exporter_expedition_detail_pdf(request, expedition_id):
     """Export PDF détail expédition avec tracking"""
     expedition = get_object_or_404(
@@ -1767,7 +1864,15 @@ def exporter_expedition_detail_pdf(request, expedition_id):
                 ['Tournée', expedition.tournee.get_numero_tournee() if expedition.tournee else 'Aucune tournée affectée'],
                 ['Date livraison prévue', expedition.date_livraison_prevue.strftime('%d/%m/%Y') if expedition.date_livraison_prevue else 'Non calculée'],
                 ['Date livraison réelle', expedition.date_livraison_reelle.strftime('%d/%m/%Y') if expedition.date_livraison_reelle else '-'],
+                ['Créé par', 
+                f"{expedition.cree_par.first_name} {expedition.cree_par.last_name} (@{expedition.cree_par.username})" 
+                if expedition.cree_par else 'Non renseigné'],
                 ['Date création', expedition.date_creation.strftime('%d/%m/%Y %H:%M')],
+                ['Modifié par', 
+                f"{expedition.modifie_par.first_name} {expedition.modifie_par.last_name} (@{expedition.modifie_par.username})" 
+                if expedition.modifie_par else 'Jamais modifié'],
+                ['Date de modification', 
+                expedition.date_modification.strftime('%d/%m/%Y à %H:%M') if expedition.modifie_par else '-'],
                 ['Description', expedition.description or 'Aucune description'],
                 ['Remarques', expedition.remarques or 'Aucune remarque'],
             ]
@@ -1796,6 +1901,7 @@ def exporter_expedition_detail_pdf(request, expedition_id):
         remarques=None  # Déjà dans la table
     )
 
+@login_required
 def creer_expedition(request):
     if request.method == 'POST':
         form = ExpeditionForm(request.POST)
@@ -1803,12 +1909,25 @@ def creer_expedition(request):
         if form.is_valid():
             try:
                 # Sauvegarder l'expédition
-                expedition = form.save()
-                
-                messages.success(
-                    request, 
-                    f"✅ Expédition {expedition.get_numero_expedition()} créée avec succès ! "
+                expedition = form.save(commit=False)
+                expedition.cree_par = request.user  
+                expedition.save()
+
+                ExpeditionService.calculer_montant(expedition)
+
+                try:
+                    ExpeditionService.affecter_tournee_intelligente(expedition)
+                except ValidationError as e:
+                    # Pas de chauffeur/véhicule dispo → Expédition créée sans tournée
+                    messages.warning(request, str(e))
+
+                from .utils import FacturationService
+                facture = FacturationService.gerer_facture_expedition(
+                    expedition, 
+                    created_by=request.user  # ✅ PASSER L'AGENT
                 )
+                
+                messages.success(request, f"✅ Expédition {expedition.get_numero_expedition()} créée par {request.user.username} ! ")
                 return redirect('detail_expedition', expedition_id=expedition.id)
             
             except Exception as e:
@@ -1820,6 +1939,7 @@ def creer_expedition(request):
         'form': form,
     })
 
+@login_required
 def modifier_expedition(request, expedition_id):
     """
     Modification d'une expédition (EN_ATTENTE uniquement)
@@ -1840,8 +1960,10 @@ def modifier_expedition(request, expedition_id):
         
         if form.is_valid():
             try:
+                expedition = form.save(commit=False)
+                expedition.modifie_par = request.user
                 expedition = form.save()
-                messages.success(request, f"Expédition {expedition.get_numero_expedition()} modifiée avec succès !")
+                messages.success(request, f"Expédition {expedition.get_numero_expedition()} modifiée par {request.user.username} !")
                 return redirect('detail_expedition', expedition_id=expedition.id)
             
             except Exception as e:
@@ -1854,6 +1976,7 @@ def modifier_expedition(request, expedition_id):
         'expedition': expedition,
     })
 
+@login_required
 def supprimer_expedition(request, expedition_id):
     """
     Suppression d'une expédition
@@ -1887,6 +2010,7 @@ def supprimer_expedition(request, expedition_id):
         'expedition': expedition,
     })
 
+@login_required
 def liste_trackings(request):
     """
     Vue globale : Liste de TOUTES les expéditions avec :
@@ -1931,6 +2055,7 @@ def liste_trackings(request):
         'expeditions_data': expeditions_data,
     })
 
+@login_required
 def detail_tracking(request, expedition_id):
     """
     Redirige vers la page de détails de l'expédition
@@ -1938,6 +2063,7 @@ def detail_tracking(request, expedition_id):
     """
     return redirect('detail_expedition', expedition_id=expedition_id)
 
+@login_required
 def liste_factures(request):
     """
     Affiche la liste de toutes les factures
@@ -1992,6 +2118,7 @@ def liste_factures(request):
         'statuts': statuts,
     })
 
+@login_required
 def exporter_factures_pdf(request):
     """
     Génère un PDF avec la liste de toutes les factures
@@ -2016,6 +2143,7 @@ def exporter_factures_pdf(request):
     
     return generer_pdf_liste("Liste des Factures", headers, data, "factures")
 
+@login_required
 def detail_facture(request, facture_id):
     """
     Affiche les détails d'une facture
@@ -2061,6 +2189,7 @@ def detail_facture(request, facture_id):
         'peut_ajouter_paiement': peut_ajouter_paiement,  # Pour afficher ou cacher le bouton
     })
 
+@login_required
 def exporter_facture_detail_pdf(request, facture_id):
     """
     Génère un PDF détaillé d'une facture
@@ -2134,6 +2263,7 @@ def exporter_facture_detail_pdf(request, facture_id):
         remarques=None
     )
 
+@login_required
 def modifier_facture(request, facture_id):
     """
     Permet de modifier une facture
@@ -2159,6 +2289,7 @@ def modifier_facture(request, facture_id):
         'facture': facture,
     })
 
+@login_required
 def supprimer_facture(request, facture_id):
     """
     Supprime une facture
@@ -2183,6 +2314,7 @@ def supprimer_facture(request, facture_id):
         'nb_paiements': nb_paiements,
     })
 
+@login_required
 def liste_paiements(request):
     """
     Affiche la liste de tous les paiements
@@ -2235,6 +2367,7 @@ def liste_paiements(request):
         'modes': modes,
     })
 
+@login_required
 def exporter_paiements_pdf(request):
     """
     Génère un PDF avec la liste de tous les paiements
@@ -2258,6 +2391,7 @@ def exporter_paiements_pdf(request):
     
     return generer_pdf_liste("Liste des Paiements", headers, data, "paiements")
 
+@login_required
 def detail_paiement(request, paiement_id):
     """
     Affiche les détails d'un paiement
@@ -2272,6 +2406,7 @@ def detail_paiement(request, paiement_id):
         'paiement': paiement,
     })
 
+@login_required
 def exporter_paiement_detail_pdf(request, paiement_id):
     """
     Génère un PDF détaillé d'un paiement
@@ -2295,6 +2430,10 @@ def exporter_paiement_detail_pdf(request, paiement_id):
                 ['Mode', paiement.get_mode_paiement_display()],
                 ['Date', paiement.date_paiement.strftime('%d/%m/%Y')],
                 ['Référence', paiement.reference_transaction or 'Non renseignée'],
+                ['Enregistré par', 
+                f"{paiement.cree_par.first_name} {paiement.cree_par.last_name} (@{paiement.cree_par.username})" 
+                if paiement.cree_par else 'Non renseigné'],
+                ['Date d\'enregistrement', paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')],
                 ['Remarques', paiement.remarques or 'Aucune'],
             ]
         },
@@ -2316,61 +2455,46 @@ def exporter_paiement_detail_pdf(request, paiement_id):
         remarques=None
     )
 
+@login_required
 def creer_paiement(request, facture_id=None):
     """
     Enregistre un nouveau paiement
-    
-    2 MODES D'UTILISATION :
-    
-    1. DEPUIS UNE FACTURE (facture_id fourni) :
-       - L'agent clique "Ajouter paiement" depuis le détail d'une facture
-       - Le formulaire est SIMPLIFIÉ : facture et client cachés (pré-remplis)
-       - Après validation, retour vers le détail de la facture
-    
-    2. MODE NORMAL (facture_id = None) :
-       - L'agent accède directement à "Créer un paiement"
-       - Le formulaire est COMPLET : il choisit la facture dans une liste
-       - Seules les factures IMPAYEE/PARTIELLEMENT_PAYEE sont proposées
-       - Après validation, retour vers le détail du paiement
     """
-    # Déterminer si on vient d'une facture
     depuis_facture = facture_id is not None
     facture = None
     
-    # ========== SI DEPUIS UNE FACTURE ==========
     if depuis_facture:
         facture = get_object_or_404(Facture, id=facture_id)
         
-        # Vérifier qu'on peut encore payer cette facture
         if facture.statut in ['PAYEE', 'ANNULEE']:
             messages.error(request, f"Impossible : facture {facture.get_statut_display()}")
             return redirect('detail_facture', facture_id=facture_id)
     
-    # ========== TRAITEMENT DU FORMULAIRE ==========
     if request.method == 'POST':
-        # Passer les options spéciales au formulaire
         form = PaiementForm(
             request.POST,
-            depuis_facture=depuis_facture,  # Pour cacher les champs
-            facture_id=facture_id           # Pour pré-remplir
+            depuis_facture=depuis_facture,
+            facture_id=facture_id
         )
         
         if form.is_valid():
             try:
-                paiement = form.save()
-                messages.success(request, f"Paiement de {paiement.montant_paye:,.2f} DA enregistré !")
+                paiement = form.save(commit=False)
+                paiement.cree_par = request.user  # ✅ AJOUTE L'AGENT QUI CRÉE
+                paiement.save()
                 
-                # ========== REDIRECTION SELON ORIGINE ==========
+                messages.success(
+                    request,
+                    f"✅ Paiement de {paiement.montant_paye:,.2f} DA enregistré par {request.user.username} !"
+                )
+                
                 if depuis_facture:
-                    # Retour vers la facture
                     return redirect('detail_facture', facture_id=facture_id)
                 else:
-                    # Retour vers le détail du paiement
                     return redirect('detail_paiement', paiement_id=paiement.id)
             except Exception as e:
-                messages.error(request, f"Erreur : {str(e)}")
+                messages.error(request, f"❌ Erreur : {str(e)}")
     else:
-        # Affichage du formulaire vide
         form = PaiementForm(
             depuis_facture=depuis_facture,
             facture_id=facture_id
@@ -2378,10 +2502,11 @@ def creer_paiement(request, facture_id=None):
     
     return render(request, 'paiements/creer.html', {
         'form': form,
-        'depuis_facture': depuis_facture,  # Pour adapter l'affichage du template
-        'facture': facture,                # Pour afficher les infos de la facture si depuis facture
+        'depuis_facture': depuis_facture,
+        'facture': facture,
     })
 
+@login_required
 def supprimer_paiement(request, paiement_id):
     """
     Supprime un paiement
@@ -2407,6 +2532,7 @@ def supprimer_paiement(request, paiement_id):
         'paiement': paiement,
     })
 
+@login_required
 def liste_incidents(request):
     """
     Liste avec recherche et filtres
@@ -2467,6 +2593,7 @@ def liste_incidents(request):
         'stats': stats,
     })
 
+@login_required
 def detail_incident(request, incident_id):
     """
     Affiche tous les détails + historique
@@ -2484,46 +2611,116 @@ def detail_incident(request, incident_id):
         'historique': historique,
     })
 
+@login_required
 def creer_incident(request):
     """
-    Formulaire de création avec gestion emails automatiques
+    Créer un incident avec notification automatique
     """
     if request.method == 'POST':
-        form = IncidentForm(request.POST, request.FILES)
+        form = IncidentForm(request.POST, request.FILES, user=request.user)
         
         if form.is_valid():
             try:
-                # Sauvegarder l'incident
-                incident = form.save()
+                incident = form.save(commit=False)
                 
-                # ✅ Le traitement automatique se fait dans le save() du modèle
-                # qui appelle IncidentService.traiter_nouvel_incident()
-                # → Emails envoyés automatiquement !
+                # ✅ SIGNALÉ PAR = UTILISATEUR CONNECTÉ (si vide)
+                if not incident.signale_par:
+                    incident.signale_par = request.user
+
+                if incident.expedition and incident.expedition.tournee:
+                    incident.tournee = incident.expedition.tournee
                 
-                messages.success(
-                    request,
-                    f"✅ Incident {incident.numero_incident} créé avec succès ! "
-                    f"Alertes envoyées par email."
-                )
+                incident.save()
+                
+                # ========== GESTION DES NOTIFICATIONS ==========
+                
+                # CAS 1 : Agent a déjà affecté quelqu'un lors de la création
+                if incident.agent_responsable:
+                    # Créer notification pour l'agent affecté
+                    Notification.objects.create(
+                        type_notification='INCIDENT_AFFECTE',
+                        titre=f"Incident affecté - {incident.numero_incident}",
+                        message=f"Vous avez été affecté à l'incident {incident.numero_incident} par {request.user.first_name} {request.user.last_name}",
+                        incident=incident,
+                        statut='NON_LUE'
+                    )
+                    
+                    # Ajouter à l'historique
+                    HistoriqueIncident.objects.create(
+                        incident=incident,
+                        action="Création + Affectation",
+                        auteur=f"{request.user.first_name} {request.user.last_name}",
+                        details=f"Incident créé et affecté à {incident.agent_responsable.first_name} {incident.agent_responsable.last_name}",
+                        ancien_statut=None,
+                        nouveau_statut='EN_COURS'
+                    )
+                    
+                    messages.success(
+                        request,
+                        f"✅ Incident {incident.numero_incident} créé et affecté à "
+                        f"{incident.agent_responsable.first_name} {incident.agent_responsable.last_name}"
+                    )
+                
+                # CAS 2 : Pas d'affectation → Notifier l'agent responsable
+                else:
+                    # Récupérer l'agent responsable principal (is_responsable=True)
+                    from django.contrib.auth import get_user_model
+                    AgentUtilisateur = get_user_model()
+                    agent_responsable_principal = AgentUtilisateur.objects.filter(
+                        is_responsable=True
+                    ).first()
+                    
+                    if agent_responsable_principal:
+                        Notification.objects.create(
+                            type_notification='INCIDENT_CREE',
+                            titre=f"Nouvel incident - {incident.numero_incident}",
+                            message=f"Nouvel incident {incident.get_type_incident_display()} créé par {incident.signale_par.first_name} {incident.signale_par.last_name}",
+                            incident=incident,
+                            statut='NON_LUE'
+                        )
+                    
+                    # Ajouter à l'historique
+                    HistoriqueIncident.objects.create(
+                        incident=incident,
+                        action="Création",
+                        auteur=f"{request.user.first_name} {request.user.last_name}",
+                        details=f"Incident signalé - En attente d'affectation",
+                        ancien_statut=None,
+                        nouveau_statut='SIGNALE'
+                    )
+                    
+                    messages.success(
+                        request,
+                        f"✅ Incident {incident.numero_incident} créé par {request.user.username}. "
+                        f"En attente d'affectation."
+                    )
+                
                 return redirect('detail_incident', incident_id=incident.id)
                 
             except Exception as e:
                 messages.error(request, f"❌ Erreur : {str(e)}")
     else:
-        form = IncidentForm()
+        form = IncidentForm(user=request.user)
     
     return render(request, 'incidents/creer.html', {
         'form': form,
     })
 
+@login_required
 def modifier_incident(request, incident_id):
     """
     Modification d'un incident existant
     """
     incident = get_object_or_404(Incident, id=incident_id)
+    if incident.agent_responsable != request.user and not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul l'agent affecté ou le responsable principal peut modifier cet incident"
+        )
+        return redirect('detail_incident', incident_id=incident.id)
     
     if request.method == 'POST':
-        form = IncidentModificationForm(request.POST, request.FILES, instance=incident)
+        form = IncidentModificationForm(request.POST, request.FILES, instance=incident, user=request.user)
         
         if form.is_valid():
             try:
@@ -2533,78 +2730,246 @@ def modifier_incident(request, incident_id):
             except Exception as e:
                 messages.error(request, f"❌ Erreur : {str(e)}")
     else:
-        form = IncidentModificationForm(instance=incident)
+        form = IncidentModificationForm(instance=incident, user=request.user)
     
     return render(request, 'incidents/modifier.html', {
         'form': form,
         'incident': incident,
     })
 
-def assigner_incident(request, incident_id):
-    """
-    Assigner un agent à un incident
-    """
-    incident = get_object_or_404(Incident, id=incident_id)
-    
-    if request.method == 'POST':
-        form = AssignationForm(request.POST)
-        
-        if form.is_valid():
-            try:
-                agent_nom = form.cleaned_data['agent_nom']
-                
-                # Utiliser le service
-                IncidentService.assigner_agent_incident(incident, agent_nom)
-                
-                messages.success(request, f"✅ Incident assigné à {agent_nom}")
-                return redirect('detail_incident', incident_id=incident.id)
-                
-            except Exception as e:
-                messages.error(request, f"❌ Erreur : {str(e)}")
-    else:
-        form = AssignationForm()
-    
-    return render(request, 'incidents/assigner.html', {
-        'form': form,
-        'incident': incident,
-    })
-
+@login_required
 def resoudre_incident(request, incident_id):
     """
-    Marquer un incident comme résolu
+    Résoudre un incident avec traitement personnalisé selon le type
     """
+    from decimal import Decimal
+    
+    incident = get_object_or_404(Incident, id=incident_id)
+
+    if incident.agent_responsable != request.user and not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul l'agent affecté ou le responsable principal peut résoudre cet incident"
+        )
+        return redirect('detail_incident', incident_id=incident.id)
+    
+    expedition = incident.expedition
+    
+    if not expedition:
+        messages.error(request, "❌ Aucune expédition associée à cet incident")
+        return redirect('detail_incident', incident_id=incident.id)
+    
+    # ========== CALCULS POUR AFFICHAGE ==========
+    
+    # 1. Cause (auto pour RETARD, sinon manuelle)
+    cause_auto = None
+    if incident.type_incident == 'RETARD':
+        cause_auto = IncidentService.analyser_cause_retard(expedition)
+    
+    # 2. Taux et montant remboursement
+    taux = IncidentService.obtenir_taux_remboursement(incident.type_incident)
+    montant_ttc = expedition.montant_total * Decimal('1.19')
+    # ✅ CALCULER LE MONTANT AU LIEU DE LE PRENDRE DE incident.montant_rembourse
+    montant_rembourse = montant_ttc * (taux / Decimal('100.00'))
+    
+    # 3. Déterminer les options de statut selon le type
+    type_incident = incident.type_incident
+    
+    if type_incident in IncidentService.INCIDENTS_GRAVES_ANNULATION:
+        # PERTE, ENDOMMAGEMENT, ACCIDENT, PROBLEME_TECHNIQUE → ANNULE (pas de choix)
+        options_statut = [('ANNULE', 'Expédition annulée automatiquement')]
+        statut_auto = True
+    
+    elif type_incident in IncidentService.TYPES_REEXPEDITION:
+        # REFUS, ADRESSE_INCORRECTE, DESTINATAIRE_ABSENT → REENVOYE ou ANNULE
+        options_statut = [
+            ('REENVOYE', 'Réexpédier le colis (nouvelle tournée + nouvelle facture)'),
+            ('ANNULE', 'Annuler définitivement l\'expédition')
+        ]
+        statut_auto = False
+    
+    else:
+        # RETARD, AUTRE → Continue ou ANNULE
+        options_statut = [
+            ('CONTINUE', 'Expédition continue sans changement'),
+            ('ANNULE', 'Annuler l\'expédition')
+        ]
+        statut_auto = False
+    
+    # ========== TRAITEMENT POST ==========
+    
+    if request.method == 'POST':
+        try:
+            # Récupérer solution
+            solution = request.POST.get('solution', '').strip()
+            if not solution:
+                messages.error(request, "❌ La solution est obligatoire")
+                return render(request, 'incidents/resoudre.html', {
+                    'incident': incident,
+                    'expedition': expedition,
+                    'cause_auto': cause_auto,
+                    'taux': taux,
+                    'montant_rembourse': montant_rembourse,
+                    'montant_ttc': montant_ttc,
+                    'options_statut': options_statut,
+                    'statut_auto': statut_auto,
+                })
+            
+            # Récupérer cause
+            if incident.type_incident == 'RETARD':
+                cause = cause_auto  # Auto-calculée
+            else:
+                cause = request.POST.get('cause', '').strip()
+                if not cause:
+                    messages.error(request, "❌ La cause est obligatoire")
+                    return render(request, 'incidents/resoudre.html', {
+                        'incident': incident,
+                        'expedition': expedition,
+                        'cause_auto': cause_auto,
+                        'taux': taux,
+                        'montant_rembourse': montant_rembourse,
+                        'montant_ttc': montant_ttc,
+                        'options_statut': options_statut,
+                        'statut_auto': statut_auto,
+                    })
+            
+            # Récupérer statut expédition
+            if statut_auto:
+                nouveau_statut_exp = 'ANNULE'
+            else:
+                nouveau_statut_exp = request.POST.get('nouveau_statut_exp')
+                if not nouveau_statut_exp:
+                    messages.error(request, "❌ Veuillez choisir un statut pour l'expédition")
+                    return render(request, 'incidents/resoudre.html', {
+                        'incident': incident,
+                        'expedition': expedition,
+                        'cause_auto': cause_auto,
+                        'taux': taux,
+                        'montant_rembourse': montant_rembourse,
+                        'montant_ttc': montant_ttc,
+                        'options_statut': options_statut,
+                        'statut_auto': statut_auto,
+                    })
+            
+            # Préparer les données
+            donnees_resolution = {
+                'cause': cause,
+                'solution': solution,
+                'nouveau_statut_exp': nouveau_statut_exp if nouveau_statut_exp != 'CONTINUE' else None,
+            }
+            
+            # Résoudre l'incident
+            success, message = IncidentService.resoudre_incident_complet(
+                incident,
+                donnees_resolution,
+                request.user
+            )
+            
+            if success:
+                messages.success(request, f"✅ {message}")
+                # ✅ TOUJOURS REDIRIGER VERS LE DÉTAIL DE L'EXPÉDITION
+                return redirect('detail_expedition', expedition_id=expedition.id)
+            else:
+                messages.error(request, f"❌ {message}")
+        
+        except Exception as e:
+            messages.error(request, f"❌ Erreur : {str(e)}")
+    
+    # ========== RENDU ==========
+    
+    return render(request, 'incidents/resoudre.html', {
+        'incident': incident,
+        'expedition': expedition,
+        'cause_auto': cause_auto,
+        'taux': taux,
+        'montant_rembourse': montant_rembourse,
+        'montant_ttc': montant_ttc,
+        'options_statut': options_statut,
+        'statut_auto': statut_auto,
+    })
+
+@login_required
+def assigner_incident(request, incident_id):
+    """
+    Affecter un agent à un incident
+    RÉSERVÉ À L'AGENT RESPONSABLE PRINCIPAL
+    """
+    # ✅ VÉRIFICATION : Seulement l'agent responsable principal
+    if not request.user.is_responsable:
+        messages.error(request, "❌ Accès refusé : Seul l'agent responsable peut affecter des incidents")
+        return redirect('detail_incident', incident_id=incident_id)
+    
     incident = get_object_or_404(Incident, id=incident_id)
     
     if request.method == 'POST':
-        form = IncidentResolutionForm(request.POST)
+        agent_id = request.POST.get('agent_responsable')
         
-        if form.is_valid():
+        if agent_id:
             try:
-                solution = form.cleaned_data['solution']
-                agent = form.cleaned_data['agent']
+                from django.contrib.auth import get_user_model
+                AgentUtilisateur = get_user_model()
+                agent = AgentUtilisateur.objects.get(id=agent_id)
                 
-                # Utiliser le service
-                IncidentService.resoudre_incident(incident, solution, agent)
+                ancien_statut = incident.statut
                 
-                messages.success(request, f"✅ Incident {incident.numero_incident} résolu !")
+                # Affecter l'agent
+                incident.agent_responsable = agent
+                incident.statut = 'EN_COURS'
+                incident.save()
+                
+                # ✅ CRÉER NOTIFICATION POUR L'AGENT AFFECTÉ
+                Notification.objects.create(
+                    type_notification='INCIDENT_AFFECTE',
+                    titre=f"Incident affecté - {incident.numero_incident}",
+                    message=f"Vous avez été affecté à l'incident {incident.numero_incident} ({incident.get_type_incident_display()}) par {request.user.first_name} {request.user.last_name}",
+                    incident=incident,
+                    statut='NON_LUE'
+                )
+                
+                # ✅ AJOUTER À L'HISTORIQUE
+                HistoriqueIncident.objects.create(
+                    incident=incident,
+                    action="Affectation",
+                    auteur=f"{request.user.first_name} {request.user.last_name}",
+                    details=f"Incident affecté à {agent.first_name} {agent.last_name}",
+                    ancien_statut=ancien_statut,
+                    nouveau_statut='EN_COURS'
+                )
+                
+                messages.success(
+                    request,
+                    f"✅ Incident affecté à {agent.first_name} {agent.last_name}"
+                )
+                
                 return redirect('detail_incident', incident_id=incident.id)
                 
             except Exception as e:
                 messages.error(request, f"❌ Erreur : {str(e)}")
-    else:
-        form = IncidentResolutionForm()
+        else:
+            messages.error(request, "❌ Veuillez sélectionner un agent")
     
-    return render(request, 'incidents/resoudre.html', {
-        'form': form,
+    # Liste des agents
+    from django.contrib.auth import get_user_model
+    AgentUtilisateur = get_user_model()
+    agents = AgentUtilisateur.objects.all()
+    
+    return render(request, 'incidents/assigner.html', {
         'incident': incident,
+        'agents': agents,
     })
 
+@login_required
 def cloturer_incident(request, incident_id):
     """
     Clôture définitive d'un incident (doit être RESOLU avant)
     """
     incident = get_object_or_404(Incident, id=incident_id)
+    if not request.user.is_responsable:
+        messages.error(request, "❌ Accès refusé : Seul l'agent responsable peut cloturer cet incident")
+        return redirect('detail_incident', incident_id=incident_id)
     
+    incident = get_object_or_404(Incident, id=incident_id)
+
     if request.method == 'POST':
         try:
             IncidentService.cloturer_incident(incident)
@@ -2619,10 +2984,16 @@ def cloturer_incident(request, incident_id):
         'incident': incident,
     })
 
+@login_required
 def supprimer_incident(request, incident_id):
     """
     Suppression d'un incident (avec confirmation)
     """
+    incident = get_object_or_404(Incident, id=incident_id)
+    if not request.user.is_responsable:
+        messages.error(request, "❌ Accès refusé : Seul l'agent responsable peut supprimer des incidents")
+        return redirect('detail_incident', incident_id=incident_id)
+    
     incident = get_object_or_404(Incident, id=incident_id)
     
     if request.method == 'POST':
@@ -2640,6 +3011,7 @@ def supprimer_incident(request, incident_id):
         'incident': incident,
     })
 
+@login_required
 def exporter_incidents_pdf(request):
     """
     Génère un PDF avec la liste de tous les incidents
@@ -2664,6 +3036,7 @@ def exporter_incidents_pdf(request):
     
     return generer_pdf_liste("Liste des Incidents", headers, data, "incidents")
 
+@login_required
 def exporter_incident_detail_pdf(request, incident_id):
     """
     Génère un PDF détaillé d'un incident
@@ -2748,6 +3121,7 @@ def exporter_incident_detail_pdf(request, incident_id):
         remarques=incident.remarques
     )
 
+@login_required
 def liste_reclamations(request):
     """
     Liste avec recherche et filtres
@@ -2822,6 +3196,7 @@ def liste_reclamations(request):
         'stats': stats,
     })
 
+@login_required
 def detail_reclamation(request, reclamation_id):
     """
     Affiche tous les détails + historique
@@ -2839,6 +3214,7 @@ def detail_reclamation(request, reclamation_id):
         'historique': historique,
     })
 
+@login_required
 def creer_reclamation(request):
     """
     Formulaire de création avec email automatique
@@ -2850,6 +3226,11 @@ def creer_reclamation(request):
             try:
                 # Sauvegarder la réclamation
                 reclamation = form.save()
+
+                if not reclamation.signale_par:
+                    reclamation.signale_par = request.user
+
+                reclamation.save()
                 
                 # ✅ Le traitement automatique se fait dans le save() du modèle
                 # qui appelle ReclamationService.traiter_nouvelle_reclamation()
@@ -2860,6 +3241,38 @@ def creer_reclamation(request):
                     f"✅ Réclamation {reclamation.numero_reclamation} créée avec succès ! "
                     f"Email envoyé au support."
                 )
+                from django.contrib.auth import get_user_model
+                AgentUtilisateur = get_user_model()
+                agent_responsable_principal = AgentUtilisateur.objects.filter(
+                    is_responsable=True
+                ).first()
+                    
+                if agent_responsable_principal:
+                    Notification.objects.create(
+                        type_notification='RECLAMATION_CREEE',
+                        titre=f"Nouvel reclamation - {reclamation.numero_reclamation}",
+                        message=f"Nouvel reclamation {reclamation.get_type_reclamation_display()} créé par {reclamation.signale_par.first_name} {reclamation.signale_par.last_name}",
+                        reclamation=reclamation,
+                        statut='NON_LUE'
+                    )
+
+            
+                    # Ajouter à l'historique
+                    HistoriqueReclamation.objects.create(
+                        reclamation=reclamation,
+                        action="Création",
+                        auteur=f"{request.user.first_name} {request.user.last_name}",
+                        details=f"Reclamation signalé - En attente d'affectation",
+                        ancien_statut=None,
+                        nouveau_statut='SIGNALE'
+                    )
+                    
+                    messages.success(
+                        request,
+                        f"✅ Reclamation {reclamation.numero_reclamation} créé par {request.user.username}. "
+                        f"En attente d'affectation."
+                    )
+
                 return redirect('detail_reclamation', reclamation_id=reclamation.id)
                 
             except Exception as e:
@@ -2871,11 +3284,19 @@ def creer_reclamation(request):
         'form': form,
     })
 
+@login_required
 def modifier_reclamation(request, reclamation_id):
     """
     Modification d'une réclamation existante
     """
     reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    if reclamation.agent_responsable != request.user and not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul l'agent affecté ou le responsable principal peut modifier cette réclamation"
+        )
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
     
     if request.method == 'POST':
         form = ReclamationModificationForm(request.POST, instance=reclamation)
@@ -2895,35 +3316,77 @@ def modifier_reclamation(request, reclamation_id):
         'reclamation': reclamation,
     })
 
-def assigner_reclamation(request, reclamation_id):
+@login_required
+def assigner_reclamation(request,reclamation_id):
     """
-    Assigner un agent à une réclamation
+    Affecter un agent à une réclamation
+    RÉSERVÉ À L'AGENT RESPONSABLE PRINCIPAL
     """
+    # ✅ VÉRIFICATION : Seulement l'agent responsable principal
+    if not request.user.is_responsable:
+        messages.error(request, "❌ Accès refusé : Seul l'agent responsable peut affecter des réclamations")
+        return redirect('detail_reclamation', reclamation_id=reclamation_id)
+    
     reclamation = get_object_or_404(Reclamation, id=reclamation_id)
     
     if request.method == 'POST':
-        form = AssignationForm(request.POST)
+        agent_id = request.POST.get('agent_responsable')
         
-        if form.is_valid():
+        if agent_id:
             try:
-                agent_nom = form.cleaned_data['agent_nom']
+                from django.contrib.auth import get_user_model
+                AgentUtilisateur = get_user_model()
+                agent = AgentUtilisateur.objects.get(id=agent_id)
                 
-                # Utiliser le service
-                ReclamationService.assigner_agent(reclamation, agent_nom)
+                ancien_statut = reclamation.statut
                 
-                messages.success(request, f"✅ Réclamation assignée à {agent_nom}")
+                # Affecter l'agent
+                reclamation.agent_responsable = agent
+                reclamation.statut = 'EN_COURS'
+                reclamation.save()
+
+
+                # ✅ CRÉER NOTIFICATION POUR L'AGENT AFFECTÉ
+                Notification.objects.create(
+                    type_notification='RECLAMATION_AFFECTEE',
+                    titre=f"Reclamation affecté - {reclamation.numero_reclamation}",
+                    message=f"Vous avez été affecté à la reclamation {reclamation.numero_reclamation} ({reclamation.get_type_reclamation_display()}) par {request.user.first_name} {request.user.last_name}",
+                    reclamation=reclamation,
+                    statut='NON_LUE'
+                )
+                
+                # ✅ AJOUTER À L'HISTORIQUE
+                HistoriqueReclamation.objects.create(
+                    reclamation=reclamation,
+                    action="Affectation",
+                    auteur=f"{request.user.first_name} {request.user.last_name}",
+                    details=f"Reclamation affecté à {agent.first_name} {agent.last_name}",
+                    ancien_statut=ancien_statut,
+                    nouveau_statut='EN_COURS'
+                )
+                
+                messages.success(
+                    request,
+                    f"✅ Réclamation affectée à {agent.first_name} {agent.last_name}"
+                )
                 return redirect('detail_reclamation', reclamation_id=reclamation.id)
                 
             except Exception as e:
                 messages.error(request, f"❌ Erreur : {str(e)}")
-    else:
-        form = AssignationForm()
+        else:
+            messages.error(request, "❌ Veuillez sélectionner un agent")
+    
+    # Liste des agents
+    from django.contrib.auth import get_user_model
+    AgentUtilisateur = get_user_model()
+    agents = AgentUtilisateur.objects.all()
     
     return render(request, 'reclamations/assigner.html', {
-        'form': form,
         'reclamation': reclamation,
+        'agents': agents,
     })
 
+@login_required
 def repondre_reclamation(request, reclamation_id):
     """
     Enregistrer une réponse à la réclamation
@@ -2932,6 +3395,14 @@ def repondre_reclamation(request, reclamation_id):
     
     if request.method == 'POST':
         form = ReclamationReponseForm(request.POST)
+
+        if reclamation.agent_responsable != request.user and not request.user.is_responsable:
+            messages.error(
+                request,
+                "❌ Accès refusé : Seul l'agent affecté ou le responsable principal peut répondre à cette réclamation"
+            )
+            return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
         
         if form.is_valid():
             try:
@@ -2960,11 +3431,18 @@ def repondre_reclamation(request, reclamation_id):
         'reclamation': reclamation,
     })
 
+@login_required
 def resoudre_reclamation(request, reclamation_id):
     """
     Marquer une réclamation comme résolue avec compensation éventuelle
     """
     reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    if reclamation.agent_responsable != request.user and not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul l'agent affecté ou le responsable principal peut résoudre cette réclamation"
+        )
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
     
     if request.method == 'POST':
         form = ReclamationResolutionForm(request.POST)
@@ -3000,11 +3478,18 @@ def resoudre_reclamation(request, reclamation_id):
         'reclamation': reclamation,
     })
 
+@login_required
 def cloturer_reclamation(request, reclamation_id):
     """
     Clôture définitive d'une réclamation (doit être RESOLUE avant)
     """
     reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    if not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul le responsable principal peut clôturer une réclamation"
+        )
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
     
     if request.method == 'POST':
         try:
@@ -3022,11 +3507,19 @@ def cloturer_reclamation(request, reclamation_id):
         'reclamation': reclamation,
     })
 
+@login_required
 def annuler_reclamation(request, reclamation_id):
     """
     Annuler une réclamation (demande infondée, doublon, etc.)
     """
     reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    if not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul le responsable principal peut annuler une réclamation"
+        )
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
+    
     
     if request.method == 'POST':
         try:
@@ -3050,11 +3543,18 @@ def annuler_reclamation(request, reclamation_id):
         'reclamation': reclamation,
     })
 
+@login_required
 def supprimer_reclamation(request, reclamation_id):
     """
     Suppression d'une réclamation (avec confirmation)
     """
     reclamation = get_object_or_404(Reclamation, id=reclamation_id)
+    if not request.user.is_responsable:
+        messages.error(
+            request,
+            "❌ Accès refusé : Seul le responsable principal peut supprimer une réclamation"
+        )
+        return redirect('detail_reclamation', reclamation_id=reclamation.id)
     
     if request.method == 'POST':
         try:
@@ -3071,6 +3571,7 @@ def supprimer_reclamation(request, reclamation_id):
         'reclamation': reclamation,
     })
 
+@login_required
 def exporter_reclamations_pdf(request):
     """
     Génère un PDF avec la liste de toutes les réclamations
@@ -3095,6 +3596,7 @@ def exporter_reclamations_pdf(request):
     
     return generer_pdf_liste("Liste des Réclamations", headers, data, "reclamations")
 
+@login_required
 def exporter_reclamation_detail_pdf(request, reclamation_id):
     """
     Génère un PDF détaillé d'une réclamation
@@ -3181,6 +3683,7 @@ def exporter_reclamation_detail_pdf(request, reclamation_id):
         remarques=reclamation.remarques
     )
 
+@login_required
 def home(request):
     """
     Page d'accueil (Dashboard)
@@ -3205,6 +3708,25 @@ def home(request):
     notifications = Notification.objects.filter(
         statut='NON_LUE'
     ).order_by('-date_creation')
+    
+    from django.db.models import Q
+
+    if request.user.is_responsable:
+        reclamations_non_terminees = Reclamation.objects.exclude(
+            statut__in=['ANNULE', 'CLOTURE', 'RESOLUE']
+        ).order_by('-date_creation')[:5]
+        
+        incidents_non_termines = Incident.objects.exclude(
+            statut__in=['ANNULE', 'CLOTURE', 'RESOLUE']
+        ).order_by('-date_creation')[:5]
+    else:
+        reclamations_non_terminees = Reclamation.objects.exclude(
+            statut__in=['ANNULE', 'CLOTURE', 'RESOLUE']
+        ).filter(agent_responsable=request.user).order_by('-date_creation')[:5]
+
+        incidents_non_termines = Incident.objects.exclude(
+            statut__in=['ANNULE', 'CLOTURE', 'RESOLUE']
+        ).filter(agent_responsable=request.user).order_by('-date_creation')[:5]
     
     # ========== TOURNÉES EN COURS ==========
     # On récupère EXACTEMENT les mêmes champs que dans liste_tournees
@@ -3236,10 +3758,13 @@ def home(request):
         'tournees_en_cours': tournees_en_cours,
         'tournees_demain': tournees_demain,
         'statuts_tournee': statuts_tournee,
+        "reclamations_non_terminees": reclamations_non_terminees,
+        "incidents_non_termines": incidents_non_termines,
     }
     
     return render(request, 'home.html', context)
 
+@login_required
 def selectionner_favoris(request):
     """
     Page de sélection des favoris
@@ -3282,6 +3807,7 @@ def selectionner_favoris(request):
     
     return render(request, 'favoris/selectionner.html', context)
 
+@login_required
 def traiter_notification(request, notification_id):
     """
     Affiche les détails d'une notification et permet de la traiter
@@ -3321,6 +3847,7 @@ def traiter_notification(request, notification_id):
         'notification': notification,
     })
 
+@login_required
 def liste_notifications(request):
     """
     Liste de toutes les notifications
@@ -3355,6 +3882,7 @@ def login_view(request):
     
     return render(request, 'auth/login.html', {'form': form})
 
+@login_required
 def logout_view(request):
     """Déconnexion"""
     logout(request)

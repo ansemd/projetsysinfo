@@ -2,38 +2,166 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Résoudre Incident {{ incident.numero_incident }}</title>
+    <title>Incident {{ incident.numero_incident }}</title>
 </head>
 <body>
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
     <h1>✅ Résoudre l'Incident {{ incident.numero_incident }}</h1>
     
-    <a href="{% url 'detail_incident' incident.id %}"><button>← Retour aux détails</button></a>
+    <a href="{% url 'detail_incident' incident.id %}" style="display: inline-block; margin-bottom: 20px;">
+        ← Retour aux détails
+    </a>
     
     <hr>
     
-    {% if messages %}
-        {% for message in messages %}
-            <p style="color: red;"><strong>{{ message }}</strong></p>
-        {% endfor %}
+    <!-- INFORMATIONS DE L'INCIDENT -->
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2>📋 Informations de l'incident</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <th style="text-align: left; padding: 10px; width: 30%;">Titre :</th>
+                <td style="padding: 10px;">{{ incident.titre }}</td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Description :</th>
+                <td style="padding: 10px;">{{ incident.description }}</td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Type :</th>
+                <td style="padding: 10px;"><strong>{{ incident.get_type_incident_display }}</strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Sévérité :</th>
+                <td style="padding: 10px;">{{ incident.get_severite_display }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- EXPÉDITION CONCERNÉE -->
+    <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2>📦 Expédition concernée</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <th style="text-align: left; padding: 10px; width: 30%;">N° Expédition :</th>
+                <td style="padding: 10px;"><strong>{{ expedition.get_numero_expedition }}</strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Client :</th>
+                <td style="padding: 10px;">{{ expedition.client.prenom }} {{ expedition.client.nom }}</td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Destination :</th>
+                <td style="padding: 10px;">{{ expedition.destination.ville }}, {{ expedition.destination.wilaya }}</td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Statut actuel :</th>
+                <td style="padding: 10px;"><strong>{{ expedition.get_statut_display }}</strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Tournée :</th>
+                <td style="padding: 10px;">
+                    {% if expedition.tournee %}
+                        {{ expedition.tournee.get_numero_tournee }} 
+                        (Statut: {{ expedition.tournee.get_statut_display }})
+                    {% else %}
+                        <em>Pas encore affectée à une tournée</em>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- REMBOURSEMENT -->
+    {% if taux > 0 %}
+    <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h2>💰 Remboursement</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <th style="text-align: left; padding: 10px; width: 30%;">Montant original TTC :</th>
+                <td style="padding: 10px;"><strong>{{ montant_ttc|floatformat:2 }} DA</strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Taux de remboursement :</th>
+                <td style="padding: 10px;"><strong>{{ taux }}%</strong></td>
+            </tr>
+            <tr>
+                <th style="text-align: left; padding: 10px;">Montant à rembourser :</th>
+                <td style="padding: 10px; color: #d9534f;"><strong>{{ montant_rembourse|floatformat:2 }} DA</strong></td>
+            </tr>
+        </table>
+        <p style="margin-top: 15px; color: #856404;">
+            ℹ️ Une notification de remboursement sera créée après résolution de l'incident.
+        </p>
+    </div>
     {% endif %}
     
-    <h2>Informations de l'incident</h2>
-    <p><strong>Titre :</strong> {{ incident.titre }}</p>
-    <p><strong>Description :</strong> {{ incident.description }}</p>
-    <p><strong>Type :</strong> {{ incident.get_type_incident_display }}</p>
-    
-    <hr>
-    
-    <form method="POST">
-        {% csrf_token %}
+    <!-- FORMULAIRE DE RÉSOLUTION -->
+    <div style="background: #fff; padding: 20px; border: 2px solid #28a745; border-radius: 8px;">
+        <h2>✅ Résoudre l'incident</h2>
         
-        <table>
-            {{ form.as_table }}
-        </table>
-        
-        <br>
-        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px;">✅ Marquer comme Résolu</button>
-        <a href="{% url 'detail_incident' incident.id %}"><button type="button">Annuler</button></a>
-    </form>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- CAUSE -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                    Cause de l'incident * :
+                </label>
+                {% if cause_auto %}
+                    <input type="text" value="{{ cause_auto }}" readonly 
+                           style="width: 100%; padding: 10px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px;">
+                    <small style="color: #6c757d;">Cette cause a été déterminée automatiquement</small>
+                {% else %}
+                    <textarea name="cause" rows="3" required 
+                              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;"
+                              placeholder="Décrivez la cause de l'incident..."></textarea>
+                {% endif %}
+            </div>
+            
+            <!-- STATUT EXPÉDITION -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                    Statut de l'expédition * :
+                </label>
+                {% if statut_auto %}
+                    <input type="text" value="{{ options_statut.0.1 }}" readonly 
+                           style="width: 100%; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
+                    <small style="color: #721c24;">L'expédition sera automatiquement annulée</small>
+                {% else %}
+                    <select name="nouveau_statut_exp" required 
+                            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;">
+                        {% for value, label in options_statut %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+            </div>
+            
+            <!-- SOLUTION -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                    Solution appliquée * :
+                </label>
+                <textarea name="solution" rows="4" required 
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;"
+                          placeholder="Décrivez la solution mise en place pour résoudre cet incident..."></textarea>
+            </div>
+            
+            <!-- BOUTONS -->
+            <div style="margin-top: 30px;">
+                <button type="submit" 
+                        style="background: #28a745; color: white; padding: 12px 30px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
+                    ✅ Marquer comme résolu
+                </button>
+                <a href="{% url 'detail_incident' incident.id %}" 
+                   style="display: inline-block; margin-left: 10px; padding: 12px 30px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+    
+</div>
 </body>
 </html>

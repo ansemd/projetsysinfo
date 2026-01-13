@@ -63,6 +63,25 @@
     </table>
     
     <hr>
+
+    <h3>📋 Traçabilité</h3>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Enregistré par :</th>
+            <td>
+                {% if paiement.cree_par %}
+                    {{ paiement.cree_par.first_name }} {{ paiement.cree_par.last_name }}
+                    <small>(@{{ paiement.cree_par.username }})</small>
+                {% else %}
+                    <em>Non renseigné</em>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date d'enregistrement :</th>
+            <td>{{ paiement.date_paiement|date:"d/m/Y H:i" }}</td>
+        </tr>
+    </table>
     
     <!-- Informations de la facture associée -->
     <h2>Facture Associée</h2>

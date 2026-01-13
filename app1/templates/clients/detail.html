@@ -81,6 +81,37 @@
     </table>
     
     <hr>
+    <h3>📋 Traçabilité</h3>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Créé par :</th>
+            <td>
+                {% if client.cree_par %}
+                    {{ client.cree_par.first_name }} {{ client.cree_par.last_name }}
+                    <small>(@{{ client.cree_par.username }})</small>
+                {% else %}
+                    <em>Non renseigné</em>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date création :</th>
+            <td>{{ client.date_inscription|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% if client.modifie_par %}
+        <tr>
+            <th>Dernière modification par :</th>
+            <td>
+                {{ client.modifie_par.first_name }} {{ client.modifie_par.last_name }}
+                <small>(@{{ client.modifie_par.username }})</small>
+            </td>
+        </tr>
+        <tr>
+            <th>Date modification :</th>
+            <td>{{ client.date_modification|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endif %}
+    </table>
     
     <!-- TOUTES les expéditions du client -->
     <h2>Historique Complet des Expéditions ({{ expeditions.count }})</h2>

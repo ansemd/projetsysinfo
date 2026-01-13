@@ -93,6 +93,31 @@
     
     <hr>
     
+    <!-- ========== TRAÇABILITÉ ========== -->
+    <h3>📋 Traçabilité</h3>
+    <table border="1" cellpadding="10" style="margin-top: 10px;">
+        <tr>
+            <th>Facture générée par :</th>
+            <td>
+                {% if facture.cree_par %}
+                    {{ facture.cree_par.first_name }} {{ facture.cree_par.last_name }}
+                    <small>(@{{ facture.cree_par.username }})</small>
+                    <br><small style="color: #666;">Agent ayant créé la première expédition de cette facture</small>
+                {% else %}
+                    <em style="color: #999;">Facture générée automatiquement (avant système de traçabilité)</em>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date d'émission :</th>
+            <td>{{ facture.date_emission|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Date d'échéance :</th>
+            <td>{{ facture.date_echeance|date:"d/m/Y" }}</td>
+        </tr>
+    </table>
+    
     <!-- ✅ EXPÉDITIONS FACTURÉES -->
     <h2>📦 Expéditions Facturées ({{ expeditions.count }})</h2>
     

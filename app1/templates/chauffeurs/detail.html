@@ -100,6 +100,38 @@
     </table>
     
     <hr>
+
+    <h3>📋 Traçabilité</h3>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Créé par :</th>
+            <td>
+                {% if vehicule.cree_par %}
+                    {{ vehicule.cree_par.first_name }} {{ vehicule.cree_par.last_name }}
+                    <small>(@{{ vehicule.cree_par.username }})</small>
+                {% else %}
+                    <em>Non renseigné</em>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date création :</th>
+            <td>{{ vehicule.date_inscription|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% if vehicule.modifie_par %}
+        <tr>
+            <th>Dernière modification par :</th>
+            <td>
+                {{ vehicule.modifie_par.first_name }} {{ vehicule.modifie_par.last_name }}
+                <small>(@{{ chauffeur.modifie_par.username }})</small>
+            </td>
+        </tr>
+        <tr>
+            <th>Date modification :</th>
+            <td>{{ vehicule.date_modification|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endif %}
+    </table>
     
     <!-- Statistiques -->
     <h2>Statistiques</h2>

@@ -105,6 +105,37 @@
             <td>{{ tournee.remarques }}</td>
         </tr>
         {% endif %}
+        <h3>📋 Traçabilité</h3>
+            <table border="1" cellpadding="10" style="margin-top: 10px;">
+                <tr>
+                    <th>Créé par :</th>
+                    <td>
+                        {% if tournee.cree_par %}
+                            {{ tournee.cree_par.first_name }} {{ tournee.cree_par.last_name }}
+                            <small>(@{{ tournee.cree_par.username }})</small>
+                        {% else %}
+                            <em style="color: #999;">Non renseigné</em>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Date de création :</th>
+                    <td>{{ tournee.date_creation|date:"d/m/Y à H:i" }}</td>
+                </tr>
+                {% if tournee.modifie_par %}
+                <tr>
+                    <th>Dernière modification par :</th>
+                    <td>
+                        {{ tournee.modifie_par.first_name }} {{ tournee.modifie_par.last_name }}
+                        <small>(@{{ tournee.modifie_par.username }})</small>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Date de modification :</th>
+                    <td>{{ tournee.date_modification|date:"d/m/Y à H:i" }}</td>
+                </tr>
+                {% endif %}
+            </table>
     </table>
     
     <hr>
@@ -147,6 +178,7 @@
                         <span style="color: red;">❌ {{ exp.get_statut_display }}</span>
                     {% endif %}
                 </td>
+                <td><a href="{% url 'detail_expedition' exp.id %}"><button>👁️ Voir</button></a></td>
             </tr>
             {% endfor %}
         </tbody>

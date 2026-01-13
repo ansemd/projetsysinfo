@@ -214,46 +214,6 @@ def gerer_suppression_paiement(sender, instance, **kwargs):
 
    # ======= SIGNAL POUR REMBOURSEMENT AUTOMATIQUE =======
 
-# ======= SIGNAL POUR REMBOURSEMENT AUTOMATIQUE =======
-@receiver(post_save, sender=Incident)
-def appliquer_remboursement_automatique(sender, instance, created, **kwargs):
-    """
-    Signal déclenché à la CRÉATION d'un incident
-    Crée une NOTIFICATION pour l'agent au lieu de rembourser automatiquement
-    """
-    if created:  # Seulement à la création
-        from .utils import IncidentService
-        
-        # Vérifier si l'incident nécessite un remboursement
-        if IncidentService.necessite_remboursement(instance):
-            # CRÉER UNE NOTIFICATION au lieu de rembourser automatiquement
-            from .models import Notification
-            
-            if not instance.expedition:
-                return
-            
-            client = instance.expedition.client
-            montant_ht = instance.expedition.montant_total
-            montant_tva = montant_ht * Decimal('0.19')
-            montant_ttc = montant_ht + montant_tva
-            taux = instance.taux_remboursement
-            montant_a_rembourser = montant_ttc * (taux / Decimal('100.00'))
-            
-            Notification.objects.create(
-                type_notification='REMBOURSEMENT_REQUIS',
-                titre=f"Remboursement requis - {client.nom} {client.prenom}",
-                message=f"L'incident {instance.numero_incident} ({instance.get_type_incident_display()}) "
-                        f"nécessite un remboursement de {montant_a_rembourser:,.2f} DA "
-                        f"(taux: {taux}%) au client {client.nom} {client.prenom}.\n\n"
-                        f"Expédition concernée: {instance.expedition.get_numero_expedition()}\n"
-                        f"Montant original: {montant_ttc:,.2f} DA\n\n"
-                        f"Cliquez sur 'Traiter' pour valider le remboursement.",
-                client=client,
-                statut='NON_LUE'
-            )
-            
-            print(f"Notification de remboursement créée pour incident {instance.numero_incident}")
-
 # ========== SIGNAL 5 : Notification kilométrage tournée terminée ==========
 @receiver(post_save, sender=Tournee)
 def notifier_tournee_terminee(sender, instance, created, **kwargs):
@@ -285,3 +245,4 @@ def notifier_tournee_terminee(sender, instance, created, **kwargs):
                         'vehicule': instance.vehicule,
                     }
                 )
+

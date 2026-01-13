@@ -129,6 +129,38 @@
     </table>
     
     <hr>
+    <!-- ========== TRAÇABILITÉ ========== -->
+    <h3>📋 Traçabilité</h3>
+    <table border="1" cellpadding="10" style="margin-top: 10px;">
+        <tr>
+            <th>Créé par :</th>
+            <td>
+                {% if expedition.cree_par %}
+                    {{ expedition.cree_par.first_name }} {{ expedition.cree_par.last_name }}
+                    <small>(@{{ expedition.cree_par.username }})</small>
+                {% else %}
+                    <em style="color: #999;">Non renseigné</em>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date de création :</th>
+            <td>{{ expedition.date_creation|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        {% if expedition.modifie_par %}
+        <tr>
+            <th>Dernière modification par :</th>
+            <td>
+                {{ expedition.modifie_par.first_name }} {{ expedition.modifie_par.last_name }}
+                <small>(@{{ expedition.modifie_par.username }})</small>
+            </td>
+        </tr>
+        <tr>
+            <th>Date de modification :</th>
+            <td>{{ expedition.date_modification|date:"d/m/Y à H:i" }}</td>
+        </tr>
+        {% endif %}
+    </table>
     
     <!--  TABLE TRACKING DÉTAILLÉE DESSOUS -->
     <h2>📍 Historique de Suivi (Tracking)</h2>

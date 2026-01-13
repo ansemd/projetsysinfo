@@ -88,6 +88,45 @@
     </table>
     
     <hr>
+    <h3>📋 Traçabilité et Assignation</h3>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Signalé par (agent) :</th>
+            <td>
+                {% if incident.signale_par %}
+                    {{ incident.signale_par.first_name }} {{ incident.signale_par.last_name }}
+                    <small>(@{{ incident.signale_par.username }})</small>
+                {% else %}
+                    <em>Non renseigné</em>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Date de signalement :</th>
+            <td>{{ incident.date_creation|date:"d/m/Y H:i" }}</td>
+        </tr>
+        <tr>
+            <th>Agent responsable du traitement :</th>
+            <td>
+                {% if incident.agent_responsable %}
+                    {{ incident.agent_responsable.first_name }} {{ incident.agent_responsable.last_name }}
+                    <small>(@{{ incident.agent_responsable.username }})</small>
+                {% else %}
+                    <em style="color: red;">❌ Non affecté</em>
+                    
+                    <!-- ✅ BOUTON SEULEMENT SI USER EST RESPONSABLE PRINCIPAL -->
+                    {% if request.user.is_responsable and incident.statut == 'SIGNALE' %}
+                    <br>
+                    <a href="{% url 'assigner_incident' incident.id %}">
+                        <button style="background: #007bff; color: white; padding: 8px 16px; border: none; cursor: pointer; margin-top: 5px;">
+                            📌 Affecter à un agent
+                        </button>
+                    </a>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
     
     <!-- Expédition/Tournée concernée -->
     {% if incident.expedition %}

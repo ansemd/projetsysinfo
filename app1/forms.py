@@ -1,8 +1,7 @@
 from django import forms
-from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, Reclamation, AgentUtilisateur
-from datetime import date
-from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from datetime import date
+from .models import Client, Chauffeur, Vehicule, TypeService, Destination, Tarification, Tournee, Expedition, TrackingExpedition, Facture, Paiement, Incident, Reclamation, AgentUtilisateur
 
 class ClientForm(forms.ModelForm):
     class Meta:
@@ -393,6 +392,7 @@ class PaiementForm(forms.ModelForm):
         
         # ========== MODE 2 : FORMULAIRE NORMAL ==========
         else:
+            from .models import Facture
             # Filtrer : Afficher SEULEMENT les factures impayées ou partiellement payées
             factures = Facture.objects.filter(
                 statut__in=['IMPAYEE', 'PARTIELLEMENT_PAYEE']
@@ -453,9 +453,9 @@ class IncidentForm(forms.ModelForm):
             'date_heure_incident',
             'lieu_incident',
             'signale_par',
+            'agent_responsable',
             'cout_estime',
             'expedition',
-            'tournee',
             'document1',
             'document2',
             'photo1',
@@ -468,6 +468,7 @@ class IncidentForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
         # Labels
@@ -476,25 +477,33 @@ class IncidentForm(forms.ModelForm):
         self.fields['description'].label = "Description détaillée *"
         self.fields['date_heure_incident'].label = "Date et heure de l'incident *"
         self.fields['lieu_incident'].label = "Lieu de l'incident"
-        self.fields['signale_par'].label = "Signalé par (nom) *"
         self.fields['cout_estime'].label = "Coût estimé (DA)"
         self.fields['expedition'].label = "Expédition concernée"
-        self.fields['tournee'].label = "Tournée concernée"
+
+        from django.contrib.auth import get_user_model
+        AgentUtilisateur = get_user_model()
         
+        self.fields['signale_par'].queryset = AgentUtilisateur.objects.all()
+        self.fields['signale_par'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} (@{obj.username})"
+        self.fields['signale_par'].required = False
+        
+        if user and user.is_responsable:
+            self.fields['agent_responsable'].queryset = AgentUtilisateur.objects.all()
+            self.fields['agent_responsable'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} (@{obj.username})"
+            self.fields['agent_responsable'].label = "Affecter à l'agent (optionnel)"
+            self.fields['agent_responsable'].help_text = "Vous pouvez affecter directement un agent lors de la création"
+        else:
+            # ✅ CACHER LE CHAMP POUR LES AGENTS NORMAUX
+            del self.fields['agent_responsable']
+
         # Filtrer les expéditions (seulement celles en cours ou en attente)
-        self.fields['expedition'].queryset = Expedition.objects.filter(
-            statut__in=['EN_ATTENTE', 'EN_TRANSIT', 'COLIS_CREE', 'EN_LIVRAISON']
+        self.fields['expedition'].queryset = Expedition.objects.exclude(
+            statut__in=['ANNULE']
         ).order_by('-date_creation')
-        
-        # Filtrer les tournées (seulement PREVUE ou EN_COURS)
-        self.fields['tournee'].queryset = Tournee.objects.filter(
-            statut__in=['PREVUE', 'EN_COURS']
-        ).order_by('-date_depart')
         
         # Help texts
         self.fields['cout_estime'].help_text = "Coût estimé des dommages en DA"
         self.fields['expedition'].help_text = "Laisser vide si incident lié à une tournée"
-        self.fields['tournee'].help_text = "Laisser vide si incident lié à une expédition"
     
     def clean(self):
         """
@@ -558,6 +567,7 @@ class IncidentModificationForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
         self.fields['titre'].label = "Titre *"
@@ -567,21 +577,15 @@ class IncidentModificationForm(forms.ModelForm):
         self.fields['agent_responsable'].label = "Agent responsable"
         self.fields['actions_entreprises'].label = "Actions entreprises"
 
-class IncidentResolutionForm(forms.Form):
-    """
-    Formulaire pour résoudre un incident
-    """
-    solution = forms.CharField(
-        label="Solution appliquée *",
-        widget=forms.Textarea(attrs={'rows': 4}),
-        help_text="Décrivez la solution mise en place pour résoudre cet incident"
-    )
-    
-    agent = forms.CharField(
-        label="Agent responsable *",
-        max_length=100,
-        help_text="Nom de l'agent qui a résolu l'incident"
-    )
+        if user and user.is_responsable:
+            from django.contrib.auth import get_user_model
+            AgentUtilisateur = get_user_model()
+            
+            self.fields['agent_responsable'].queryset = AgentUtilisateur.objects.all()
+            self.fields['agent_responsable'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} (@{obj.username})"
+            self.fields['agent_responsable'].label = "Agent responsable"
+        else:
+            del self.fields['agent_responsable']
 
 class ReclamationForm(forms.ModelForm):
     """
@@ -749,17 +753,6 @@ class ReclamationResolutionForm(forms.Form):
         
         return cleaned_data
 
-class AssignationForm(forms.Form):
-    """
-    Formulaire simple pour assigner un agent
-    (utilisable pour incidents ET réclamations)
-    """
-    agent_nom = forms.CharField(
-        label="Nom de l'agent *",
-        max_length=100,
-        help_text="Agent qui sera responsable du traitement"
-    )
-
 class LoginForm(AuthenticationForm):
     """Formulaire de connexion"""
     username = forms.CharField(
@@ -775,25 +768,6 @@ class LoginForm(AuthenticationForm):
             'placeholder': "Mot de passe"
         })
     )
-
-class AjouterAgentForm(forms.ModelForm):
-    """Formulaire pour ajouter un nouvel agent (par le responsable)"""
-    
-    class Meta:
-        model = AgentUtilisateur
-        fields = ['first_name', 'last_name', 'email', 'telephone']
-        labels = {
-            'first_name': 'Prénom',
-            'last_name': 'Nom',
-            'email': 'Email',
-            'telephone': 'Téléphone',
-        }
-        widgets = {
-            'first_name': forms.TextInput(attrs={'placeholder': 'Ahmed'}),
-            'last_name': forms.TextInput(attrs={'placeholder': 'Benali'}),
-            'email': forms.EmailInput(attrs={'placeholder': 'ahmed.benali@example.com'}),
-            'telephone': forms.TextInput(attrs={'placeholder': '+213 555 123 456'}),
-        }
 
 class ChangerMotDePasseForm(forms.Form):
     """Formulaire pour changer le mot de passe"""
@@ -819,51 +793,4 @@ class ChangerMotDePasseForm(forms.Form):
             raise forms.ValidationError("Les mots de passe ne correspondent pas")
         
         return cleaned_data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -252,7 +252,121 @@
                                     ✅ OK - Renseigner le kilométrage
                                 </button>
                             </form>
-                        
+                        <!-- INCIDENT CRÉÉ (pour agent responsable) -->
+                        {% elif notif.type_notification == 'INCIDENT_CREE' %}
+                        <div style="border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 15px; background: #fff;">
+                            <strong>🚨 {{ notif.titre }}</strong>
+                            <p>{{ notif.message }}</p>
+                            <div style="background: #fff3cd; padding: 10px; margin: 10px 0;">
+                                <p><strong>Incident :</strong> {{ notif.incident.numero_incident }}</p>
+                                <p><strong>Type :</strong> {{ notif.incident.get_type_incident_display }}</p>
+                                <p><strong>Sévérité :</strong> {{ notif.incident.severite }}</p>
+                            </div>
+                            <form method="POST" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="AFFECTER" class="btn-primary">
+                                    📌 Affecter à un agent
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- INCIDENT AFFECTÉ (pour agent affecté) -->
+                        {% elif notif.type_notification == 'INCIDENT_AFFECTE' %}
+                        <div style="border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 15px; background: #fff;">
+                            <strong>📌 {{ notif.titre }}</strong>
+                            <p>{{ notif.message }}</p>
+                            <div style="background: #f8d7da; padding: 10px; margin: 10px 0;">
+                                <p><strong>Incident :</strong> {{ notif.incident.numero_incident }}</p>
+                                <p><strong>Type :</strong> {{ notif.incident.get_type_incident_display }}</p>
+                                <p><strong>Sévérité :</strong> 
+                                    <span class="badge badge-{% if notif.incident.severite == 'CRITIQUE' %}danger{% elif notif.incident.severite == 'ELEVEE' %}warning{% else %}info{% endif %}">
+                                        {{ notif.incident.get_severite_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            
+                            <form method="POST" action="{% url 'traiter_notification' notif.id %}">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="VOIR" class="btn-primary">
+                                    👁️ Voir l'incident
+                                </button>
+                            </form>
+                        </div>
+                        <!-- RÉCLAMATION CRÉÉE (pour agent responsable) -->
+                        {% elif notif.type_notification == 'RECLAMATION_CREEE' %}
+                        <div style="border-left: 4px solid #17a2b8; padding: 15px; margin-bottom: 15px; background: #fff;">
+                            <strong>📝 {{ notif.titre }}</strong>
+                            <p>{{ notif.message }}</p>
+                            <div style="background: #d1ecf1; padding: 10px; margin: 10px 0;">
+                                <p><strong>Réclamation :</strong> {{ notif.reclamation.numero_reclamation }}</p>
+                                <p><strong>Nature :</strong> {{ notif.reclamation.get_nature_display }}</p>
+                                <p><strong>Priorité :</strong> {{ notif.reclamation.get_priorite_display }}</p>
+                            </div>
+                            <form method="POST" action="{% url 'traiter_notification' notif.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="AFFECTER" class="btn-primary">
+                                    📌 Affecter à un agent
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- RÉCLAMATION AFFECTÉE (pour agent affecté) -->
+                        {% elif notif.type_notification == 'RECLAMATION_AFFECTEE' %}
+                        <div style="border-left: 4px solid #28a745; padding: 15px; margin-bottom: 15px; background: #fff;">
+                            <strong>✅ {{ notif.titre }}</strong>
+                            <p>{{ notif.message }}</p>
+                            <div style="background: #d4edda; padding: 10px; margin: 10px 0;">
+                                <p><strong>Réclamation :</strong> {{ notif.reclamation.numero_reclamation }}</p>
+                                <p><strong>Nature :</strong> {{ notif.reclamation.get_nature_display }}</p>
+                                <p><strong>Priorité :</strong> 
+                                    <span class="badge badge-{% if notif.reclamation.priorite == 'URGENTE' %}danger{% elif notif.reclamation.priorite == 'HAUTE' %}warning{% else %}info{% endif %}">
+                                        {{ notif.reclamation.get_priorite_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <form method="POST" action="{% url 'traiter_notification' notif.id %}">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="VOIR" class="btn-primary">
+                                    👁️ Voir la réclamation
+                                </button>
+                            </form>
+                        </div>
+                        <!-- INCIDENT RÉSOLU (pour agent responsable) -->
+                        {% elif notif.type_notification == 'INCIDENT_RESOLU' %}
+                        <div style="border-left: 4px solid #28a745; padding: 15px; margin-bottom: 15px; background: #fff;">
+                            <strong>✅ {{ notif.titre }}</strong>
+                            <p>{{ notif.message }}</p>
+                            <div style="background: #d4edda; padding: 10px; margin: 10px 0;">
+                                <p><strong>Incident :</strong> {{ notif.incident.numero_incident }}</p>
+                                <p><strong>Type :</strong> {{ notif.incident.get_type_incident_display }}</p>
+                                <p><strong>Statut :</strong> {{ notif.incident.get_statut_display }}</p>
+                            </div>
+                            <form method="POST" action="{% url 'traiter_notification' notif.id %}">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="CLOTURER" class="btn-success">
+                                    ✅ Voir et clôturer
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- RÉCLAMATION RÉSOLUE (pour agent responsable) -->
+                        {% elif notif.type_notification == 'RECLAMATION_RESOLUE' %}
+                        <div style="border-left: 4px solid #28a745; padding: 15px; margin-bottom: 15px; background: #fff;">
+                            <strong>✅ {{ notif.titre }}</strong>
+                            <p>{{ notif.message }}</p>
+                            <div style="background: #d4edda; padding: 10px; margin: 10px 0;">
+                                <p><strong>Réclamation :</strong> {{ notif.reclamation.numero_reclamation }}</p>
+                                <p><strong>Nature :</strong> {{ notif.reclamation.get_nature_display }}</p>
+                                <p><strong>Statut :</strong> {{ notif.reclamation.get_statut_display }}</p>
+                            </div>
+                            <form method="POST" action="{% url 'traiter_notification' notif.id %}">
+                                {% csrf_token %}
+                                <button type="submit" name="action" value="CLOTURER" class="btn-success">
+                                    ✅ Voir et clôturer
+                                </button>
+                            </form>
+                        </div>
+        
                         {% endif %}
                     </div>
                 </li>
@@ -270,7 +384,47 @@
     </aside>
     
     <hr>
-    
+    <!-- ========== RÉCLAMATIONS NON TERMINÉES ========== -->
+    <section>
+        <h2>📝 Réclamations en cours</h2>
+
+        {% if reclamations_non_terminees %}
+            <ul style="list-style: none; padding: 0;">
+                {% for rec in reclamations_non_terminees %}
+                <li style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #fffbe6;">
+                    <strong>{{ rec.numero_reclamation }} - {{ rec.get_type_reclamation_display }}</strong><br>
+                    <span>Priorité : {{ rec.get_priorite_display }}</span><br>
+                    <span>Statut : {{ rec.get_statut_display }}</span><br>
+                    <a href="{% url 'detail_reclamation' rec.id %}" style="color: blue; text-decoration: underline;">Voir la réclamation</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune réclamation non terminée</p>
+        {% endif %}
+    </section>
+
+    <hr>
+
+    <!-- ========== INCIDENTS NON TERMINÉS ========== -->
+    <section>
+        <h2>🚨 Incidents en cours</h2>
+
+        {% if incidents_non_termines %}
+            <ul style="list-style: none; padding: 0;">
+                {% for inc in incidents_non_termines %}
+                <li style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #fff3cd;">
+                    <strong>{{ inc.numero_incident }} - {{ inc.get_type_incident_display }}</strong><br>
+                    <span>Sévérité : {{ inc.severite }}</span><br>
+                    <span>Statut : {{ inc.get_statut_display }}</span><br>
+                    <a href="{% url 'detail_incident' inc.id %}" style="color: blue; text-decoration: underline;">Voir l'incident</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucun incident non terminé</p>
+        {% endif %}
+    </section>
     <!-- ========== TOURNÉES EN COURS ========== -->
     <section>
         <h2>🚚 Tournées en cours</h2>

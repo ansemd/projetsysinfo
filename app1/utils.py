@@ -119,7 +119,9 @@ class TourneeService:
             
             # Marquer expéditions comme LIVREES
             from .models import TrackingExpedition
-            for exp in tournee.expeditions.all():
+            expeditions_a_livrer = tournee.expeditions.filter(statut='EN_TRANSIT')  # ✅ Seulement EN_TRANSIT
+
+            for exp in expeditions_a_livrer:
                 if exp.statut == 'EN_TRANSIT':
                     exp.statut = 'LIVRE'
                     exp.date_livraison_reelle = timezone.now().date()
@@ -170,11 +172,18 @@ class ExpeditionService:
         
         # Vérifier modification si tournée en cours/terminée
         if expedition.pk:
-            from .models import Expedition
+            from .models import Expedition, Incident
             ancienne = Expedition.objects.get(pk=expedition.pk)
             if ancienne.tournee and ancienne.tournee.statut != 'PREVUE':
+                # ✅ VÉRIFIER S'IL Y A UN INCIDENT ACTIF
+                a_incident_actif = Incident.objects.filter(
+                    expedition=ancienne,
+                ).exists()
+            
+            # ✅ AUTORISER MODIFICATION SI INCIDENT ACTIF
+            if not a_incident_actif:
                 raise ValidationError(
-                    "Impossible de modifier : la tournée est déjà en cours ou terminée"
+                    "Impossible de modifier : la tournée est déjà en cours ou terminée. "
                 )
     
     @staticmethod
@@ -210,7 +219,14 @@ class ExpeditionService:
         - Capacité suffisante
         """
         from .models import Tournee
+        from django.db.models import Sum
+
+        # EXPRESS → Tournée privée dédiée
+        if expedition.type_service.type_service == 'EXPRESS':
+            ExpeditionService.creer_tournee_express(expedition)
+            return
         
+        # STANDARD → Chercher tournée compatible existante
         tournees_compatibles = Tournee.objects.filter(
             zone_cible=expedition.destination.zone_logistique,
             statut='PREVUE',
@@ -218,7 +234,6 @@ class ExpeditionService:
             date_depart__gte=timezone.now()
         ).order_by('date_depart')
         
-        # Chercher une tournée avec capacité suffisante
         for tournee in tournees_compatibles:
             totaux = tournee.expeditions.aggregate(poids_total=Sum('poids'))
             poids_actuel = totaux['poids_total'] or 0 
@@ -226,9 +241,9 @@ class ExpeditionService:
             if float(poids_actuel) + float(expedition.poids) <= float(tournee.vehicule.capacite_poids):
                 expedition.tournee = tournee
                 expedition.save()
-                return tournee
+                return
         
-        # Aucune tournée compatible → en créer une nouvelle
+        # Aucune tournée compatible → Créer nouvelle tournée partagée
         ExpeditionService.creer_nouvelle_tournee(expedition)
     
     @staticmethod
@@ -271,6 +286,7 @@ class ExpeditionService:
         )
         
         expedition.tournee = tournee
+        expedition.save()
     
     @staticmethod
     def creer_tournee_express(expedition):
@@ -291,7 +307,7 @@ class ExpeditionService:
         # Départ immédiat si avant 14h, sinon demain matin 8h
         maintenant = timezone.now()
         if maintenant.hour < 14:
-            date_depart = maintenant
+            date_depart = maintenant + timedelta(hours=1)
         else:
             date_depart = maintenant + timedelta(days=1)
             date_depart = date_depart.replace(hour=8, minute=0, second=0)
@@ -307,6 +323,7 @@ class ExpeditionService:
         )
         
         expedition.tournee = tournee
+        expedition.save()
     
     @staticmethod
     def calculer_date_livraison(expedition):
@@ -619,7 +636,7 @@ class FacturationService:
         facture.save()
     
     @staticmethod
-    def gerer_facture_expedition(expedition):
+    def gerer_facture_expedition(expedition, created_by=None):
         """
         Crée une nouvelle facture OU ajoute l'expédition à une facture existante
         
@@ -674,7 +691,8 @@ class FacturationService:
             # CRÉER une NOUVELLE facture
             facture = Facture.objects.create(
                 client=client,
-                date_echeance=aujourd_hui + timedelta(days=30),
+                cree_par=created_by,
+                date_echeance=aujourd_hui + timedelta(days=60),
                 statut='IMPAYEE',
                 taux_tva=Decimal('19.00')
             )
@@ -972,39 +990,6 @@ class NotificationService:
                     'message': '⏳ Notification marquée comme lue. Elle réapparaîtra demain.'
                 }
         
-        # ========== REMBOURSEMENT REQUIS ==========
-        elif notification.type_notification == 'REMBOURSEMENT_REQUIS':
-            
-            if action == 'OK':
-                # Trouver l'incident lié
-                from .models import Incident
-                
-                incident = Incident.objects.filter(
-                    expedition__client=notification.client,
-                    remboursement_effectue=False,
-                    type_incident__in=IncidentService.INCIDENTS_AVEC_REMBOURSEMENT
-                ).order_by('-date_creation').first()
-                
-                if not incident:
-                    return {'success': False, 'message': 'Aucun incident trouvé'}
-                
-                # Effectuer le remboursement
-                success, message = IncidentService.traiter_remboursement_incident(
-                    incident, 
-                    auteur="Agent"
-                )
-                
-                if success:
-                    notification.statut = 'TRAITEE'
-                    notification.action_effectuee = 'REMBOURSE'
-                    notification.commentaire_traitement = message
-                    notification.date_traitement = timezone.now()
-                    notification.save()
-                    
-                    resultat = {'success': True, 'message': f"{message}"}
-                else:
-                    resultat = {'success': False, 'message': f"{message}"}
-
         # ========== NOTIFICATIONS TOURNÉE TERMINÉE ==========
         elif notification.type_notification == 'TOURNEE_TERMINEE':
             tournee = notification.tournee
@@ -1022,7 +1007,115 @@ class NotificationService:
                     'message': 'Redirection vers la modification de la tournée',
                     'redirect': f'/tournees/{tournee.id}/terminer/' 
                 }
+
+        # ========== NOTIFICATIONS REMBOURSSEMENT EN CAS D"INCIDENT ==========
+        elif notification.type_notification == 'REMBOURSEMENT_REQUIS':
+            
+            if action == 'OK':
+                incident = notification.incident
                 
+                if not incident:
+                    return {'success': False, 'message': 'Aucun incident trouvé'}
+                
+                # Marquer le remboursement comme effectué
+                incident.remboursement_effectue = True
+                incident.save()
+                
+                # Marquer notification comme traitée
+                notification.statut = 'TRAITEE'
+                notification.action_effectuee = 'REMBOURSE'
+                notification.commentaire_traitement = f"Remboursement de {incident.montant_rembourse:,.2f} DA effectué physiquement"
+                notification.date_traitement = timezone.now()
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': f"✅ Remboursement de {incident.montant_rembourse:,.2f} DA confirmé"
+                }
+
+        # ========== NOTIFICATIONS INCIDENT CRÉÉ ==========
+        elif notification.type_notification == 'INCIDENT_CREE':
+            
+            if action == 'AFFECTER':
+                # Rediriger vers la page d'affectation
+                notification.statut = 'LUE'
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers l\'affectation',
+                    'redirect': f'/incidents/{notification.incident.id}/assigner/'
+                }
+
+        # ========== NOTIFICATIONS INCIDENT AFFECTÉ ==========
+        elif notification.type_notification == 'INCIDENT_AFFECTE':
+            
+            if action == 'VOIR':
+                # Rediriger vers le détail de l'incident
+                notification.statut = 'LUE'
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers l\'incident',
+                    'redirect': f'/incidents/{notification.incident.id}/'
+                }
+        # ========== NOTIFICATIONS RÉCLAMATION CRÉÉE ==========
+        elif notification.type_notification == 'RECLAMATION_CREEE':
+            
+            if action == 'AFFECTER':
+                # Rediriger vers la page d'affectation
+                notification.statut = 'LUE'
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers l\'affectation',
+                    'redirect': f'/reclamations/{notification.reclamation.id}/assigner/'
+                }
+
+        # ========== NOTIFICATIONS RÉCLAMATION AFFECTÉE ==========
+        elif notification.type_notification == 'RECLAMATION_AFFECTEE':
+            
+            if action == 'VOIR':
+                # Rediriger vers le détail de la réclamation
+                notification.statut = 'LUE'
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers la réclamation',
+                    'redirect': f'/reclamations/{notification.reclamation.id}/'
+                }
+
+        # ========== NOTIFICATIONS INCIDENT RÉSOLU ==========
+        elif notification.type_notification == 'INCIDENT_RESOLU':
+            
+            if action == 'CLOTURER':
+                # Rediriger vers la page de clôture
+                notification.statut = 'LUE'
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers la clôture',
+                    'redirect': f'/incidents/{notification.incident.id}/cloturer/'
+                }
+
+        # ========== NOTIFICATIONS RÉCLAMATION RÉSOLUE ==========
+        elif notification.type_notification == 'RECLAMATION_RESOLUE':
+            
+            if action == 'CLOTURER':
+                # Rediriger vers la page de clôture
+                notification.statut = 'LUE'
+                notification.save()
+                
+                resultat = {
+                    'success': True,
+                    'message': 'Redirection vers la clôture',
+                    'redirect': f'/reclamations/{notification.reclamation.id}/cloturer/'
+                }
+
         return resultat
     
     @staticmethod
@@ -1041,150 +1134,233 @@ class NotificationService:
 class IncidentService:
    
     TAUX_REMBOURSEMENT = {
-        'PERTE': 100.00,              # 100% - Colis perdu
-        'ENDOMMAGEMENT': 80.00,       # 80% - Colis endommagé
-        'ACCIDENT': 100.00,           # 100% - Accident grave
-        'PROBLEME_TECHNIQUE': 50.00,  # 50% - Problème technique
-        'RETARD': 20.00,              # 20% - Retard (compensation)
-        'REFUS_DESTINATAIRE': 0.00,   # 0% - Refus (pas la faute de l'entreprise)
-        'ADRESSE_INCORRECTE': 0.00,   # 0% - Erreur client
-        'DESTINATAIRE_ABSENT': 0.00,  # 0% - Absence client
-        'AUTRE': 0.00,                # 0% - À évaluer au cas par cas
+        'PERTE': Decimal('100.00'),
+        'ENDOMMAGEMENT': Decimal('100.00'),
+        'ACCIDENT': Decimal('100.00'),
+        'PROBLEME_TECHNIQUE': Decimal('50.00'),
+        'RETARD': Decimal('5.00'),
+        'REFUS_DESTINATAIRE': Decimal('0.00'),
+        'ADRESSE_INCORRECTE': Decimal('0.00'),
+        'DESTINATAIRE_ABSENT': Decimal('0.00'),
+        'AUTRE': Decimal('0.00'),
     }
     
     # Types d'incidents nécessitant une annulation automatique
     INCIDENTS_GRAVES_ANNULATION = ['PERTE', 'ENDOMMAGEMENT', 'PROBLEME_TECHNIQUE', 'ACCIDENT']
-    
+    TYPES_REEXPEDITION = ['REFUS_DESTINATAIRE', 'ADRESSE_INCORRECTE', 'DESTINATAIRE_ABSENT']
     # Types d'incidents nécessitant un remboursement (avec ou sans annulation)
     INCIDENTS_AVEC_REMBOURSEMENT = ['PERTE', 'ENDOMMAGEMENT', 'ACCIDENT', 'PROBLEME_TECHNIQUE', 'RETARD']
     
     @staticmethod
-    def traiter_remboursement_incident(incident, auteur="Agent"):
-        """
-        Traite le remboursement lié à un incident
-        Applique le taux de remboursement selon le type d'incident
+    def analyser_cause_retard(expedition):
+        """Analyse la cause d'un retard"""
+        if not expedition.tournee:
+            return "Expédition non affectée à une tournée - Colis au dépôt"
         
-        Cette méthode est maintenant appelée MANUELLEMENT par l'agent
-        via la notification, pas automatiquement
-        """
-        from .models import HistoriqueIncident
-        from decimal import Decimal
+        tournee = expedition.tournee
         
-        if not incident.expedition:
-            return False, "Pas d'expédition associée à cet incident"
+        if tournee.statut == 'PREVUE':
+            from django.utils import timezone
+            if timezone.now() < tournee.date_depart:
+                return f"Tournée programmée - Départ prévu le {tournee.date_depart.strftime('%d/%m/%Y à %H:%M')}"
+            else:
+                return "Tournée en retard de départ"
+        elif tournee.statut == 'EN_COURS':
+            return f"Tournée en cours - Chauffeur: {tournee.chauffeur.prenom} {tournee.chauffeur.nom}"
+        elif tournee.statut == 'TERMINEE':
+            return "Tournée terminée mais colis non livré"
         
-        if incident.remboursement_effectue:
-            return False, "Remboursement déjà effectué pour cet incident"
-        
-        # Récupérer le taux de remboursement
-        taux = incident.taux_remboursement
-        
-        if taux <= 0:
-            return False, f"Aucun remboursement prévu pour ce type d'incident ({incident.get_type_incident_display()})"
-        
-        expedition = incident.expedition
-        client = expedition.client
-        
-        # Calculer le montant à rembourser
-        montant_ht = expedition.montant_total
-        montant_tva = montant_ht * Decimal('0.19')  # 19% TVA
-        montant_ttc = montant_ht + montant_tva
-        
-        # Appliquer le taux de remboursement
-        montant_a_rembourser = montant_ttc * (taux / Decimal('100.00'))
-        
-        # 🆕 CRÉDITER le client (ici c'est OK car c'est suite à validation de l'agent)
-        client.solde -= montant_a_rembourser
-        client.save()
-        
-        # Marquer le remboursement comme effectué
-        incident.remboursement_effectue = True
-        incident.montant_rembourse = montant_a_rembourser
-        incident.statut = 'RESOLU'  #  Passer directement en RESOLU
-        incident.save(update_fields=['remboursement_effectue', 'montant_rembourse', 'statut'])
-        
-        # Historique
-        HistoriqueIncident.objects.create(
-            incident=incident,
-            action="Remboursement effectué",
-            auteur=auteur,
-            details=f"Montant remboursé : {montant_a_rembourser:.2f} DA ({taux}% de {montant_ttc:.2f} DA). "
-                    f"Client crédité."
-        )
-        
-        return True, f"Remboursement de {montant_a_rembourser:.2f} DA effectué ({taux}%)"
-        
-    @staticmethod
-    def annuler_expedition_incident(incident, auteur="Agent"):
-        """
-         Annule l'expédition liée à un incident grave avec remboursement complet
-        """
-        from .models import HistoriqueIncident
-        
-        if not incident.expedition:
-            return False, "Pas d'expédition associée"
-        
-        expedition = incident.expedition
-        
-        # Vérifier si l'expédition peut être annulée
-        if expedition.statut not in ['EN_ATTENTE', 'COLIS_CREE']:
-            return False, f"Impossible d'annuler : l'expédition est en {expedition.get_statut_display()}"
-        
-        try:
-            # Annuler l'expédition (remboursement inclus)
-            ExpeditionService.annuler_expedition(expedition)
-            
-            # Marquer le remboursement comme effectué
-            incident.remboursement_effectue = True
-            incident.montant_rembourse = expedition.montant_total * Decimal('1.19')  # TTC
-            incident.save(update_fields=['remboursement_effectue', 'montant_rembourse'])
-            
-            # Historique
-            HistoriqueIncident.objects.create(
-                incident=incident,
-                action="Expédition annulée",
-                auteur=auteur,
-                details=f"Expédition {expedition.get_numero_expedition()} annulée et client remboursé intégralement"
-            )
-            
-            return True, f"Expédition {expedition.get_numero_expedition()} annulée avec succès"
-            
-        except Exception as e:
-            # Historique d'erreur
-            HistoriqueIncident.objects.create(
-                incident=incident,
-                action="Erreur d'annulation",
-                auteur=auteur,
-                details=f"Erreur : {str(e)}"
-            )
-            
-            return False, f"Erreur lors de l'annulation : {str(e)}"
+        return "Cause inconnue"
     
     @staticmethod
-    def resoudre_incident(incident, solution, agent):
-        """
-        Marque un incident comme résolu
-        """
+    def resoudre_incident_complet(incident, donnees_resolution, agent):
+        """Résout un incident avec traitement personnalisé selon le type"""
         from django.utils import timezone
-        from .models import HistoriqueIncident
+        from .models import HistoriqueIncident, Notification, TrackingExpedition
+        from decimal import Decimal
         
-        ancien_statut = incident.statut
+        expedition = incident.expedition
+        type_incident = incident.type_incident
         
+        # ========== 1. CALCULER REMBOURSEMENT ==========
+        taux = IncidentService.TAUX_REMBOURSEMENT.get(type_incident, Decimal('0.00'))
+        montant_rembourse = Decimal('0.00')
+        
+        if taux > 0 and expedition:
+            montant_ht = expedition.montant_total
+            montant_tva = montant_ht * Decimal('0.19')
+            montant_ttc = montant_ht + montant_tva
+            montant_rembourse = montant_ttc * (taux / Decimal('100.00'))
+            
+            incident.montant_rembourse = montant_rembourse
+            incident.remboursement_effectue = False
+            
+            # ✅ GESTION INTELLIGENTE DU REMBOURSEMENT
+            client = expedition.client
+            solde_avant = client.solde
+            solde_apres = solde_avant - montant_rembourse
+            
+            # Appliquer le nouveau solde
+            client.solde = solde_apres
+            client.save()
+            
+            # ✅ CRÉER NOTIFICATION SELON LE CAS
+            if solde_apres < 0:
+                # CAS : Remboursement physique nécessaire
+                montant_a_rembourser_physiquement = abs(solde_apres)
+                Notification.objects.create(
+                    type_notification='REMBOURSEMENT_REQUIS',
+                    titre=f"Remboursement physique requis - {client.nom} {client.prenom}",
+                    message=(
+                        f"Suite à la résolution de l'incident {incident.numero_incident}, "
+                        f"un remboursement physique de {montant_a_rembourser_physiquement:,.2f} DA "
+                        f"doit être effectué au client {client.nom} {client.prenom}.\n\n"
+                        f"💰 Détails :\n"
+                        f"- Montant à rembourser : {montant_rembourse:,.2f} DA ({taux}%)\n"
+                        f"- Solde avant : {solde_avant:,.2f} DA\n"
+                        f"- Compensation du solde : {solde_avant:,.2f} DA\n"
+                        f"- Reste à rembourser : {montant_a_rembourser_physiquement:,.2f} DA\n\n"
+                        f"Le solde du client a été mis à {solde_apres:,.2f} DA (crédit)."
+                    ),
+                    client=client,
+                    incident=incident,
+                    statut='NON_LUE'
+                )
+            else:
+                # CAS : Compensation totale dans le solde
+                Notification.objects.create(
+                    type_notification='REMBOURSEMENT_REQUIS',
+                    titre=f"Compensation appliquée - {client.nom} {client.prenom}",
+                    message=(
+                        f"Suite à la résolution de l'incident {incident.numero_incident}, "
+                        f"une compensation de {montant_rembourse:,.2f} DA a été appliquée "
+                        f"au solde du client {client.nom} {client.prenom}.\n\n"
+                        f"💰 Détails :\n"
+                        f"- Montant compensé : {montant_rembourse:,.2f} DA ({taux}%)\n"
+                        f"- Solde avant : {solde_avant:,.2f} DA\n"
+                        f"- Nouveau solde : {solde_apres:,.2f} DA\n\n"
+                        f"Aucun remboursement physique n'est nécessaire."
+                    ),
+                    client=client,
+                    incident=incident,
+                    statut='NON_LUE'
+                )
+        
+        # ========== 2. CRÉER ÉTAPES DE TRACKING ==========
+        
+        # Étape 1 : Incident créé
+        TrackingExpedition.objects.create(
+            expedition=expedition,
+            statut_etape='INCIDENT',
+            commentaire=f"🚨 Incident {incident.numero_incident} ({incident.get_type_incident_display()}) - Cause : {donnees_resolution.get('cause', 'Non spécifiée')}"
+        )
+        
+        # ========== 3. MODIFIER STATUT EXPÉDITION ==========
+        nouveau_statut = donnees_resolution.get('nouveau_statut_exp')
+        
+        if nouveau_statut == 'ANNULE':
+            expedition.statut = 'ANNULE'
+            expedition.tournee = None
+            expedition.save()
+            
+            # ✅ ANNULER LES FACTURES NON PAYÉES
+            from .models import Facture
+            factures = expedition.factures.filter(statut__in=['IMPAYEE', 'PARTIELLEMENT_PAYEE', 'EN_RETARD'])
+            for facture in factures:
+                facture.statut = 'ANNULEE'
+                facture.save()
+            
+            # Tracking : Annulation
+            TrackingExpedition.objects.create(
+                expedition=expedition,
+                statut_etape='ANNULE',
+                commentaire=f"Expédition annulée suite à incident {incident.numero_incident}"
+            )
+        
+        elif nouveau_statut == 'REENVOYE':
+            expedition.statut = 'REENVOYE'
+            expedition.tournee = None
+            expedition.save()
+            
+            # Réaffecter à une nouvelle tournée
+            from . import utils
+            try:
+                utils.ExpeditionService.affecter_tournee_intelligente(expedition)
+            except:
+                pass
+            
+            # Recalculer date livraison
+            if expedition.tournee:
+                utils.ExpeditionService.calculer_date_livraison(expedition)
+            
+            # Générer nouvelle facture
+            utils.FacturationService.gerer_facture_expedition(expedition, created_by=agent)
+            
+            # Tracking : Réexpédition
+            TrackingExpedition.objects.create(
+                expedition=expedition,
+                statut_etape='REENVOYE',
+                commentaire=f"Colis réexpédié suite à incident {incident.numero_incident}"
+            )
+        
+        # ========== 4. MARQUER INCIDENT RÉSOLU ==========
         incident.statut = 'RESOLU'
-        incident.actions_entreprises = solution
-        incident.agent_responsable = agent
+        incident.actions_entreprises = donnees_resolution.get('solution', '')
         incident.date_resolution = timezone.now()
+        incident.taux_remboursement = taux
         incident.save()
         
-        # Historique
+        # Étape 2 : Incident résolu
+        TrackingExpedition.objects.create(
+            expedition=expedition,
+            statut_etape='INCIDENT_RESOLU',
+            commentaire=f"✅ Incident {incident.numero_incident} résolu - Solution : {donnees_resolution.get('solution', '')[:100]}"
+        )
+
+        # ========== 5. NOTIFIER L'AGENT RESPONSABLE PRINCIPAL ==========
+        from django.contrib.auth import get_user_model
+        AgentUtilisateur = get_user_model()
+        agent_responsable_principal = AgentUtilisateur.objects.filter(
+            is_responsable=True
+        ).first()
+
+        if agent_responsable_principal:
+            Notification.objects.create(
+                type_notification='INCIDENT_RESOLU',
+                titre=f"Incident résolu - {incident.numero_incident}",
+                message=(
+                    f"L'incident {incident.numero_incident} ({incident.get_type_incident_display()}) "
+                    f"a été résolu par {agent.first_name} {agent.last_name}.\n\n"
+                    f"Expédition : {expedition.get_numero_expedition()}\n"
+                    f"Solution : {donnees_resolution.get('solution', '')[:100]}...\n\n"
+                    f"Vous pouvez maintenant clôturer cet incident."
+                ),
+                incident=incident,
+                statut='NON_LUE'
+            )
+        
+        # ========== 6. HISTORIQUE ==========
+        details_parts = [f"Type: {incident.get_type_incident_display()}"]
+        
+        if donnees_resolution.get('cause'):
+            details_parts.append(f"Cause: {donnees_resolution['cause']}")
+        
+        if montant_rembourse > 0:
+            details_parts.append(f"Remboursement: {montant_rembourse:.2f} DA ({taux}%)")
+        
+        if nouveau_statut:
+            details_parts.append(f"Expédition → {nouveau_statut}")
+        
         HistoriqueIncident.objects.create(
             incident=incident,
-            action="Incident résolu",
-            auteur=agent,
-            details=f"Solution appliquée : {solution[:100]}",
-            ancien_statut=ancien_statut,
+            action="Résolution complète",
+            auteur=f"{agent.first_name} {agent.last_name}",
+            details=" | ".join(details_parts),
+            ancien_statut='EN_COURS',
             nouveau_statut='RESOLU'
         )
+        
+        return True, "Incident résolu avec succès"
     
     @staticmethod
     def cloturer_incident(incident, auteur="Agent"):
@@ -1313,7 +1489,8 @@ class ReclamationService:
         """
         Traite une nouvelle réclamation : priorité automatique, assignation, etc.
         """
-        from .models import HistoriqueReclamation
+        from .models import HistoriqueReclamation, Notification
+        from django.contrib.auth import get_user_model
         
         # Définir la priorité automatiquement selon la nature
         if reclamation.nature in ['COLIS_PERDU', 'COLIS_ENDOMMAGE', 'REMBOURSEMENT']:
@@ -1331,6 +1508,7 @@ class ReclamationService:
             details=f"Réclamation créée par le client {reclamation.client}",
             nouveau_statut='OUVERTE'
         )
+
         
         from .notification import AlerteEmailService
         AlerteEmailService.envoyer_notification_nouvelle_reclamation(reclamation)
@@ -1341,7 +1519,7 @@ class ReclamationService:
         Assigne un agent à une réclamation
         """
         from django.utils import timezone
-        from .models import HistoriqueReclamation
+        from .models import HistoriqueReclamation, Notification
         
         ancien_agent = reclamation.agent_responsable
         
@@ -1359,6 +1537,7 @@ class ReclamationService:
             ancien_statut='OUVERTE',
             nouveau_statut='EN_COURS'
         )
+
     
     @staticmethod
     def repondre_reclamation(reclamation, reponse, solution, auteur):
@@ -1393,7 +1572,8 @@ class ReclamationService:
         Marque une réclamation comme résolue
         """
         from django.utils import timezone
-        from .models import HistoriqueReclamation
+        from .models import HistoriqueReclamation, Notification
+        from django.contrib.auth import get_user_model
         
         ancien_statut = reclamation.statut
         
@@ -1420,6 +1600,28 @@ class ReclamationService:
         if accorder_compensation and montant_compensation > 0:
             reclamation.client.solde -= Decimal(str(montant_compensation))
             reclamation.client.save()
+
+        # ✅ NOTIFIER L'AGENT RESPONSABLE PRINCIPAL
+        AgentUtilisateur = get_user_model()
+        agent_responsable_principal = AgentUtilisateur.objects.filter(
+            is_responsable=True
+        ).first()
+        
+        if agent_responsable_principal:
+            Notification.objects.create(
+                type_notification='RECLAMATION_RESOLUE',
+                titre=f"Réclamation résolue - {reclamation.numero_reclamation}",
+                message=(
+                    f"La réclamation {reclamation.numero_reclamation} ({reclamation.get_nature_display()}) "
+                    f"a été résolue par {auteur}.\n\n"
+                    f"Client : {reclamation.client.prenom} {reclamation.client.nom}\n"
+                    f"Solution : {reclamation.solution_proposee[:100] if reclamation.solution_proposee else 'Non spécifiée'}...\n"
+                    f"Compensation : {'Oui - ' + str(montant_compensation) + ' DA' if accorder_compensation else 'Non'}\n\n"
+                    f"Vous pouvez maintenant clôturer cette réclamation."
+                ),
+                client=reclamation.client,
+                statut='NON_LUE'
+            )
     
     @staticmethod
     def cloturer_reclamation(reclamation, auteur):

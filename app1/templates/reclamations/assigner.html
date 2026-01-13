@@ -2,50 +2,41 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Assigner Réclamation {{ reclamation.numero_reclamation }}</title>
+    <title>Assigner la réclamation</title>
 </head>
 <body>
-    <h1>👤 Assigner un Agent à la Réclamation {{ reclamation.numero_reclamation }}</h1>
+    <h1>📌 Assigner la réclamation {{ reclamation.numero_reclamation }}</h1>
     
-    <a href="{% url 'detail_reclamation' reclamation.id %}"><button>← Retour aux détails</button></a>
+    <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid #007bff;">
+        <strong>Type :</strong> {{ reclamation.get_type_reclamation_display }}<br>
+        <strong>Nature :</strong> {{ reclamation.get_nature_display }}<br>
+        <strong>Priorité :</strong> {{ reclamation.get_priorite_display }}<br>
+        <strong>Titre :</strong> {{ reclamation.titre }}
+    </div>
     
-    <hr>
-    
-    {% if messages %}
-        {% for message in messages %}
-            <p style="color: red; font-weight: bold;">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-    
-    <h2>📋 Informations de la réclamation</h2>
-    <table border="1" cellpadding="10">
-        <tr><th>Client</th><td>{{ reclamation.client.prenom }} {{ reclamation.client.nom }}</td></tr>
-        <tr><th>Objet</th><td>{{ reclamation.objet }}</td></tr>
-        <tr><th>Nature</th><td>{{ reclamation.get_nature_display }}</td></tr>
-        <tr><th>Priorité</th><td>
-            {% if reclamation.priorite == 'URGENTE' %}
-                <span style="color: red; font-weight: bold;">🔴 {{ reclamation.get_priorite_display }}</span>
-            {% elif reclamation.priorite == 'ELEVEE' %}
-                <span style="color: orange;">🟠 {{ reclamation.get_priorite_display }}</span>
-            {% else %}
-                {{ reclamation.get_priorite_display }}
-            {% endif %}
-        </td></tr>
-        <tr><th>Description</th><td>{{ reclamation.description|truncatewords:30 }}</td></tr>
-    </table>
-    
-    <hr>
-    
-    <form method="POST">
+    <form method="post">
         {% csrf_token %}
         
-        <table>
-            {{ form.as_table }}
-        </table>
+        <label><strong>Agent responsable :</strong></label>
+        <select name="agent_responsable" required style="width: 100%; padding: 10px; margin: 10px 0;">
+            <option value="">-- Sélectionner un agent --</option>
+            {% for agent in agents %}
+            <option value="{{ agent.id }}" {% if reclamation.agent_responsable and reclamation.agent_responsable.id == agent.id %}selected{% endif %}>
+                {{ agent.first_name }} {{ agent.last_name }} (@{{ agent.username }})
+            </option>
+            {% endfor %}
+        </select>
         
-        <br>
-        <button type="submit" style="background: #007bff; color: white; padding: 10px 20px;">✅ Assigner cet Agent</button>
-        <a href="{% url 'detail_reclamation' reclamation.id %}"><button type="button">❌ Annuler</button></a>
+        <br><br>
+        
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer;">
+            ✅ Assigner cette réclamation
+        </button>
+        <a href="{% url 'detail_reclamation' reclamation.id %}">
+            <button type="button" style="background: #6c757d; color: white; padding: 10px 20px; border: none; cursor: pointer;">
+                Annuler
+            </button>
+        </a>
     </form>
 </body>
 </html>
