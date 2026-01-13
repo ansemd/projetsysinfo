@@ -1012,11 +1012,19 @@ class NotificationService:
         elif notification.type_notification == 'REMBOURSEMENT_REQUIS':
             
             if action == 'OK':
+                client = notification.client
                 incident = notification.incident
-                
+                if not client:
+                    return {'success': False, 'message': '❌ Client introuvable'}
                 if not incident:
                     return {'success': False, 'message': 'Aucun incident trouvé'}
                 
+                montant_rembourse_physiquement = abs(client.solde) if client.solde < 0 else Decimal('0.00')
+        
+                # ✅ REMETTRE LE SOLDE À 0 (seulement maintenant !)
+                client.solde = Decimal('0.00')
+                client.save()
+        
                 # Marquer le remboursement comme effectué
                 incident.remboursement_effectue = True
                 incident.save()
@@ -1224,8 +1232,12 @@ class IncidentService:
                     ),
                     client=client,
                     incident=incident,
-                    statut='NON_LUE'
+                    statut='NON_LUE',
+                    requires_action=True
                 )
+                incident.remboursement_effectue = False
+                incident.save()
+
             else:
                 # CAS : Compensation totale dans le solde
                 Notification.objects.create(
@@ -1243,8 +1255,11 @@ class IncidentService:
                     ),
                     client=client,
                     incident=incident,
-                    statut='NON_LUE'
+                    statut='NON_LUE',
+                    requires_action=False
                 )
+            incident.remboursement_effectue = True
+            incident.save()
         
         # ========== 2. CRÉER ÉTAPES DE TRACKING ==========
         
