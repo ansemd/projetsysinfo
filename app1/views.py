@@ -2610,7 +2610,6 @@ def detail_incident(request, incident_id):
         'incident': incident,
         'historique': historique,
     })
-
 @login_required
 def creer_incident(request):
     """
@@ -2629,6 +2628,21 @@ def creer_incident(request):
 
                 if incident.expedition and incident.expedition.tournee:
                     incident.tournee = incident.expedition.tournee
+                
+                # ✅ AJOUTER : Définir la sévérité automatiquement
+                if incident.type_incident in ['PERTE', 'ACCIDENT']:
+                    incident.severite = 'CRITIQUE'
+                elif incident.type_incident in ['ENDOMMAGEMENT', 'PROBLEME_TECHNIQUE']:
+                    incident.severite = 'ELEVEE'
+                elif incident.type_incident == 'RETARD':
+                    incident.severite = 'MOYENNE'
+                else:
+                    incident.severite = 'FAIBLE'
+                
+                # ✅ AJOUTER : Définir le taux de remboursement
+                incident.taux_remboursement = IncidentService.obtenir_taux_remboursement(
+                    incident.type_incident
+                )
                 
                 incident.save()
                 
